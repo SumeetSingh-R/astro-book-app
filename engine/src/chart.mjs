@@ -1,4 +1,4 @@
-// Astro Booklet calculation engine: birth details in, Western and Vedic chart data out.
+// Astro Book calculation engine: birth details in, Western and Vedic chart data out.
 import SwissEph from 'swisseph-wasm';
 import { localToUtc, julianDay } from './time.mjs';
 import { ENGINE_VERSION, SIGNS, ASPECTS } from './constants.mjs';

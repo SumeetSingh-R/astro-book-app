@@ -1,4 +1,4 @@
--- Astro Booklet: initial schema
+-- Astro Book: initial schema
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,

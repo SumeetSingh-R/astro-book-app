@@ -43,4 +43,4 @@ createServer(async (nodeReq, nodeRes) => {
     } catch { /* try the SPA fallback */ }
   }
   nodeRes.writeHead(404).end('Not found');
-}).listen(port, () => console.log(`Astro Booklet preview on http://localhost:${port}`));
+}).listen(port, () => console.log(`Astro Book preview on http://localhost:${port}`));

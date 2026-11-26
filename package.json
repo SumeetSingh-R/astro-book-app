@@ -1,9 +1,9 @@
 {
-  "name": "astro-booklet",
+  "name": "astro-book",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Astro Booklet: Vedic and Western astrology web app",
+  "description": "Astro Book: Vedic and Western astrology web app",
   "scripts": {
     "test": "node --test engine/test/*.test.mjs api/test/*.test.mjs",
     "build:places": "node scripts/build-places.mjs",

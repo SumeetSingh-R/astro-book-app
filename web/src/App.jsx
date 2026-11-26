@@ -51,7 +51,7 @@ function Private({ children }) {
 function Shell({ children }) {
   const { session, authError } = useAuth();
   return (
-    <div className="booklet">
+    <div className="site">
       <header className="cover">
         <Link to="/" className="brand" aria-label="Astro Book, home">
           <span className="plate"><img src="/brand/logo-symbol.svg" alt="" /></span>
