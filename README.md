@@ -5,7 +5,7 @@ A Vedic and Western astrology web app.
 ## Stack
 
 - **Frontend:** web app deployed on Netlify (`astro-book-app`), live at https://astro-book-app.netlify.app
-- **Backend:** Supabase (auth, Postgres, server functions), project `astro-booklet`, Mumbai region
+- **Backend:** Supabase (auth, Postgres, server functions), project `astro-book-app`, Mumbai region
 - **Calculations:** own engine built on Swiss Ephemeris (no external astrology API)
 
 ## First version scope
