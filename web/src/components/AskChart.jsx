@@ -3,6 +3,7 @@ import { api } from '../lib/api.js';
 import { supabase } from '../lib/supabase.js';
 import { todayISO } from '../lib/format.js';
 import { useLanguage, wordsFor } from '../lib/language.jsx';
+import { ThreadSkeleton, SkeletonLines } from './Skeleton.jsx';
 
 const LIMIT = 10;
 
@@ -95,6 +96,7 @@ export default function AskChart({ profileId, title }) {
       <h2 id={`${inputId}-title`} lang={language}>{title ?? w.askTitle}</h2>
       <p className="muted" lang={language}>{w.askIntro}</p>
 
+      {messages === null ? <ThreadSkeleton label="Loading the conversation…" /> : null}
       {messages?.length ? (
         <ol className="thread" aria-live="polite">
           {messages.map((m) => (
@@ -102,7 +104,7 @@ export default function AskChart({ profileId, title }) {
               {m.role === 'user' ? <p>{m.content}</p> : <Answer text={m.content} basedOnLabel={wordsFor(m.language).basedOn} />}
             </li>
           ))}
-          {busy ? <li className="a waiting" lang={language}><p>{w.asking}</p></li> : null}
+          {busy ? <li className="a waiting" lang={language}><p>{w.asking}</p><SkeletonLines count={3} last="50%" /></li> : null}
         </ol>
       ) : null}
       <div ref={endRef} />

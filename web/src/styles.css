@@ -437,6 +437,32 @@ ul.doshas .dosha-head { display: flex; flex-wrap: wrap; align-items: center; gap
 .day-facts dd { margin: 0; font-weight: 500; }
 .day-why .hint { margin-top: var(--space-3); }
 
+/* ---------- Loading skeletons: the outline of what is about to arrive ---------- */
+.skeleton { display: block; position: relative; overflow: hidden; height: 0.9em; margin: 0.42em 0; background: var(--line); border-radius: var(--radius-sm); }
+.skeleton::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--surface), transparent); opacity: 0.85; animation: shimmer 1.5s ease-in-out infinite; }
+.band.surface .skeleton::after, .ask .skeleton::after, .day-why .skeleton::after { background: linear-gradient(90deg, transparent, var(--paper), transparent); }
+@keyframes shimmer { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+.skeleton-lines { display: block; max-width: 68ch; }
+.skeleton-lines.large { max-width: 60ch; font-size: 1.25rem; line-height: 1.6; margin-bottom: var(--space-8); }
+.skeleton.title { height: 2.2rem; margin: 0 0 var(--space-3); max-width: 100%; }
+.skeleton.title.tall { height: 3rem; margin: var(--space-3) 0 var(--space-6); }
+.skeleton.subtitle { height: 1.5rem; max-width: 100%; }
+.skeleton.heading { height: 1.2rem; margin-bottom: var(--space-3); max-width: 100%; }
+.skeleton.small { height: 0.75rem; max-width: 100%; }
+.skeleton.pill { height: 1.6rem; }
+.skeleton.square { height: auto; aspect-ratio: 1; margin: 0; border-radius: 0; }
+.skeleton.button-shape { height: 2.9rem; border-radius: var(--radius-md); flex: none; }
+.skeleton.bubble { height: 3rem; border-radius: var(--radius-md); margin: 0; }
+.loading.thread .skeleton.bubble { background: var(--line); border: 0; }
+.loading.thread .skeleton.bubble.q { justify-self: end; }
+.loading.thread .skeleton.bubble.a { height: 7rem; }
+.skeleton-card { border-top: 2px solid var(--line); padding-top: var(--space-3); }
+.skeleton-row { padding: var(--space-3) 0; border-bottom: 1px solid var(--line); }
+.skeleton-item { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3) var(--space-6); padding: var(--space-4) 0; border-bottom: 1px solid var(--line); }
+.loading.day { margin-top: var(--space-4); }
+.thread .a.waiting .skeleton-lines { margin-top: var(--space-2); }
+
 /* ---------- Small screens ---------- */
 @media (max-width: 52rem) {
   .hero, .chart-grid, .band.draw, .faq, .day, .areas { grid-template-columns: minmax(0, 1fr); }

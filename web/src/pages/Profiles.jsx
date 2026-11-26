@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
 import { formatBirth } from '../lib/format.js';
+import { ListSkeleton } from '../components/Skeleton.jsx';
 
 /** Shared loader for the signed-in user's saved birth profiles. */
 export function useProfiles() {
@@ -49,7 +50,7 @@ export default function Profiles() {
       </div>
       {error ? <p className="error" role="alert">{error}</p> : null}
       {actionError ? <p className="error" role="alert">{actionError}</p> : null}
-      {!profiles && !error ? <p className="muted">Loading your charts…</p> : null}
+      {!profiles && !error ? <ListSkeleton label="Loading your charts…" /> : null}
       {profiles?.length === 0 ? (
         <div className="empty">
           <p>No charts saved yet. Add your own birth details first, then family members you want to match or follow.</p>

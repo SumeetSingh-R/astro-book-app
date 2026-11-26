@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
 import { SIGNS, RASHIS, SIGN_GLYPHS, todayISO } from '../lib/format.js';
+import { ReadingCardSkeleton } from './Skeleton.jsx';
 
 const TONE_LABELS = { supportive: 'A supportive day', demanding: 'A demanding day', steady: 'A steady day' };
 
@@ -56,7 +57,7 @@ export default function HoroscopeReader() {
       </div>
 
       {error ? <p className="error" role="alert">{error}</p> : null}
-      {!error && !readings ? <p className="muted">Loading today's readings…</p> : null}
+      {!error && !readings ? <ReadingCardSkeleton label="Loading today's readings…" /> : null}
       {readings && !sign ? <p className="muted">Choose a sign to read today's horoscope. {system === 'vedic' ? 'Not sure of your Moon sign? Draw your chart and it is shown beside the kundli.' : ''}</p> : null}
 
       {reading ? (

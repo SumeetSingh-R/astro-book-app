@@ -5,6 +5,7 @@ import ChartView from '../components/ChartView.jsx';
 import ChartReading from '../components/ChartReading.jsx';
 import AskChart from '../components/AskChart.jsx';
 import { LanguageSwitch } from '../lib/language.jsx';
+import { ChartPageSkeleton } from '../components/Skeleton.jsx';
 
 export default function ChartPage() {
   const { id } = useParams();
@@ -25,7 +26,7 @@ export default function ChartPage() {
     <>
       <p><Link to="/charts">Back to my charts</Link></p>
       {error ? <><h1>Chart unavailable</h1><p className="error" role="alert">{error}</p></> : null}
-      {!data && !error ? <p className="muted">Calculating the chart…</p> : null}
+      {!data && !error ? <ChartPageSkeleton label="Calculating the chart…" /> : null}
       {data ? (
         <>
           <div className="title-row">

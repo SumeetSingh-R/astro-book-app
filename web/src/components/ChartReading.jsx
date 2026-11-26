@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
 import { useLanguage, wordsFor } from '../lib/language.jsx';
+import { ReadingSkeleton } from './Skeleton.jsx';
 
 /** The chart explained for someone who doesn't read charts: a summary, then one note per area of life. */
 export default function ChartReading({ profileId }) {
@@ -24,7 +25,7 @@ export default function ChartReading({ profileId }) {
     <section className="plain" aria-labelledby="plain-title" lang={reading?.language ?? language}>
       <h2 id="plain-title">{w.plainWords}</h2>
       {error ? <p className="error" role="alert">{error}</p> : null}
-      {!reading && !error ? <p className="muted" aria-live="polite">{w.writing}</p> : null}
+      {!reading && !error ? <><p className="muted" aria-hidden="true">{w.writing}</p><ReadingSkeleton label={w.writing} /></> : null}
       {reading ? (
         <>
           {reading.source === 'rules' ? (

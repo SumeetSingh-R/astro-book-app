@@ -6,6 +6,7 @@ import { formatBirth, formatDate, todayISO } from '../lib/format.js';
 import { useProfiles } from './Profiles.jsx';
 import { LanguageSwitch, useLanguage, wordsFor } from '../lib/language.jsx';
 import AskChart from '../components/AskChart.jsx';
+import { DaySkeleton } from '../components/Skeleton.jsx';
 
 const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'];
 
@@ -86,7 +87,7 @@ function PersonalDay({ profile }) {
         <LanguageSwitch />
       </div>
       {error ? <p className="error" role="alert">{error}</p> : null}
-      {!data && !error ? <p className="muted" aria-live="polite">Reading today against {profile.name}'s chart…</p> : null}
+      {!data && !error ? <DaySkeleton label={`Reading today against ${profile.name}'s chart…`} /> : null}
       {data ? (
         <div className="day">
           <article className="day-reading" lang={shown}>
@@ -123,7 +124,7 @@ export default function Today() {
   }
 
   if (error) return <><h1>Today</h1><p className="error" role="alert">{error}</p></>;
-  if (!profiles) return <p className="muted">Loading…</p>;
+  if (!profiles) return <DaySkeleton label="Loading your day…" />;
 
   const self = profiles.find((p) => p.is_self);
   if (self) return <PersonalDay profile={self} />;
