@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js';
 
-/** Call the Astro Booklet API. Throws an Error whose message is safe to show to the user. */
+/** Call the Astro Book API. Throws an Error whose message is safe to show to the user. */
 export async function api(path, { method = 'GET', body, auth = false } = {}) {
   const headers = {};
   if (body) headers['content-type'] = 'application/json';

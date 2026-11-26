@@ -28,8 +28,11 @@ function VedicResult({ result, a, b }) {
       {result.doshas.length === 0 ? <p>No Nadi, Bhakoot or Gana dosha.</p> : (
         <ul className="doshas">
           {result.doshas.map((d) => (
-            <li key={d.name} className={d.cancelled ? 'cancelled' : 'active'}>
-              <strong>{d.name}{d.cancelled ? ', cancelled' : ''}</strong>
+            <li key={d.name}>
+              <span className="dosha-head">
+                <strong>{d.name}</strong>
+                <span className={d.cancelled ? 'status cancelled' : 'status active'}>{d.cancelled ? 'Cancelled' : 'Present'}</span>
+              </span>
               <span>Present because {d.reason}.</span>
               {d.cancelled
                 ? <span>Traditionally treated as cancelled because {d.cancellations.join(', and because ')}.</span>

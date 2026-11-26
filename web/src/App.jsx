@@ -53,7 +53,10 @@ function Shell({ children }) {
   return (
     <div className="booklet">
       <header className="cover">
-        <Link to="/" className="brand">Astro Booklet</Link>
+        <Link to="/" className="brand" aria-label="Astro Book, home">
+          <span className="plate"><img src="/brand/logo-symbol.svg" alt="" /></span>
+          <img className="wordmark" src="/brand/logo-wordmark-light.svg" alt="Astro Book" />
+        </Link>
         <nav aria-label="Main">
           <NavLink to="/" end>Today</NavLink>
           <NavLink to="/charts">My charts</NavLink>
@@ -72,7 +75,7 @@ function Shell({ children }) {
       </main>
       <footer className="colophon">
         <p>Calculated with Swiss Ephemeris. Vedic charts use the Lahiri ayanamsa. Readings are for reflection and guidance, not a substitute for professional advice.</p>
-        <p>Astro Booklet is free, open-source software under the AGPL-3.0 licence: <a href="https://github.com/SumeetSingh-R/astro-booklet">get the source code</a>. Place data from <a href="https://www.geonames.org/">GeoNames</a> (CC BY 4.0).</p>
+        <p>Astro Book is free, open-source software under the AGPL-3.0 licence: <a href="https://github.com/SumeetSingh-R/astro-booklet">get the source code</a>. Place data from <a href="https://www.geonames.org/">GeoNames</a> (CC BY 4.0).</p>
       </footer>
     </div>
   );

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
 import { SIGNS, RASHIS, SIGN_GLYPHS, todayISO } from '../lib/format.js';
 
+const TONE_LABELS = { supportive: 'A supportive day', demanding: 'A demanding day', steady: 'A steady day' };
+
 function remembered(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
 }
@@ -59,6 +61,7 @@ export default function Horoscope() {
 
       {reading ? (
         <article className="reading" aria-live="polite">
+          <span className="tone">{TONE_LABELS[reading.content.tone]}</span>
           <h2>{reading.signName}: {reading.content.title}</h2>
           <p className="reading-text">{reading.content.text}</p>
           <dl className="facts">

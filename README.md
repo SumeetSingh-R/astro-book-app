@@ -1,4 +1,4 @@
-# Astro Booklet
+# Astro Book
 
 A Vedic and Western astrology web app.
 

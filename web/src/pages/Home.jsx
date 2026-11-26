@@ -46,8 +46,8 @@ export default function Home() {
     <>
       <section className="hero">
         <div className="hero-copy">
-          <h1>Your kundli and birth chart, kept in one booklet</h1>
-          <p className="lede">Enter a date, time and place of birth. Astro Booklet calculates the Vedic and Western charts, the dasha timeline, compatibility and a daily reading.</p>
+          <h1>Your kundli and birth chart, kept like a book</h1>
+          <p className="lede">Enter a date, time and place of birth. Astro Book calculates the Vedic and Western charts, the dasha timeline, compatibility and a daily reading.</p>
           <BirthForm submitLabel="Draw my chart" busyLabel="Calculating…" onSubmit={makeChart} />
         </div>
         <div className="hero-sky">
@@ -65,8 +65,8 @@ export default function Home() {
           <div className="save-prompt">
             <p>This chart isn't saved yet.</p>
             {session
-              ? <Link className="button primary" to="/charts/new">Save it to my charts</Link>
-              : <Link className="button primary" to="/sign-in" state={{ from: '/charts/new', mode: 'sign-up' }}>Create an account to save it</Link>}
+              ? <Link className="button accent" to="/charts/new">Save it to my charts</Link>
+              : <Link className="button accent" to="/sign-in" state={{ from: '/charts/new', mode: 'sign-up' }}>Create an account to save it</Link>}
           </div>
         </section>
       ) : null}
