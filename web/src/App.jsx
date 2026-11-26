@@ -74,8 +74,27 @@ function Shell({ children }) {
         {children}
       </main>
       <footer className="colophon">
-        <p>Calculated with Swiss Ephemeris. Vedic charts use the Lahiri ayanamsa. Readings are for reflection and guidance, not a substitute for professional advice.</p>
-        <p>Astro Book is free, open-source software under the AGPL-3.0 licence: <a href="https://github.com/SumeetSingh-R/astro-book-app">get the source code</a>. Place data from <a href="https://www.geonames.org/">GeoNames</a> (CC BY 4.0).</p>
+        <div className="colophon-grid">
+          <div>
+            <p className="colophon-name">Astro Book</p>
+            <p>Your kundli, matching and a daily reading, kept like a book.</p>
+          </div>
+          <nav aria-label="Explore">
+            <h2>Explore</h2>
+            <Link to="/">Today</Link>
+            <Link to="/charts">My charts</Link>
+            <Link to="/match">Matching</Link>
+            <Link to="/horoscope">Horoscope</Link>
+          </nav>
+          <nav aria-label="About">
+            <h2>About</h2>
+            <a href="https://github.com/SumeetSingh-R/astro-book-app">Source code</a>
+            <a href="https://github.com/SumeetSingh-R/astro-book-app/blob/main/LICENSE">Licence (AGPL-3.0)</a>
+            <a href="https://www.astro.com/swisseph/">Swiss Ephemeris</a>
+            <a href="https://www.geonames.org/">Place data: GeoNames (CC BY 4.0)</a>
+          </nav>
+        </div>
+        <p className="colophon-small">Vedic charts use the Lahiri ayanamsa. Readings are for reflection and guidance, not a substitute for professional advice. Astro Book is free, open-source software.</p>
       </footer>
     </div>
   );

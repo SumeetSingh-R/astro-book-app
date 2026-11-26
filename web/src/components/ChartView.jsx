@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import NorthIndianChart from './NorthIndianChart.jsx';
+import Kundli from './Kundli.jsx';
 import WesternWheel from './WesternWheel.jsx';
 import { dms, formatDate, PLANET_GLYPHS } from '../lib/format.js';
 
@@ -45,9 +45,13 @@ function Dasha({ dasha }) {
 
 function VedicPanel({ chart }) {
   const v = chart.vedic;
+  // The chart and the table are linked: selecting a house marks its grahas in the table,
+  // and choosing a graha in the table selects its house in the chart.
+  const [inHouse, setInHouse] = useState([]);
+  const [focusPlanet, setFocusPlanet] = useState(null);
   return (
     <div className="chart-grid">
-      <NorthIndianChart vedic={v} label="Vedic birth chart (kundli)" />
+      <Kundli vedic={v} views label="Vedic birth chart (kundli)" onSelect={(sel) => setInHouse(sel.planets)} focusPlanet={focusPlanet} />
       <div>
         <dl className="facts">
           <div><dt>Lagna</dt><dd>{v.lagna ? `${v.lagna.rashi} ${dms(v.lagna.degreeInRashi)}` : 'Needs a birth time'}</dd></div>
@@ -57,12 +61,15 @@ function VedicPanel({ chart }) {
         </dl>
         <div className="table-wrap">
           <table>
-            <caption>Graha positions</caption>
+            <caption>Graha positions <span className="caption-hint">Choose a graha to find it in the chart.</span></caption>
             <thead><tr><th>Graha</th><th>Rashi</th><th>Degree</th><th>Nakshatra</th><th>House</th><th>Navamsa</th></tr></thead>
             <tbody>
               {v.planets.map((p) => (
-                <tr key={p.name}>
-                  <th scope="row">{p.name}{p.retrograde && p.name !== 'Rahu' && p.name !== 'Ketu' ? <span className="retro" title="Retrograde"> R</span> : null}</th>
+                <tr key={p.name} className={inHouse.includes(p.name) ? 'hl' : undefined}>
+                  <th scope="row">
+                    <button type="button" className="rowlink" onClick={() => setFocusPlanet({ name: p.name, t: Date.now() })}>{p.name}</button>
+                    {p.retrograde && p.name !== 'Rahu' && p.name !== 'Ketu' ? <span className="retro" title="Retrograde"> R</span> : null}
+                  </th>
                   <td>{p.rashi}</td><td>{dms(p.degreeInRashi)}</td><td>{p.nakshatra}, pada {p.pada}</td><td>{p.house ?? '–'}</td><td>{p.navamsaRashi}</td>
                 </tr>
               ))}

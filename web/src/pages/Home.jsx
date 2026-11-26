@@ -4,7 +4,8 @@ import { api } from '../lib/api.js';
 import { useAuth } from '../App.jsx';
 import BirthForm from '../components/BirthForm.jsx';
 import ChartView from '../components/ChartView.jsx';
-import NorthIndianChart from '../components/NorthIndianChart.jsx';
+import Kundli from '../components/Kundli.jsx';
+import HoroscopeReader from '../components/HoroscopeReader.jsx';
 
 // Ujjain: the traditional prime meridian of Indian astronomy.
 const UJJAIN = { latitude: 23.1765, longitude: 75.7885, timezone: 'Asia/Kolkata' };
@@ -16,6 +17,51 @@ function nowInIndia() {
   );
   return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}` };
 }
+
+/** A small line drawing in an arch frame, the brand's window shape. */
+function ArchPicture({ children }) {
+  return (
+    <span className="arch-picture" aria-hidden="true">
+      <svg viewBox="0 0 64 64">{children}</svg>
+    </span>
+  );
+}
+
+const FEATURES = [
+  {
+    title: 'Kundli and birth chart',
+    text: 'Your Vedic kundli and Western wheel from one set of birth details, with every graha, house and nakshatra laid out.',
+    link: ['#draw', 'Draw my chart'],
+    art: <><rect x="12" y="12" width="40" height="40" /><path d="M12 12L52 52M52 12L12 52M32 12L52 32L32 52L12 32Z" /></>,
+  },
+  {
+    title: 'Matching',
+    text: 'Ashtakoot matching out of 36 gunas, shown koota by koota, with doshas, cancellations and a Manglik check.',
+    link: ['/match', 'Match two charts'],
+    art: <><circle cx="25" cy="32" r="14" /><circle cx="39" cy="32" r="14" /></>,
+  },
+  {
+    title: 'A daily reading',
+    text: 'A short reading for your Moon sign or Sun sign, drawn from where the Moon is today.',
+    link: ['#today', 'Read today'],
+    art: <><path d="M40 14a19 19 0 1 0 10 31a15 15 0 0 1-10-31Z" /><circle cx="18" cy="20" r="1.6" className="dot" /><circle cx="27" cy="12" r="1.6" className="dot" /></>,
+  },
+  {
+    title: 'Your dasha timeline',
+    text: 'The 120-year Vimshottari timeline with the period you are in now, and every sub-period inside it.',
+    link: ['#draw', 'See my timeline'],
+    art: <><path d="M10 20H54M10 32H54M10 44H54" /><path d="M10 20H26M10 32H40M10 44H20" className="accent" /></>,
+  },
+];
+
+const FAQS = [
+  ['What do I need to draw a chart?', 'Your date, time and place of birth. The time matters most: the lagna (rising sign) changes about every two hours, and it decides which house every graha falls in.'],
+  ['What if I don\'t know my birth time?', 'Tick "I don\'t know the birth time". Astro Book still calculates every planet\'s position and draws the chart from your Moon sign. Houses and the ascendant are left out, and dasha dates are approximate.'],
+  ['Why is my Vedic sign different from my Western sign?', 'Vedic astrology measures the zodiac against the stars (sidereal) and Western astrology measures it against the seasons (tropical). The two are about 24 degrees apart today, so many people have one sign in one system and the previous sign in the other. Astro Book shows both.'],
+  ['How are the charts calculated?', 'With Swiss Ephemeris, the astronomy library that professional astrology software is built on. Vedic charts use the Lahiri ayanamsa and whole-sign houses; Western charts use Placidus houses.'],
+  ['How does matching work?', 'Vedic matching follows the Ashtakoot method: eight tests on the two Moon positions, worth 36 points in all. Astro Book shows each test, flags Nadi, Bhakoot and Gana dosha, says when a common cancellation rule applies, and checks whether either person is Manglik.'],
+  ['Is it free, and who can see my charts?', 'Astro Book is free and open source. A quick chart drawn on this page is not saved anywhere. Charts you save to an account are visible only to you.'],
+];
 
 export default function Home() {
   const { session } = useAuth();
@@ -47,15 +93,52 @@ export default function Home() {
       <section className="hero">
         <div className="hero-copy">
           <h1>Your kundli and birth chart, kept like a book</h1>
-          <p className="lede">Enter a date, time and place of birth. Astro Book calculates the Vedic and Western charts, the dasha timeline, compatibility and a daily reading.</p>
-          <BirthForm submitLabel="Draw my chart" busyLabel="Calculating…" onSubmit={makeChart} />
+          <p className="lede">Astro Book calculates your Vedic and Western charts from your exact birth details, then helps you read them: house by house, period by period, day by day.</p>
+          <div className="cta-row">
+            <a className="button primary" href="#draw">Draw my chart</a>
+            {session
+              ? <Link className="button" to="/charts">Open my charts</Link>
+              : <a className="button" href="#today">Read today's horoscope</a>}
+          </div>
+          <dl className="inside">
+            <div><dt>2</dt><dd>systems, Vedic and Western, from one set of birth details</dd></div>
+            <div><dt>36</dt><dd>point Ashtakoot matching, shown koota by koota</dd></div>
+            <div><dt>120</dt><dd>year dasha timeline, down to each sub-period</dd></div>
+          </dl>
         </div>
         <div className="hero-sky">
-          {sky ? <NorthIndianChart vedic={sky.vedic} animate label="Kundli of the sky over Ujjain right now" /> : <div className="kundli-placeholder" aria-hidden="true" />}
           <p className="sky-caption">
             {sky === false ? 'The live sky chart could not load.' : `The sky over Ujjain right now${skyTime ? `, ${skyTime} IST` : ''}`}
           </p>
+          {sky ? <Kundli vedic={sky.vedic} animate label="Kundli of the sky over Ujjain right now" /> : <div className="kundli-placeholder" aria-hidden="true" />}
         </div>
+      </section>
+
+      <section className="band surface" aria-labelledby="features-title">
+        <h2 id="features-title">What you can do here</h2>
+        <ul className="features">
+          {FEATURES.map((f) => (
+            <li key={f.title}>
+              <ArchPicture>{f.art}</ArchPicture>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
+              {f.link[0].startsWith('#') ? <a href={f.link[0]}>{f.link[1]}</a> : <Link to={f.link[0]}>{f.link[1]}</Link>}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section id="draw" className="band draw" aria-labelledby="draw-title">
+        <div className="draw-copy">
+          <h2 id="draw-title">Draw your chart</h2>
+          <p className="lede">It takes three things, and nothing is saved unless you choose to.</p>
+          <ol className="needs">
+            <li><strong>Date of birth.</strong> Sets where the slow planets stand.</li>
+            <li><strong>Time of birth.</strong> Sets the lagna and the houses. If you don't know it, you can still draw a Moon chart.</li>
+            <li><strong>Place of birth.</strong> Search for the town, or the nearest larger one.</li>
+          </ol>
+        </div>
+        <BirthForm submitLabel="Draw my chart" busyLabel="Calculating…" onSubmit={makeChart} />
       </section>
 
       {preview ? (
@@ -71,10 +154,41 @@ export default function Home() {
         </section>
       ) : null}
 
-      <section className="today-links">
-        <h2>Today</h2>
-        <p>Read today's horoscope for your Moon sign (Vedic) or Sun sign (Western).</p>
-        <Link className="button" to="/horoscope">Read today's horoscope</Link>
+      <section className="band dark" aria-labelledby="trust-title">
+        <h2 id="trust-title">Calculated, not guessed</h2>
+        <ul className="trust">
+          <li>
+            <h3>Real astronomy</h3>
+            <p>Planet positions come from Swiss Ephemeris and are checked against an independent astronomy library to within a fiftieth of a degree.</p>
+          </li>
+          <li>
+            <h3>Nothing hidden</h3>
+            <p>The app is open source. Every rule it applies, from the ayanamsa to the matching tables, can be read in the code.</p>
+          </li>
+          <li>
+            <h3>Yours alone</h3>
+            <p>Saved charts are visible only to your account. A quick chart drawn on this page is never stored.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section id="today" className="band" aria-labelledby="today-title">
+        <h2 id="today-title">Today's horoscope</h2>
+        <HoroscopeReader />
+      </section>
+
+      <section className="band surface" aria-labelledby="faq-title">
+        <div className="faq">
+          <h2 id="faq-title">Questions people ask first</h2>
+          <div>
+            {FAQS.map(([q, a], i) => (
+              <details key={q} open={i === 0}>
+                <summary>{q}</summary>
+                <p>{a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
       </section>
     </>
   );
