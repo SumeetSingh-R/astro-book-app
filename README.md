@@ -31,9 +31,26 @@ npm install
 npm test
 ```
 
-`computeChart({ date, time, timezone, latitude, longitude })` returns both the Western (tropical, Placidus)
-and Vedic (sidereal Lahiri, whole-sign) chart, including nakshatras, navamsa and the Vimshottari dasha timeline.
-Planet positions are tested against an independent astronomy library.
+| Function | What it returns |
+|---|---|
+| `computeChart({ date, time, timezone, latitude, longitude })` | Western (tropical, Placidus) and Vedic (sidereal Lahiri, whole-sign) chart, with nakshatras, navamsa and the Vimshottari dasha timeline |
+| `matchVedic(groomChart, brideChart)` | Ashtakoot (Guna Milan) score out of 36, koota by koota, with doshas and a Manglik check |
+| `matchWestern(chartA, chartB)` | Synastry: cross-chart aspects sorted by tightness, with a harmonious/challenging count |
+| `dailyHoroscopesAll(date)` | 24 readings for the day: 12 Sun signs (Western) and 12 Moon signs (Vedic) |
+
+Checks in the test suite:
+
+- Planet positions against an independent astronomy library, across birth dates from 1910 to 2026
+- Ascendant against an independent formula
+- Ashtakoot against a published worked example (17.5/36) and structural checks on every lookup table
+- Nakshatra, navamsa and dasha rules against hand-worked cases
+
+Conventions chosen (these vary between astrologers and can be changed):
+
+- Lahiri ayanamsa, mean lunar node for Rahu/Ketu, 365.25-day year for dasha dates
+- Vashya and Gana scoring tables: the versions most widely used in matching software (see `src/matchTables.mjs`)
+- Bhakoot and Nadi dosha cancellation rules are not applied
+- Daily horoscopes are evaluated at 06:00 India time and driven by the Moon's house from the sign
 
 ## Database
 
