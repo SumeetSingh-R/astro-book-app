@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, NavLink, Link, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase.js';
 import Home from './pages/Home.jsx';
 import Horoscope from './pages/Horoscope.jsx';
@@ -12,14 +12,31 @@ import SignIn from './pages/SignIn.jsx';
 const AuthContext = createContext({ session: null, loading: true });
 export const useAuth = () => useContext(AuthContext);
 
+/** If a sign-in provider sent the visitor back with an error, read it from the address bar. */
+function returnedAuthError() {
+  const query = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  return query.get('error_description') ?? hash.get('error_description');
+}
+
 function AuthProvider({ children }) {
   const [state, setState] = useState({ session: null, loading: true });
+  const [authError] = useState(returnedAuthError);
+  const navigate = useNavigate();
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setState({ session: data.session, loading: false }));
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => setState({ session, loading: false }));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      setState({ session, loading: false });
+      if (event === 'SIGNED_IN' && session) {
+        // After a Google sign-in the visitor lands on the home page; send them where they were going.
+        let next = null;
+        try { next = sessionStorage.getItem('postAuthPath'); sessionStorage.removeItem('postAuthPath'); } catch { /* storage unavailable */ }
+        if (next && next.startsWith('/')) navigate(next, { replace: true });
+      }
+    });
     return () => sub.subscription.unsubscribe();
-  }, []);
-  return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
+  }, [navigate]);
+  return <AuthContext.Provider value={{ ...state, authError }}>{children}</AuthContext.Provider>;
 }
 
 /** Pages that need an account send signed-out visitors to sign in, then bring them back. */
@@ -32,7 +49,7 @@ function Private({ children }) {
 }
 
 function Shell({ children }) {
-  const { session } = useAuth();
+  const { session, authError } = useAuth();
   return (
     <div className="booklet">
       <header className="cover">
@@ -49,7 +66,10 @@ function Shell({ children }) {
             : <Link to="/sign-in" className="on-dark">Sign in</Link>}
         </div>
       </header>
-      <main className="page">{children}</main>
+      <main className="page">
+        {authError && !session ? <p className="error" role="alert">Sign-in did not complete: {authError}. Try again from the sign-in page.</p> : null}
+        {children}
+      </main>
       <footer className="colophon">
         <p>Calculated with Swiss Ephemeris. Vedic charts use the Lahiri ayanamsa. Readings are for reflection and guidance, not a substitute for professional advice.</p>
         <p>Astro Booklet is free, open-source software under the AGPL-3.0 licence: <a href="https://github.com/SumeetSingh-R/astro-booklet">get the source code</a>. Place data from <a href="https://www.geonames.org/">GeoNames</a> (CC BY 4.0).</p>

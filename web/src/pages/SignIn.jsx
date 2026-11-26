@@ -38,6 +38,14 @@ export default function SignIn() {
     }
   }
 
+  async function google() {
+    setError(null);
+    // Remember where to go after Google sends the visitor back to the site.
+    try { sessionStorage.setItem('postAuthPath', from); } catch { /* storage unavailable */ }
+    const { error: err } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    if (err) setError('Google sign-in could not start. Try again, or use email and password.');
+  }
+
   if (sent) {
     return (
       <>
@@ -52,6 +60,8 @@ export default function SignIn() {
     <div className="narrow">
       <h1>{mode === 'sign-up' ? 'Create your account' : 'Sign in'}</h1>
       <p className="lede">An account keeps your charts and matches private to you.</p>
+      <button type="button" className="button google" onClick={google}>Continue with Google</button>
+      <p className="or"><span>or use email</span></p>
       <div className="segmented" role="tablist" aria-label="Account">
         <button type="button" role="tab" aria-selected={mode === 'sign-in'} className={mode === 'sign-in' ? 'on' : undefined} onClick={() => setMode('sign-in')}>Sign in</button>
         <button type="button" role="tab" aria-selected={mode === 'sign-up'} className={mode === 'sign-up' ? 'on' : undefined} onClick={() => setMode('sign-up')}>Create account</button>

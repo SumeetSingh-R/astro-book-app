@@ -139,6 +139,11 @@ legend { font-weight: 700; padding: 0 0.4rem; }
 .segmented button + button { border-left: 2px solid var(--ink); }
 .segmented button.on { background: var(--ink); color: var(--haldi); }
 
+.button.google { width: 100%; max-width: 34rem; text-align: center; background: var(--haldi-light); }
+.button.google:hover { background: var(--ink); color: var(--haldi); }
+.or { display: flex; align-items: center; gap: 0.75rem; color: var(--ink-soft); font-size: 0.95rem; margin: 1.1rem 0 0.25rem; max-width: 34rem; }
+.or::before, .or::after { content: ''; flex: 1; border-top: 1px solid var(--rule); }
+
 /* ---------- Home ---------- */
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); gap: clamp(1.5rem, 5vw, 4rem); align-items: start; }
 .hero-sky { position: sticky; top: 1.5rem; }
