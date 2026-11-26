@@ -4,7 +4,8 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { handleChart, handleMatch, handleHoroscope, handlePlaces, handlePreview } from '../api/lib/handlers.mjs';
+import { handleChart, handleMatch, handleHoroscope, handlePlaces, handlePreview, handleReading, handleToday, handleAsk } from '../api/lib/handlers.mjs';
+import { createAi } from '../api/lib/ai.mjs';
 import { createDb } from '../api/lib/db.mjs';
 
 const dist = fileURLToPath(new URL('../web/dist/', import.meta.url));
@@ -17,6 +18,9 @@ const routes = {
   '/api/match': (req) => handleMatch(req, { createDb }),
   '/api/horoscope': (req) => handleHoroscope(req),
   '/api/places': (req) => handlePlaces(req, { loadPlaces }),
+  '/api/reading': (req) => handleReading(req, { createDb, ai: createAi() }),
+  '/api/today': (req) => handleToday(req, { createDb, ai: createAi() }),
+  '/api/ask': (req) => handleAsk(req, { createDb, ai: createAi() }),
 };
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' };
 

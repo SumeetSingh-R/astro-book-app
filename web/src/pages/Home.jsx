@@ -30,7 +30,7 @@ function ArchPicture({ children }) {
 const FEATURES = [
   {
     title: 'Kundli and birth chart',
-    text: 'Your Vedic kundli and Western wheel from one set of birth details, with every graha, house and nakshatra laid out.',
+    text: 'Your Vedic kundli and Western wheel from one set of birth details, then explained in plain words, in English or Hindi.',
     link: ['#draw', 'Draw my chart'],
     art: <><rect x="12" y="12" width="40" height="40" /><path d="M12 12L52 52M52 12L12 52M32 12L52 32L32 52L12 32Z" /></>,
   },
@@ -41,16 +41,16 @@ const FEATURES = [
     art: <><circle cx="25" cy="32" r="14" /><circle cx="39" cy="32" r="14" /></>,
   },
   {
-    title: 'A daily reading',
-    text: 'A short reading for your Moon sign or Sun sign, drawn from where the Moon is today.',
-    link: ['#today', 'Read today'],
+    title: 'A reading for your day',
+    text: 'With an account, each day is read against your own chart: where today\'s Moon falls from your birth Moon and lagna.',
+    link: ['/today', 'Read my day'],
     art: <><path d="M40 14a19 19 0 1 0 10 31a15 15 0 0 1-10-31Z" /><circle cx="18" cy="20" r="1.6" className="dot" /><circle cx="27" cy="12" r="1.6" className="dot" /></>,
   },
   {
-    title: 'Your dasha timeline',
-    text: 'The 120-year Vimshottari timeline with the period you are in now, and every sub-period inside it.',
-    link: ['#draw', 'See my timeline'],
-    art: <><path d="M10 20H54M10 32H54M10 44H54" /><path d="M10 20H26M10 32H40M10 44H20" className="accent" /></>,
+    title: 'Ask your chart',
+    text: 'Ask in plain words, such as when a good period for marriage or a job change is, and get an answer drawn from your own chart.',
+    link: ['/charts', 'Ask my chart'],
+    art: <><path d="M12 16H52V42H30L20 52V42H12Z" /><circle cx="24" cy="29" r="1.8" className="dot" /><circle cx="32" cy="29" r="1.8" className="dot" /><circle cx="40" cy="29" r="1.8" className="dot" /></>,
   },
 ];
 
@@ -60,6 +60,7 @@ const FAQS = [
   ['Why is my Vedic sign different from my Western sign?', 'Vedic astrology measures the zodiac against the stars (sidereal) and Western astrology measures it against the seasons (tropical). The two are about 24 degrees apart today, so many people have one sign in one system and the previous sign in the other. Astro Book shows both.'],
   ['How are the charts calculated?', 'With Swiss Ephemeris, the astronomy library that professional astrology software is built on. Vedic charts use the Lahiri ayanamsa and whole-sign houses; Western charts use Placidus houses.'],
   ['How does matching work?', 'Vedic matching follows the Ashtakoot method: eight tests on the two Moon positions, worth 36 points in all. Astro Book shows each test, flags Nadi, Bhakoot and Gana dosha, says when a common cancellation rule applies, and checks whether either person is Manglik.'],
+  ['How does "Ask your chart" work?', 'The app first calculates the facts of your chart: which graha rules and sits in each house, your dasha periods, and where Jupiter and Saturn will be in the coming years. An AI model (Claude) then writes the answer in plain words from those facts only. It does not calculate anything itself. Timing is given as ranges of months that tradition reads as supportive, never as a date or a promise. Your name, email, birth date and birth place are not sent to the model.'],
   ['Is it free, and who can see my charts?', 'Astro Book is free and open source. A quick chart drawn on this page is not saved anywhere. Charts you save to an account are visible only to you.'],
 ];
 
@@ -97,13 +98,13 @@ export default function Home() {
           <div className="cta-row">
             <a className="button primary" href="#draw">Draw my chart</a>
             {session
-              ? <Link className="button" to="/charts">Open my charts</Link>
+              ? <Link className="button" to="/today">Read my day</Link>
               : <a className="button" href="#today">Read today's horoscope</a>}
           </div>
           <dl className="inside">
             <div><dt>2</dt><dd>systems, Vedic and Western, from one set of birth details</dd></div>
             <div><dt>36</dt><dd>point Ashtakoot matching, shown koota by koota</dd></div>
-            <div><dt>120</dt><dd>year dasha timeline, down to each sub-period</dd></div>
+            <div><dt>120</dt><dd>year dasha timeline, with the period you are in explained</dd></div>
           </dl>
         </div>
         <div className="hero-sky">
@@ -173,7 +174,11 @@ export default function Home() {
       </section>
 
       <section id="today" className="band" aria-labelledby="today-title">
-        <h2 id="today-title">Today's horoscope</h2>
+        <h2 id="today-title">Today's horoscope, by sign</h2>
+        <p>{session
+          ? <>This is the general reading for a sign. <Link to="/today">Your own day</Link> is read from your chart.</>
+          : <>This is the general reading for a sign. <Link to="/sign-in" state={{ from: '/today', mode: 'sign-up' }}>Create an account</Link> and each day is read from your own chart instead.</>}
+        </p>
         <HoroscopeReader />
       </section>
 

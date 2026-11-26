@@ -43,12 +43,32 @@ function Dasha({ dasha }) {
   );
 }
 
-function VedicPanel({ chart }) {
+function VedicPanel({ chart, compact }) {
   const v = chart.vedic;
   // The chart and the table are linked: selecting a house marks its grahas in the table,
   // and choosing a graha in the table selects its house in the chart.
   const [inHouse, setInHouse] = useState([]);
   const [focusPlanet, setFocusPlanet] = useState(null);
+  const [tableOpen, setTableOpen] = useState(!compact);
+  const table = (
+    <div className="table-wrap">
+      <table>
+        <caption>Graha positions <span className="caption-hint">Choose a graha to find it in the chart.</span></caption>
+        <thead><tr><th>Graha</th><th>Rashi</th><th>Degree</th><th>Nakshatra</th><th>House</th><th>Navamsa</th></tr></thead>
+        <tbody>
+          {v.planets.map((p) => (
+            <tr key={p.name} className={inHouse.includes(p.name) ? 'hl' : undefined}>
+              <th scope="row">
+                <button type="button" className="rowlink" onClick={() => setFocusPlanet({ name: p.name, t: Date.now() })}>{p.name}</button>
+                {p.retrograde && p.name !== 'Rahu' && p.name !== 'Ketu' ? <span className="retro" title="Retrograde"> R</span> : null}
+              </th>
+              <td>{p.rashi}</td><td>{dms(p.degreeInRashi)}</td><td>{p.nakshatra}, pada {p.pada}</td><td>{p.house ?? '–'}</td><td>{p.navamsaRashi}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
   return (
     <div className="chart-grid">
       <Kundli vedic={v} views label="Vedic birth chart (kundli)" onSelect={(sel) => setInHouse(sel.planets)} focusPlanet={focusPlanet} />
@@ -59,25 +79,21 @@ function VedicPanel({ chart }) {
           <div><dt>Birth nakshatra</dt><dd>{v.dasha.moonNakshatra}</dd></div>
           <div><dt>Ayanamsa</dt><dd>{v.ayanamsa.name} {dms(v.ayanamsa.value)}</dd></div>
         </dl>
-        <div className="table-wrap">
-          <table>
-            <caption>Graha positions <span className="caption-hint">Choose a graha to find it in the chart.</span></caption>
-            <thead><tr><th>Graha</th><th>Rashi</th><th>Degree</th><th>Nakshatra</th><th>House</th><th>Navamsa</th></tr></thead>
-            <tbody>
-              {v.planets.map((p) => (
-                <tr key={p.name} className={inHouse.includes(p.name) ? 'hl' : undefined}>
-                  <th scope="row">
-                    <button type="button" className="rowlink" onClick={() => setFocusPlanet({ name: p.name, t: Date.now() })}>{p.name}</button>
-                    {p.retrograde && p.name !== 'Rahu' && p.name !== 'Ketu' ? <span className="retro" title="Retrograde"> R</span> : null}
-                  </th>
-                  <td>{p.rashi}</td><td>{dms(p.degreeInRashi)}</td><td>{p.nakshatra}, pada {p.pada}</td><td>{p.house ?? '–'}</td><td>{p.navamsaRashi}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {compact ? (
+          <details className="fold" open={tableOpen} onToggle={(e) => setTableOpen(e.currentTarget.open)}>
+            <summary>Positions of every graha</summary>
+            {table}
+          </details>
+        ) : table}
       </div>
-      <div className="span-2"><Dasha dasha={v.dasha} /></div>
+      <div className="span-2">
+        {compact ? (
+          <details className="fold">
+            <summary>Dasha timeline: the periods of your life</summary>
+            <Dasha dasha={v.dasha} />
+          </details>
+        ) : <Dasha dasha={v.dasha} />}
+      </div>
     </div>
   );
 }
@@ -124,7 +140,7 @@ function WesternPanel({ chart }) {
 }
 
 /** Tabs for the two systems over one calculated chart. */
-export default function ChartView({ chart, initial = 'vedic' }) {
+export default function ChartView({ chart, initial = 'vedic', compact = false }) {
   const [system, setSystem] = useState(initial);
   return (
     <div>
@@ -134,7 +150,7 @@ export default function ChartView({ chart, initial = 'vedic' }) {
         ))}
       </div>
       {chart.notes?.map((n) => <p key={n} className="notice">{n}</p>)}
-      {system === 'vedic' ? <VedicPanel chart={chart} /> : <WesternPanel chart={chart} />}
+      {system === 'vedic' ? <VedicPanel chart={chart} compact={compact} /> : <WesternPanel chart={chart} />}
     </div>
   );
 }

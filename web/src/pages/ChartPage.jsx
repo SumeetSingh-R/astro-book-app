@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import ChartView from '../components/ChartView.jsx';
+import ChartReading from '../components/ChartReading.jsx';
+import AskChart from '../components/AskChart.jsx';
+import { LanguageSwitch } from '../lib/language.jsx';
 
 export default function ChartPage() {
   const { id } = useParams();
@@ -25,9 +28,19 @@ export default function ChartPage() {
       {!data && !error ? <p className="muted">Calculating the chart…</p> : null}
       {data ? (
         <>
-          <h1>{data.profile.name}</h1>
-          <p className="lede">{data.profile.placeName}</p>
-          <ChartView chart={data.chart} />
+          <div className="title-row">
+            <div>
+              <h1>{data.profile.name}</h1>
+              <p className="lede">{data.profile.placeName}</p>
+            </div>
+            <LanguageSwitch />
+          </div>
+          <ChartReading profileId={id} />
+          <AskChart profileId={id} />
+          <section className="the-chart" aria-labelledby="chart-title">
+            <h2 id="chart-title">The chart itself</h2>
+            <ChartView chart={data.chart} compact />
+          </section>
         </>
       ) : null}
     </>

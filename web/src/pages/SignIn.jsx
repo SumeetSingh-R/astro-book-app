@@ -7,7 +7,7 @@ export default function SignIn() {
   const { session } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const from = location.state?.from ?? '/charts';
+  const from = location.state?.from ?? '/today';
   const [mode, setMode] = useState(location.state?.mode === 'sign-up' ? 'sign-up' : 'sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -8,6 +8,8 @@ import NewProfile from './pages/NewProfile.jsx';
 import ChartPage from './pages/ChartPage.jsx';
 import Match from './pages/Match.jsx';
 import SignIn from './pages/SignIn.jsx';
+import Today from './pages/Today.jsx';
+import { LanguageProvider } from './lib/language.jsx';
 
 const AuthContext = createContext({ session: null, loading: true });
 export const useAuth = () => useContext(AuthContext);
@@ -58,10 +60,10 @@ function Shell({ children }) {
           <img className="wordmark" src="/brand/logo-wordmark-light.svg" alt="Astro Book" />
         </Link>
         <nav aria-label="Main">
-          <NavLink to="/" end>Today</NavLink>
+          {/* Signed in, "Today" is the reading for your own chart; signed out, it is the home page. */}
+          {session ? <NavLink to="/today">Today</NavLink> : <NavLink to="/" end>Today</NavLink>}
           <NavLink to="/charts">My charts</NavLink>
           <NavLink to="/match">Matching</NavLink>
-          <NavLink to="/horoscope">Horoscope</NavLink>
         </nav>
         <div className="account">
           {session
@@ -77,14 +79,13 @@ function Shell({ children }) {
         <div className="colophon-grid">
           <div>
             <p className="colophon-name">Astro Book</p>
-            <p>Your kundli, matching and a daily reading, kept like a book.</p>
+            <p>Your kundli in plain words, answers from your own chart, matching and a reading for each day.</p>
           </div>
           <nav aria-label="Explore">
             <h2>Explore</h2>
-            <Link to="/">Today</Link>
+            <Link to={session ? '/today' : '/'}>Today</Link>
             <Link to="/charts">My charts</Link>
             <Link to="/match">Matching</Link>
-            <Link to="/horoscope">Horoscope</Link>
           </nav>
           <nav aria-label="About">
             <h2>About</h2>
@@ -94,7 +95,7 @@ function Shell({ children }) {
             <a href="https://www.geonames.org/">Place data: GeoNames (CC BY 4.0)</a>
           </nav>
         </div>
-        <p className="colophon-small">Vedic charts use the Lahiri ayanamsa. Readings are for reflection and guidance, not a substitute for professional advice. Astro Book is free, open-source software.</p>
+        <p className="colophon-small">Vedic charts use the Lahiri ayanamsa. Readings and answers are written by an AI model from calculated chart facts. They are for reflection and guidance, not predictions or professional advice. Astro Book is free, open-source software.</p>
       </footer>
     </div>
   );
@@ -104,9 +105,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <LanguageProvider>
         <Shell>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/today" element={<Private><Today /></Private>} />
             <Route path="/horoscope" element={<Horoscope />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/charts" element={<Private><Profiles /></Private>} />
@@ -116,6 +119,7 @@ export default function App() {
             <Route path="*" element={<><h1>Page not found</h1><p><Link to="/">Go to today's page</Link></p></>} />
           </Routes>
         </Shell>
+        </LanguageProvider>
       </AuthProvider>
     </BrowserRouter>
   );

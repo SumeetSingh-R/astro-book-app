@@ -7,6 +7,7 @@ A Vedic and Western astrology web app.
 - **Frontend:** web app deployed on Netlify (`astro-book-app`), live at https://astro-book-app.netlify.app
 - **Backend:** Supabase (auth, Postgres, server functions), project `astro-book-app`, Mumbai region
 - **Calculations:** own engine built on Swiss Ephemeris (no external astrology API)
+- **Readings and answers:** an AI model (Claude Haiku, through the Anthropic API) writes plain-language text from facts the engine has already calculated
 
 ## First version scope
 
@@ -14,6 +15,26 @@ A Vedic and Western astrology web app.
 - Vedic chart (kundli) and Western natal chart, drawn, with planet and house details
 - Compatibility matching
 - Daily horoscope
+
+## Second version: readings for people who don't read charts
+
+- **In plain words:** each saved chart is explained area by area (nature, work, money, marriage, family, wellbeing, current period), with the chart factors behind each note. Written once per chart and language, then stored.
+- **A personal day:** the signed-in Today page reads each day against the person's own chart (Moon's house from the birth Moon and lagna, tara bala, dasha, Sade Sati), not their sign alone.
+- **Ask your chart:** questions in plain words, answered from that chart. English and Hindi.
+
+The rule throughout: **the engine calculates, the model only explains.** The model is given the chart as facts (house lords, occupants, aspects, dignity, dasha periods) and, for timing questions, a table of month ranges the engine has worked out from the dasha lords and the Jupiter and Saturn transits. It is told to use nothing else, to give timing as month ranges and never dates, and not to predict death, illness, the sex of a child, or the results of exams, court cases or markets. The person's name, email, birth date, birth time and birth place are never sent to the model: only their age, the calculated positions and the question.
+
+### Switching the AI on
+
+Set these in the Netlify site's environment variables (never in the code):
+
+| Variable | Required | Meaning |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Yes | API key from the Claude Console |
+| `AI_MODEL` | No | Model id. Default `claude-haiku-5-5` |
+| `AI_EFFORT` | No | Thinking effort. Default `low` |
+
+Without a key the app still works: readings fall back to fixed text built from the same facts, and "Ask your chart" says it is not switched on. Each person can ask 10 questions a day (`ASK_LIMIT` in `api/lib/handlers.mjs`); the count is kept in the database by a function the browser cannot reset.
 
 ## Repository layout
 
@@ -43,6 +64,9 @@ npm run preview        # serves the app and API together on http://localhost:888
 | `matchVedic(groomChart, brideChart)` | Ashtakoot (Guna Milan) score out of 36, koota by koota, with doshas and a Manglik check |
 | `matchWestern(chartA, chartB)` | Synastry: cross-chart aspects sorted by tightness, with a harmonious/challenging count |
 | `dailyHoroscopesAll(date)` | 24 readings for the day: 12 Sun signs (Western) and 12 Moon signs (Vedic) |
+| `chartFacts(chart)` | The chart restated as facts: each house's rashi, lord, occupants and aspects; each graha's dignity; the running dasha |
+| `topicWindows(chart, topic)` | Month ranges traditionally read as supportive for a topic (marriage, career, money, children, education, home, travel), with reasons |
+| `personalDay(chart, date)` | A day read against one chart: Moon's house from the birth Moon and lagna, tara bala, dasha, Saturn and Jupiter from the Moon |
 
 Checks in the test suite:
 
@@ -61,6 +85,8 @@ Conventions chosen (these vary between astrologers and can be changed):
   - Gana dosha: both Moon signs have the same lord; or the two lords are mutual natural friends
   - Not checked: navamsa-based and other chart-level exceptions
 - Daily horoscopes are evaluated at 06:00 India time and driven by the Moon's house from the sign
+- Timing windows combine two tests, month by month: the antardasha or mahadasha lord is a significator of the topic (lord or occupant of its house, its natural significator, or a node acting for one of these), and Jupiter occupies or aspects the house or its lord. A month where Saturn does too is marked as strongest. Other timing methods exist and astrologers weigh them differently; no windows are produced for health
+- Graha aspects used: the 7th for all, plus Mars 4 and 8, Jupiter 5 and 9, Saturn 3 and 10. Rahu and Ketu are given no aspects
 
 ## API
 
@@ -74,13 +100,16 @@ applies to everything the API reads or writes. No admin key is used anywhere.
 | `POST /api/chart/preview` `{ date, time, timezone, latitude, longitude }` | Public | Calculates a chart without saving anything |
 | `GET /api/horoscope?system=&sign=&date=` | Public | Daily readings (all 12 signs when `sign` is omitted) |
 | `GET /api/places?q=&country=` | Public | Birth-place search: name, state, country, coordinates and timezone |
+| `POST /api/reading` `{ birthProfileId, language }` | Signed in | The chart in plain words (`language` is `en` or `hi`) |
+| `POST /api/today` `{ birthProfileId, language, date?, timezone? }` | Signed in | Today read against one person's chart: the day's facts and a reading |
+| `POST /api/ask` `{ birthProfileId, question, language }` | Signed in | A question answered from the chart; saved to the conversation |
 
 Place data: GeoNames cities with population over 1,000 (about 135,000 places), timezone derived from coordinates.
 
 ## Database
 
-Five tables, all with row-level security: `profiles`, `birth_profiles`, `charts`, `matches`, `daily_horoscopes`.
-Users can only read and change their own data. Stored charts and matches are cleared automatically when a profile's birth details change.
+Eight tables, all with row-level security: `profiles`, `birth_profiles`, `charts`, `matches`, `daily_horoscopes`, `readings`, `chat_messages`, `ai_usage`.
+Users can only read and change their own data. Stored charts, matches and readings are cleared automatically when a profile's birth details change. One birth profile per account can be marked `is_self`; the Today page follows it.
 
 ## Licence
 

@@ -10,7 +10,7 @@ export function useProfiles() {
   async function load() {
     const { data, error: err } = await supabase
       .from('birth_profiles')
-      .select('id, name, relation, birth_date, birth_time, time_unknown, place_name')
+      .select('id, name, relation, birth_date, birth_time, time_unknown, place_name, is_self')
       .order('created_at', { ascending: true });
     if (err) setError('Your charts could not be loaded. Refresh the page to try again.');
     else setProfiles(data);
@@ -29,6 +29,15 @@ export default function Profiles() {
     const { error: err } = await supabase.from('birth_profiles').delete().eq('id', id);
     if (err) setActionError('That chart could not be deleted. Try again.');
     setConfirming(null);
+    reload();
+  }
+
+  /** Mark one chart as the account holder's own. Only one can be, so the old mark is cleared first. */
+  async function markSelf(id) {
+    setActionError(null);
+    const cleared = await supabase.from('birth_profiles').update({ is_self: false }).eq('is_self', true);
+    const marked = cleared.error ? cleared : await supabase.from('birth_profiles').update({ is_self: true }).eq('id', id);
+    if (marked.error) setActionError('That could not be saved. Try again.');
     reload();
   }
 
@@ -51,11 +60,12 @@ export default function Profiles() {
         {profiles?.map((p) => (
           <li key={p.id}>
             <div>
-              <h2><Link to={`/charts/${p.id}`}>{p.name}</Link>{p.relation ? <span className="relation"> ({p.relation})</span> : null}</h2>
+              <h2><Link to={`/charts/${p.id}`}>{p.name}</Link>{p.relation ? <span className="relation"> ({p.relation})</span> : null}{p.is_self ? <span className="tag you">You</span> : null}</h2>
               <p className="muted">{formatBirth(p)}, {p.place_name}</p>
             </div>
             <div className="actions">
               <Link className="button" to={`/charts/${p.id}`}>Open chart</Link>
+              {p.is_self ? null : <button type="button" className="link" onClick={() => markSelf(p.id)}>This is me</button>}
               {confirming === p.id ? (
                 <>
                   <button type="button" className="button danger" onClick={() => remove(p.id)}>Delete {p.name}'s chart</button>

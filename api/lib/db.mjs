@@ -56,5 +56,49 @@ export function createDb(token, env = process.env) {
       if (error) fail(error, 'saveMatch');
       return data;
     },
+
+    /** The stored reading for a chart (kind 'chart') or a day (kind 'daily'), newest first. */
+    async getReading({ birthProfileId, kind, language, forDate, engineVersion }) {
+      let query = supabase
+        .from('readings')
+        .select('content, model, created_at')
+        .eq('birth_profile_id', birthProfileId)
+        .eq('kind', kind)
+        .eq('language', language)
+        .eq('engine_version', engineVersion);
+      query = forDate ? query.eq('for_date', forDate) : query.is('for_date', null);
+      const { data, error } = await query.order('created_at', { ascending: false }).limit(1);
+      if (error) fail(error, 'getReading');
+      return data?.[0] ?? null;
+    },
+
+    async saveReading(row) {
+      const { error } = await supabase.from('readings').insert(row);
+      if (error) fail(error, 'saveReading');
+    },
+
+    /** Count one AI request against today's allowance. Returns how many are left, or -1 if none. */
+    async consumeQuota(kind, limit) {
+      const { data, error } = await supabase.rpc('consume_ai_quota', { p_kind: kind, p_limit: limit });
+      if (error) fail(error, 'consumeQuota');
+      return data;
+    },
+
+    /** The latest messages of a chart's conversation, oldest first. */
+    async getRecentMessages(birthProfileId, limit) {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('role, content, created_at')
+        .eq('birth_profile_id', birthProfileId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (error) fail(error, 'getRecentMessages');
+      return (data ?? []).reverse();
+    },
+
+    async saveMessages(rows) {
+      const { error } = await supabase.from('chat_messages').insert(rows);
+      if (error) fail(error, 'saveMessages');
+    },
   };
 }
