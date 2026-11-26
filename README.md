@@ -25,7 +25,7 @@ A Vedic and Western astrology web app.
 | `config/` | Public client configuration (Supabase URL and publishable key) |
 | `supabase/` | Database migrations |
 | `scripts/` | Build scripts (place dataset) |
-| `web/` | Frontend app (placeholder page for now) |
+| `web/` | Frontend app (React + Vite) |
 
 ## Engine
 
@@ -33,6 +33,8 @@ A Vedic and Western astrology web app.
 npm install
 npm run build:places   # generates the place-lookup dataset
 npm test               # engine + API tests
+npm run build          # place dataset + web app
+npm run preview        # serves the app and API together on http://localhost:8888
 ```
 
 | Function | What it returns |
@@ -65,6 +67,7 @@ applies to everything the API reads or writes. No admin key is used anywhere.
 |---|---|---|
 | `POST /api/chart` `{ birthProfileId }` | Signed in | Returns the chart for a saved birth profile (calculated once, then served from the database) |
 | `POST /api/match` `{ system, groomProfileId, brideProfileId }` or `{ system: "western", profileAId, profileBId }` | Signed in | Runs and saves a compatibility match |
+| `POST /api/chart/preview` `{ date, time, timezone, latitude, longitude }` | Public | Calculates a chart without saving anything |
 | `GET /api/horoscope?system=&sign=&date=` | Public | Daily readings (all 12 signs when `sign` is omitted) |
 | `GET /api/places?q=&country=` | Public | Birth-place search: name, state, country, coordinates and timezone |
 

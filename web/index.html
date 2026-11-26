@@ -4,17 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Astro Booklet</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 15vh auto; padding: 0 1.5rem; line-height: 1.6; color: #1d1b2f; }
-    code { background: #f1eefa; padding: 0.1rem 0.35rem; border-radius: 4px; }
-  </style>
+  <meta name="description" content="Your kundli and birth chart, compatibility matching and a daily reading, calculated for your exact birth details.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;700&family=Rozha+One&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body>
-  <h1>Astro Booklet</h1>
-  <p>The app is being built. The calculation service is live:</p>
-  <ul>
-    <li><a href="/api/horoscope?system=vedic"><code>/api/horoscope?system=vedic</code></a></li>
-    <li><a href="/api/places?q=surat&country=IN"><code>/api/places?q=surat&amp;country=IN</code></a></li>
-  </ul>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

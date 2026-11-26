@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { handleChart, handleMatch, handleHoroscope, handlePlaces } from '../lib/handlers.mjs';
+import { handleChart, handleMatch, handleHoroscope, handlePlaces, handlePreview } from '../lib/handlers.mjs';
 import { ApiError } from '../lib/http.mjs';
 import { searchPlaces } from '../lib/places.mjs';
 import dataset from '../data/places.generated.mjs';
@@ -175,4 +175,24 @@ test('places endpoint', async () => {
   assert.equal(body.places[0].label, 'Rajkot, Gujarat, India');
   assert.equal((await handlePlaces(get('/api/places?q=x&country=india'), { loadPlaces })).status, 400);
   assert.deepEqual((await (await handlePlaces(get('/api/places'), { loadPlaces })).json()).places, []);
+});
+
+// ---------- /api/chart/preview ----------
+test('preview: public chart from raw birth details, with validation', async () => {
+  const ok = await handlePreview(post('/api/chart/preview', { date: '1996-02-19', time: '10:00', timezone: 'Asia/Kolkata', latitude: 26.47, longitude: 84.44 }, null));
+  assert.equal(ok.status, 200);
+  const { chart } = await ok.json();
+  assert.equal(chart.vedic.planets.length, 9);
+  assert.ok(chart.western.ascendant);
+
+  const noTime = await (await handlePreview(post('/api/chart/preview', { date: '1996-02-19', time: '', timezone: 'Asia/Kolkata', latitude: '26.47', longitude: '84.44' }, null))).json();
+  assert.equal(noTime.chart.timeKnown, false);
+
+  const bad = async (b) => (await handlePreview(post('/api/chart/preview', b, null))).status;
+  assert.equal(await bad({ date: '19-02-1996', time: '10:00', timezone: 'Asia/Kolkata', latitude: 26, longitude: 84 }), 400);
+  assert.equal(await bad({ date: '1996-02-19', time: '10am', timezone: 'Asia/Kolkata', latitude: 26, longitude: 84 }), 400);
+  assert.equal(await bad({ date: '1996-02-19', time: '10:00', timezone: 'Nowhere/Land', latitude: 26, longitude: 84 }), 400);
+  assert.equal(await bad({ date: '1996-02-19', time: '10:00', timezone: 'Asia/Kolkata', latitude: 126, longitude: 84 }), 400);
+  assert.equal(await bad({ date: '1996-02-19', time: '10:00', timezone: 'Asia/Kolkata' }), 400);
+  assert.equal((await handlePreview(get('/api/chart/preview'))).status, 405);
 });

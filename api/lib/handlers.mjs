@@ -59,6 +59,34 @@ export async function handleChart(req, deps) {
   } catch (e) { return errorResponse(e); }
 }
 
+// POST /api/chart/preview  { date, time, timezone, latitude, longitude }   (public, nothing is saved)
+export async function handlePreview(req) {
+  try {
+    requireMethod(req, 'POST');
+    const body = await readJson(req);
+    const input = {
+      date: body.date,
+      time: body.time == null || body.time === '' ? null : body.time,
+      timezone: body.timezone,
+      latitude: Number(body.latitude),
+      longitude: Number(body.longitude),
+    };
+    if (typeof input.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(input.date) || +input.date.slice(0, 4) < 1800 || +input.date.slice(0, 4) > 2200) {
+      throw new ApiError(400, 'invalid_input', 'date must be YYYY-MM-DD between 1800 and 2200.');
+    }
+    if (input.time !== null && (typeof input.time !== 'string' || !/^\d{2}:\d{2}$/.test(input.time))) {
+      throw new ApiError(400, 'invalid_input', 'time must be HH:MM, or left empty if unknown.');
+    }
+    let chart;
+    try {
+      chart = await computeChart(input);
+    } catch (e) {
+      throw new ApiError(400, 'invalid_input', e.message);
+    }
+    return json({ chart });
+  } catch (e) { return errorResponse(e); }
+}
+
 // POST /api/match  { system: 'vedic'|'western', groomProfileId, brideProfileId }   (vedic)
 //                  { system: 'western', profileAId, profileBId }                    (western)
 export async function handleMatch(req, deps) {
