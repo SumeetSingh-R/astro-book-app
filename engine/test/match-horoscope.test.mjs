@@ -50,7 +50,12 @@ test('published worked example: bride Moon in Shravana (Capricorn), groom Moon i
   assert.equal(koota(r, 'Yoni').groom, 'Tiger');
   assert.equal(koota(r, 'Yoni').bride, 'Monkey');
   assert.equal(koota(r, 'Nadi').bride, 'Antya');
-  assert.ok(r.doshas.some((d) => d.startsWith('Bhakoot')));
+  // Virgo (Mercury) and Capricorn (Saturn): the lords are not mutual friends, so nothing is cancelled.
+  const bhakoot = r.doshas.find((d) => d.name === 'Bhakoot dosha');
+  assert.equal(bhakoot.reason, 'the Moon signs are 5/9 apart');
+  assert.equal(bhakoot.cancelled, false);
+  assert.equal(r.doshas.find((d) => d.name === 'Gana dosha').cancelled, false);
+  assert.equal(r.doshas.some((d) => d.name === 'Nadi dosha'), false);
   assert.ok(r.band.startsWith('Below'));
 });
 
@@ -59,7 +64,55 @@ test('identical Moon positions: full marks except Nadi (28/36)', () => {
   assert.equal(koota(r, 'Nadi').score, 0);
   assert.equal(koota(r, 'Bhakoot').score, 7);
   assert.equal(r.total, 28);
-  assert.ok(r.doshas.some((d) => d.startsWith('Nadi')));
+  // same nakshatra, same pada, same sign: Nadi dosha stands
+  const nadi = r.doshas.find((d) => d.name === 'Nadi dosha');
+  assert.equal(nadi.cancelled, false);
+  assert.deepEqual(nadi.cancellations, []);
+});
+
+test('dosha cancellation rules', () => {
+  const dosha = (g, b, name) => ashtakoot(g, b).doshas.find((d) => d.name === name);
+
+  // Bhakoot: Aries-Scorpio is 6/8 but both are ruled by Mars
+  const sameLord = dosha(5, 215, 'Bhakoot dosha');
+  assert.equal(sameLord.reason, 'the Moon signs are 6/8 apart');
+  assert.equal(sameLord.cancelled, true);
+  assert.deepEqual(sameLord.cancellations, ['both Moon signs are ruled by Mars']);
+  // Bhakoot: Aries-Pisces is 2/12; Mars and Jupiter are mutual friends
+  const friends = dosha(5, 335, 'Bhakoot dosha');
+  assert.equal(friends.cancelled, true);
+  assert.match(friends.cancellations[0], /Mars and Jupiter, are mutual friends/);
+  // Bhakoot: Aries-Virgo is 6/8; Mars and Mercury are not friends
+  assert.equal(dosha(5, 155, 'Bhakoot dosha').cancelled, false);
+  // Bhakoot: Cancer-Aquarius is 6/8; Moon and Saturn are not mutual friends
+  assert.equal(dosha(95, 305, 'Bhakoot dosha').cancelled, false);
+  // the score itself is unchanged by a cancellation
+  assert.equal(ashtakoot(5, 215).kootas.find((k) => k.name === 'Bhakoot').score, 0);
+
+  // Nadi: same nakshatra (Rohini), different padas
+  const padas = dosha(41, 45, 'Nadi dosha');
+  assert.equal(padas.cancelled, true);
+  assert.deepEqual(padas.cancellations, ['both have the same nakshatra but different padas']);
+  // Nadi: same sign (Taurus), different nakshatras (Krittika and Rohini, both Antya)
+  const sameSign = dosha(35, 45, 'Nadi dosha');
+  assert.deepEqual(sameSign.cancellations, ['both have the same Moon sign but different nakshatras']);
+  // Nadi: same nakshatra (Krittika) across two signs (Aries and Taurus)
+  const acrossSigns = dosha(28, 35, 'Nadi dosha');
+  assert.ok(acrossSigns.cancellations.includes('both have the same nakshatra but different Moon signs'));
+  // Nadi: different nakshatras in different signs with the same nadi (Ashwini and Ardra, both Aadi) stands
+  const stands = dosha(5, 70, 'Nadi dosha');
+  assert.equal(stands.reason, 'both are Aadi nadi');
+  assert.equal(stands.cancelled, false);
+
+  // Gana: Rakshasa groom (Krittika in Aries) with Deva bride (Anuradha in Scorpio): same lord Mars cancels
+  const gana = dosha(28, 215, 'Gana dosha');
+  assert.equal(gana.reason, "the groom's gana is Rakshasa and the bride's is Deva");
+  assert.equal(gana.cancelled, true);
+  assert.deepEqual(gana.cancellations, ['both Moon signs are ruled by Mars']);
+  // every dosha entry has the full shape
+  for (const d of ashtakoot(175, 286).doshas) {
+    assert.deepEqual(Object.keys(d).sort(), ['cancellations', 'cancelled', 'name', 'reason']);
+  }
 });
 
 test('graha maitri combinations', () => {

@@ -25,8 +25,20 @@ function VedicResult({ result, a, b }) {
         </table>
       </div>
       <h3>Doshas</h3>
-      {result.doshas.length ? <ul>{result.doshas.map((d) => <li key={d}>{d}</li>)}</ul> : <p>No Nadi, Bhakoot or Gana dosha.</p>}
-      <p className="muted">Traditional cancellation rules for these doshas are not applied here. An astrologer may read them differently.</p>
+      {result.doshas.length === 0 ? <p>No Nadi, Bhakoot or Gana dosha.</p> : (
+        <ul className="doshas">
+          {result.doshas.map((d) => (
+            <li key={d.name} className={d.cancelled ? 'cancelled' : 'active'}>
+              <strong>{d.name}{d.cancelled ? ', cancelled' : ''}</strong>
+              <span>Present because {d.reason}.</span>
+              {d.cancelled
+                ? <span>Traditionally treated as cancelled because {d.cancellations.join(', and because ')}.</span>
+                : <span>None of the common cancellation rules apply.</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="muted">A cancelled dosha still counts as 0 points in the score above. Cancellation rules vary between traditions, so an astrologer may read these differently.</p>
       <h3>Manglik</h3>
       <p>{result.manglik.summary}</p>
       <ul>

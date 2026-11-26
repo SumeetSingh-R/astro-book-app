@@ -83,7 +83,7 @@ a:hover { color: var(--kumkum-deep); }
 .narrow { max-width: 36rem; }
 
 .colophon { border-top: 1px solid var(--rule); padding: 1.25rem clamp(1rem, 4vw, 3rem) 2.5rem; font-size: 0.9rem; color: var(--ink-soft); }
-.colophon p { max-width: 80ch; margin: 0 auto; }
+.colophon p { max-width: 80ch; margin: 0 auto 0.5rem; }
 
 /* ---------- Buttons and inputs ---------- */
 button { font: inherit; cursor: pointer; }
@@ -247,6 +247,10 @@ tbody th { font-weight: 700; }
 .meter { position: relative; height: 0.9rem; max-width: 34rem; background: var(--haldi-light); border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; margin-bottom: 1.75rem; }
 .meter span { display: block; height: 100%; background: var(--kumkum); }
 .meter i { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); }
+
+ul.doshas { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: 0.6rem; max-width: 46rem; }
+ul.doshas li { display: grid; gap: 0.1rem; padding: 0.6rem 0.9rem; background: var(--haldi-light); border-left: 4px solid var(--kumkum); }
+ul.doshas li.cancelled { border-left-color: var(--neem); }
 
 /* ---------- Small screens ---------- */
 @media (max-width: 52rem) {

@@ -55,7 +55,11 @@ Conventions chosen (these vary between astrologers and can be changed):
 
 - Lahiri ayanamsa, mean lunar node for Rahu/Ketu, 365.25-day year for dasha dates
 - Vashya and Gana scoring tables: the versions most widely used in matching software (see `src/matchTables.mjs`)
-- Bhakoot and Nadi dosha cancellation rules are not applied
+- Dosha cancellation rules checked (the score is never changed; the dosha is shown as "cancelled" with the reason):
+  - Nadi dosha: same Moon sign with different nakshatras; same nakshatra with different Moon signs; same nakshatra with different padas
+  - Bhakoot dosha: both Moon signs have the same lord; or the two lords are mutual natural friends
+  - Gana dosha: both Moon signs have the same lord; or the two lords are mutual natural friends
+  - Not checked: navamsa-based and other chart-level exceptions
 - Daily horoscopes are evaluated at 06:00 India time and driven by the Moon's house from the sign
 
 ## API
@@ -78,7 +82,25 @@ Place data: GeoNames cities with population over 1,000 (about 135,000 places), t
 Five tables, all with row-level security: `profiles`, `birth_profiles`, `charts`, `matches`, `daily_horoscopes`.
 Users can only read and change their own data. Stored charts and matches are cleared automatically when a profile's birth details change.
 
-## Licence note
+## Licence
 
-Swiss Ephemeris is dual-licensed (AGPL or a paid professional licence from Astrodienst).
-The licence choice must be made before public launch.
+Copyright (C) 2026 Sumeet Singh
+
+Astro Booklet is free software: you can redistribute it and/or modify it under the terms of the
+GNU Affero General Public License as published by the Free Software Foundation, either version 3
+of the License, or (at your option) any later version. It is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY. See [LICENSE](LICENSE) for the full text.
+
+The AGPL applies because the app is built on Swiss Ephemeris, which Astrodienst offers under the AGPL
+(or a paid professional licence). Anyone who runs a modified copy as a public service must offer its
+source code to their users. The live app links to this repository from its footer for that reason.
+
+Third-party components:
+
+| Component | Licence |
+|---|---|
+| [Swiss Ephemeris](https://www.astro.com/swisseph/) (Astrodienst AG) | AGPL-3.0 |
+| `swisseph-wasm` (WebAssembly build of Swiss Ephemeris) | GPL-3.0-or-later |
+| `astronomy-engine` (used only in tests as an independent check) | MIT |
+| Place data from [GeoNames](https://www.geonames.org/) via `all-the-cities` | CC BY 4.0 |
+| React, Vite, Supabase client | MIT |

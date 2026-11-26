@@ -65,10 +65,37 @@ export function ashtakoot(groomMoonLon, brideMoonLon) {
   ];
   const total = kootas.reduce((s, k) => s + k.score, 0);
 
+  // Doshas, with the widely used cancellation (parihara) rules. The 36-point score is not changed
+  // by a cancellation; the dosha is reported as present but cancelled, with the reason.
+  const lordG = RASHI_LORD[g.rashi];
+  const lordB = RASHI_LORD[b.rashi];
+  const sameLord = lordG === lordB;
+  const mutualFriends = !sameLord && relation(lordG, lordB) === 'F' && relation(lordB, lordG) === 'F';
+  const lordReasons = [];
+  if (sameLord) lordReasons.push(`both Moon signs are ruled by ${lordG}`);
+  if (mutualFriends) lordReasons.push(`the Moon sign lords, ${lordG} and ${lordB}, are mutual friends`);
+
   const doshas = [];
-  if (nadi === 0) doshas.push('Nadi dosha (same nadi)');
-  if (bhakoot === 0) doshas.push(`Bhakoot dosha (Moon signs ${distance}/${14 - distance} apart)`);
-  if (gana <= 1) doshas.push('Gana dosha');
+  const addDosha = (name, reason, cancellations) => doshas.push({
+    name, reason, cancelled: cancellations.length > 0, cancellations,
+  });
+
+  if (nadi === 0) {
+    const reasons = [];
+    const sameNak = g.nak === b.nak;
+    const sameRashi = g.rashi === b.rashi;
+    const padaOf = (p) => Math.min(3, Math.floor((p.lon - p.nak * NAKSHATRA_SPAN) / (NAKSHATRA_SPAN / 4))) + 1;
+    if (sameRashi && !sameNak) reasons.push('both have the same Moon sign but different nakshatras');
+    if (sameNak && !sameRashi) reasons.push('both have the same nakshatra but different Moon signs');
+    if (sameNak && padaOf(g) !== padaOf(b)) reasons.push('both have the same nakshatra but different padas');
+    addDosha('Nadi dosha', `both are ${NADI[NADI_OF_NAKSHATRA[g.nak]]} nadi`, reasons);
+  }
+  if (bhakoot === 0) {
+    addDosha('Bhakoot dosha', `the Moon signs are ${Math.min(distance, 14 - distance)}/${Math.max(distance, 14 - distance)} apart`, lordReasons);
+  }
+  if (gana <= 1) {
+    addDosha('Gana dosha', `the groom's gana is ${GANA[GANA_OF_NAKSHATRA[g.nak]]} and the bride's is ${GANA[GANA_OF_NAKSHATRA[b.nak]]}`, lordReasons);
+  }
 
   let band;
   if (total < 18) band = 'Below the traditional minimum of 18';

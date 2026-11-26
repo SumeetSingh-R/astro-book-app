@@ -52,6 +52,7 @@ function Shell({ children }) {
       <main className="page">{children}</main>
       <footer className="colophon">
         <p>Calculated with Swiss Ephemeris. Vedic charts use the Lahiri ayanamsa. Readings are for reflection and guidance, not a substitute for professional advice.</p>
+        <p>Astro Booklet is free, open-source software under the AGPL-3.0 licence: <a href="https://github.com/SumeetSingh-R/astro-booklet">get the source code</a>. Place data from <a href="https://www.geonames.org/">GeoNames</a> (CC BY 4.0).</p>
       </footer>
     </div>
   );
