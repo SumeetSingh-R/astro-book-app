@@ -1,0 +1,52 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../App.jsx';
+import { useAccount, toFormValues, toRow } from '../lib/account.jsx';
+import { LanguageSwitch } from '../lib/language.jsx';
+import BirthForm from '../components/BirthForm.jsx';
+import Icon from '../components/Icon.jsx';
+
+/** The person's own details. Saved once here, they feed Today, the chart, matching and questions. */
+export default function Profile() {
+  const { session } = useAuth();
+  const { self, reload } = useAccount();
+  const navigate = useNavigate();
+  const [saved, setSaved] = useState(false);
+
+  async function save(values) {
+    setSaved(false);
+    const { error } = await supabase.from('birth_profiles').update(toRow(values)).eq('id', self.id);
+    if (error) throw new Error('Your changes could not be saved. Check the details and try again.');
+    await reload();
+    setSaved(true);
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    navigate('/', { replace: true });
+  }
+
+  return (
+    <div className="sheet">
+      <div className="profile-head">
+        <span className="avatar large" aria-hidden="true">{self.name.trim().charAt(0).toUpperCase()}</span>
+        <div>
+          <h1>{self.name}</h1>
+          <p className="muted">{session.user.email}</p>
+        </div>
+      </div>
+      <p className="banner"><Icon name="check" size={20} />Saved once, used everywhere: your chart, your daily reading, matching and your questions all read from this profile.</p>
+      <h2>Your birth details</h2>
+      <BirthForm key={self.id} kind="self" initial={toFormValues(self)} submitLabel="Save changes" busyLabel="Saving…" onSubmit={save}
+        done={saved ? 'Saved. Your chart and readings are up to date.' : null}>
+        <fieldset className="plain-fieldset">
+          <legend>Language for readings and answers</legend>
+          <LanguageSwitch />
+        </fieldset>
+        <p className="private"><Icon name="lock" size={18} />Your birth details are private to your account and are used only to draw your chart.</p>
+      </BirthForm>
+      <button type="button" className="btn outline" onClick={signOut}>Sign out</button>
+    </div>
+  );
+}

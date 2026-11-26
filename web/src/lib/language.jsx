@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from './supabase.js';
 
 // The language readings and answers are written in. Page furniture stays in English for now;
 // the labels directly around a reading follow this choice.
@@ -9,11 +10,21 @@ function stored() {
   try { return localStorage.getItem('reading.language') === 'hi' ? 'hi' : 'en'; } catch { return 'en'; }
 }
 
-export function LanguageProvider({ children }) {
+export function LanguageProvider({ userId, children }) {
   const [language, setState] = useState(stored);
+  // Signed in, the choice lives with the account so it is the same on every device.
+  useEffect(() => {
+    if (!userId) return;
+    let live = true;
+    supabase.from('profiles').select('language').eq('id', userId).maybeSingle().then(({ data }) => {
+      if (live && data?.language) { setState(data.language); try { localStorage.setItem('reading.language', data.language); } catch { /* storage unavailable */ } }
+    });
+    return () => { live = false; };
+  }, [userId]);
   const setLanguage = (value) => {
     setState(value);
     try { localStorage.setItem('reading.language', value); } catch { /* storage unavailable */ }
+    if (userId) supabase.from('profiles').update({ language: value }).eq('id', userId).then(() => {});
   };
   return <LanguageContext.Provider value={[language, setLanguage]}>{children}</LanguageContext.Provider>;
 }
@@ -21,9 +32,9 @@ export function LanguageProvider({ children }) {
 export function LanguageSwitch() {
   const [language, setLanguage] = useLanguage();
   return (
-    <div className="segmented compact language" role="group" aria-label="Language for readings and answers">
+    <div className="pills language" role="group" aria-label="Language for readings and answers">
       {[['en', 'English'], ['hi', 'हिन्दी']].map(([key, name]) => (
-        <button key={key} type="button" lang={key} aria-pressed={language === key} className={language === key ? 'on' : undefined} onClick={() => setLanguage(key)}>{name}</button>
+        <button key={key} type="button" lang={key} aria-pressed={language === key} className={language === key ? 'pill on' : 'pill'} onClick={() => setLanguage(key)}>{name}</button>
       ))}
     </div>
   );
@@ -33,8 +44,9 @@ const WORDS = {
   en: {
     plainWords: 'In plain words',
     why: 'Why we say this',
-    nature: 'Your nature', career: 'Work and career', money: 'Money', relationships: 'Marriage and partnership',
-    family: 'Home and family', wellbeing: 'Energy and wellbeing', now: 'The period you are in',
+    nature: 'Nature', career: 'Work', money: 'Money', relationships: 'Marriage',
+    family: 'Family', wellbeing: 'Wellbeing', now: 'Right now',
+    hideWhy: 'Hide the reason', areas: 'Area of life',
     writing: 'Writing the reading for this chart…',
     shortReading: 'A shorter reading is shown because the full one could not be written just now.',
     hindiUnavailable: 'The Hindi reading is not available just now, so this one is in English.',
@@ -55,8 +67,9 @@ const WORDS = {
   hi: {
     plainWords: 'सरल शब्दों में',
     why: 'ऐसा क्यों',
-    nature: 'आपका स्वभाव', career: 'काम और करियर', money: 'धन', relationships: 'विवाह और साझेदारी',
-    family: 'घर और परिवार', wellbeing: 'ऊर्जा और सेहत', now: 'आपका वर्तमान समय',
+    nature: 'स्वभाव', career: 'काम', money: 'धन', relationships: 'विवाह',
+    family: 'परिवार', wellbeing: 'सेहत', now: 'अभी',
+    hideWhy: 'कारण छिपाएँ', areas: 'जीवन का क्षेत्र',
     writing: 'इस कुंडली का फल लिखा जा रहा है…',
     shortReading: 'पूरा फल अभी नहीं लिखा जा सका, इसलिए छोटा फल दिखाया गया है।',
     hindiUnavailable: 'हिन्दी में फल अभी उपलब्ध नहीं है, इसलिए यह अंग्रेज़ी में है।',

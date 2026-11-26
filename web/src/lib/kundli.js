@@ -79,3 +79,88 @@ export function buildKundli(vedic, view) {
   }
   return houses;
 }
+
+// ---------- Reading one house in plain words ----------
+export const HOUSE_TOPICS = [
+  'self, body and temperament', 'money, speech and family', 'courage, effort and siblings', 'home, mother, property and peace of mind',
+  'children, creativity and learning', 'daily work, health, debts and rivals', 'marriage and partnerships', 'longevity, sudden change and shared money',
+  'fortune, faith, father and long journeys', 'career and reputation', 'gains, income and friends', 'expenses, rest, solitude and foreign places',
+];
+const EXALTED_IN = { Sun: 1, Moon: 2, Mars: 10, Mercury: 6, Jupiter: 4, Venus: 12, Saturn: 7 };
+const EXTRA_ASPECTS = { Mars: [4, 8], Jupiter: [5, 9], Saturn: [3, 10] };
+const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'];
+const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+
+function dignity(name, sign) {
+  const ex = EXALTED_IN[name];
+  if (!ex) return null;
+  if (sign === ex) return 'exalted';
+  if (sign === ((ex + 5) % 12) + 1) return 'debilitated';
+  return RASHI_LORDS[sign - 1] === name ? 'own' : null;
+}
+
+/** The mahadasha and antardasha lords at a moment, or null outside the timeline. */
+export function periodAt(dasha, at = Date.now()) {
+  const maha = dasha?.mahadashas.find((m) => Date.parse(m.start) <= at && at < Date.parse(m.end));
+  if (!maha) return null;
+  const antar = maha.antardashas.find((a) => Date.parse(a.start) <= at && at < Date.parse(a.end)) ?? maha.antardashas[0];
+  return { maha: maha.lord, mahaEnd: maha.end, antar: antar.lord, antarEnd: antar.end };
+}
+
+/**
+ * What one house says: how its lord is placed, who looks at it, and, for a person's own chart,
+ * whether the period they are in now brings it into focus.
+ * @param houses  the output of buildKundli()
+ * @param period  periodAt(...) for a personal chart, or null (the sky right now, a navamsa)
+ */
+export function readHouse(houses, number, period, whose = 'your') {
+  const house = houses[number - 1];
+  const names = house.planets.map((p) => p.name);
+  const lord = RASHI_LORDS[house.sign - 1];
+  const lordHouse = houses.find((h) => h.planets.some((p) => p.name === lord));
+
+  let lordLine = null;
+  if (lordHouse) {
+    const strength = dignity(lord, lordHouse.sign);
+    if (lordHouse.house === house.house) {
+      lordLine = `Its lord, ${lord}, sits right here in its own sign, a strong support for this house.`;
+    } else {
+      lordLine = `Its lord, ${lord}, sits in the ${ORDINALS[lordHouse.house - 1]} house (${HOUSE_TOPICS[lordHouse.house - 1]})`
+        + (strength === 'exalted' ? ', where it is exalted: a strong support for this house.'
+          : strength === 'own' ? ', in its own sign: a strong support for this house.'
+            : strength === 'debilitated' ? ', where it is weak, so this area asks for more patience.' : '.');
+    }
+  }
+
+  const lookers = [];
+  for (const h of houses) {
+    const distance = ((house.house - h.house + 12) % 12) + 1;
+    for (const p of h.planets) {
+      if (p.name === 'Rahu' || p.name === 'Ketu') continue;
+      if (distance === 7 || (EXTRA_ASPECTS[p.name] ?? []).includes(distance)) lookers.push(p.name);
+    }
+  }
+  const aspectLine = lookers.length ? `${list(lookers)} ${lookers.length > 1 ? 'look' : 'looks'} at this house from across the chart.` : null;
+
+  let status = names.length ? 'Active' : 'Quiet';
+  let nowLine = null;
+  if (period) {
+    const focus = [];
+    let until = period.mahaEnd;
+    for (const [graha, label] of [[period.maha, 'main period'], [period.antar, 'sub-period']]) {
+      let hit = false;
+      if (lord === graha) { focus.push(`${graha}, the lord of ${whose} ${label}, rules this house`); hit = true; }
+      if (names.includes(graha)) { focus.push(`${graha}, the lord of ${whose} ${label}, sits here`); hit = true; }
+      if (hit && label === 'sub-period') until = period.antarEnd;
+    }
+    if (focus.length) {
+      status = 'In focus now';
+      const when = new Date(until).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+      const text = list(focus);
+      nowLine = `${text[0].toUpperCase()}${text.slice(1)}, so these themes are in focus until ${when}.`;
+    } else {
+      nowLine = `Neither of ${whose} current period lords is tied to this house, so it stays in the background for now.`;
+    }
+  }
+  return { status, lord, lordLine, aspectLine, nowLine };
+}

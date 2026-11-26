@@ -24,6 +24,15 @@ A Vedic and Western astrology web app.
 
 The rule throughout: **the engine calculates, the model only explains.** The model is given the chart as facts (house lords, occupants, aspects, dignity, dasha periods) and, for timing questions, a table of month ranges the engine has worked out from the dasha lords and the Jupiter and Saturn transits. It is told to use nothing else, to give timing as month ranges and never dates, and not to predict death, illness, the sex of a child, or the results of exams, court cases or markets. The person's name, email, birth date, birth time and birth place are never sent to the model: only their age, the calculated positions and the question.
 
+## Third version: a consumer app
+
+- **One profile:** a new account is asked for its birth details once (`/welcome`). They are kept as the birth profile marked `is_self` and feed Today, the chart, matching and questions. `/profile` edits them, with the reading language (`profiles.language`) and sign out.
+- **New look:** lavender ground, a lilac-to-peach gradient, violet actions, Fraunces headings with Mukta text, the owl logo, and the arch as the repeated shape. Light theme only.
+- **Clickable kundli:** tap a house to read what it stands for, how its lord is placed, and whether the person's current dasha period brings it into focus (`readHouse` in `web/src/lib/kundli.js`).
+- **Time picker:** hour, minute and AM/PM in place of the browser's time field.
+- **Phones:** a bottom tab bar (Today, My charts, Ask, Matching).
+- **About page:** credits, privacy and the link to this source code live at `/about`, linked from every footer.
+
 ### Switching the AI on
 
 Set these in the Netlify site's environment variables (never in the code):

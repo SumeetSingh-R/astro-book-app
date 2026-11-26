@@ -22,7 +22,11 @@ export function formatDate(iso, opts = { day: 'numeric', month: 'short', year: '
 
 export function formatBirth(profile) {
   const date = new Date(`${profile.birth_date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-  const time = profile.time_unknown || !profile.birth_time ? 'time unknown' : String(profile.birth_time).slice(0, 5);
+  let time = 'time not known';
+  if (!profile.time_unknown && profile.birth_time) {
+    const [h, m] = String(profile.birth_time).split(':');
+    time = `${Number(h) % 12 === 0 ? 12 : Number(h) % 12}:${m} ${Number(h) >= 12 ? 'PM' : 'AM'}`;
+  }
   return `${date}, ${time}`;
 }
 

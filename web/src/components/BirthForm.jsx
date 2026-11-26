@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { api } from '../lib/api.js';
+import TimePicker from './TimePicker.jsx';
+import Icon from './Icon.jsx';
 
 /** Birth-place picker: searches towns and cities, with manual coordinates as a fallback. */
 function PlaceField({ value, onChange }) {
@@ -44,7 +46,7 @@ function PlaceField({ value, onChange }) {
     const set = (patch) => onChange({ ...v, ...patch, manual: true });
     return (
       <fieldset className="manual-place">
-        <legend>Birth place</legend>
+        <legend>Place of birth</legend>
         <label>Place name<input value={v.label} onChange={(e) => set({ label: e.target.value })} required placeholder="Village or town, district" /></label>
         <div className="row">
           <label>Latitude<input type="number" step="any" min="-90" max="90" value={v.latitude} onChange={(e) => set({ latitude: e.target.value })} required placeholder="26.47" /></label>
@@ -59,12 +61,11 @@ function PlaceField({ value, onChange }) {
 
   return (
     <div className="place-field">
-      <label htmlFor={id}>Birth place</label>
+      <label htmlFor={id}>Place of birth</label>
       <input
         id={id} value={query} onChange={(e) => search(e.target.value)} autoComplete="off" required
         placeholder="Start typing a town or city" role="combobox" aria-expanded={results.length > 0} aria-controls={`${id}-list`}
       />
-      {value ? <p className="hint">Latitude {value.latitude}, longitude {value.longitude}, {value.timezone}</p> : null}
       {status === 'loading' ? <p className="hint">Searching…</p> : null}
       {status === 'error' ? <p className="hint error">Place search isn't responding. Try again, or enter coordinates.</p> : null}
       {results.length > 0 ? (
@@ -83,11 +84,12 @@ function PlaceField({ value, onChange }) {
 }
 
 /**
- * Birth details form.
- * `withName` adds the name and relation fields (used when saving a profile).
+ * Birth details form, used for a quick chart, for a person's profile and for adding someone else.
+ *  - kind: 'quick' (date, time, place), 'self' (adds your name) or 'person' (adds their name and relation)
+ *  - children are placed above the submit button (for example a language choice)
  * `onSubmit` receives { name, relation, date, time, timeUnknown, place }.
  */
-export default function BirthForm({ withName = false, initial, submitLabel, busyLabel, onSubmit }) {
+export default function BirthForm({ kind = 'quick', initial, submitLabel, busyLabel, onSubmit, children, done }) {
   const [name, setName] = useState(initial?.name ?? '');
   const [relation, setRelation] = useState(initial?.relation ?? '');
   const [date, setDate] = useState(initial?.date ?? '');
@@ -96,6 +98,7 @@ export default function BirthForm({ withName = false, initial, submitLabel, busy
   const [place, setPlace] = useState(initial?.place ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const whose = kind === 'person' ? 'their' : 'my';
 
   async function submit(e) {
     e.preventDefault();
@@ -105,7 +108,7 @@ export default function BirthForm({ withName = false, initial, submitLabel, busy
       return;
     }
     if (!timeUnknown && !time) {
-      setError('Enter the birth time, or tick "I don\'t know the birth time".');
+      setError(`Choose the hour and minute of birth, or tick "I don't know ${whose} birth time".`);
       return;
     }
     setBusy(true);
@@ -123,20 +126,27 @@ export default function BirthForm({ withName = false, initial, submitLabel, busy
 
   return (
     <form className="birth-form" onSubmit={submit}>
-      {withName ? (
-        <div className="row">
-          <label>Name<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} placeholder="Whose chart is this?" /></label>
-          <label>Relation (optional)<input value={relation} onChange={(e) => setRelation(e.target.value)} maxLength={40} placeholder="Me, spouse, mother…" /></label>
-        </div>
-      ) : null}
-      <div className="row">
+      <div className="fields">
+        {kind === 'self' ? (
+          <label>Your name<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} autoComplete="name" placeholder="What should we call you?" /></label>
+        ) : null}
+        {kind === 'person' ? (
+          <>
+            <label>Their name<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} placeholder="Whose chart is this?" /></label>
+            <label>How you know them (optional)<input value={relation} onChange={(e) => setRelation(e.target.value)} maxLength={40} placeholder="Husband, mother, friend…" /></label>
+          </>
+        ) : null}
         <label>Date of birth<input type="date" value={date} onChange={(e) => setDate(e.target.value)} required min="1800-01-01" max="2200-12-31" /></label>
-        <label>Time of birth<input type="time" value={time} onChange={(e) => setTime(e.target.value)} disabled={timeUnknown} /></label>
+        <div>
+          <TimePicker value={time} onChange={setTime} disabled={timeUnknown} whose={whose} />
+          <label className="check"><input type="checkbox" checked={timeUnknown} onChange={(e) => setTimeUnknown(e.target.checked)} /> I don't know {whose} birth time</label>
+        </div>
+        <PlaceField value={place} onChange={setPlace} />
       </div>
-      <label className="check"><input type="checkbox" checked={timeUnknown} onChange={(e) => setTimeUnknown(e.target.checked)} /> I don't know the birth time</label>
-      <PlaceField value={place} onChange={setPlace} />
+      {children}
       {error ? <p className="error" role="alert">{error}</p> : null}
-      <button type="submit" className="primary" disabled={busy}>{busy ? busyLabel : submitLabel}</button>
+      {done ? <p className="saved msg" role="status"><Icon name="check" size={20} /> {done}</p> : null}
+      <button type="submit" className="btn" disabled={busy}>{busy ? busyLabel : submitLabel}</button>
     </form>
   );
 }

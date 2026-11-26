@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase.js';
 import { todayISO } from '../lib/format.js';
 import { useLanguage, wordsFor } from '../lib/language.jsx';
 import { ThreadSkeleton, SkeletonLines } from './Skeleton.jsx';
+import Icon from './Icon.jsx';
 
 const LIMIT = 10;
 
@@ -32,7 +33,7 @@ function Answer({ text, basedOnLabel }) {
 }
 
 /** Questions about one saved chart, answered from that chart. The conversation is kept with the account. */
-export default function AskChart({ profileId, title }) {
+export default function AskChart({ profileId, title, panel = true }) {
   const [language] = useLanguage();
   const w = wordsFor(language);
   const inputId = useId();
@@ -92,7 +93,7 @@ export default function AskChart({ profileId, title }) {
 
   const used = remaining !== null && remaining <= 0;
   return (
-    <section className="ask" aria-labelledby={`${inputId}-title`}>
+    <section className={panel ? 'ask panel' : 'ask'} aria-labelledby={`${inputId}-title`}>
       <h2 id={`${inputId}-title`} lang={language}>{title ?? w.askTitle}</h2>
       <p className="muted" lang={language}>{w.askIntro}</p>
 
@@ -100,7 +101,7 @@ export default function AskChart({ profileId, title }) {
       {messages?.length ? (
         <ol className="thread" aria-live="polite">
           {messages.map((m) => (
-            <li key={m.id} className={m.role === 'user' ? 'q' : 'a'} lang={m.language}>
+            <li key={m.id} className={m.role === 'user' ? 'q msg' : 'a msg'} lang={m.language}>
               {m.role === 'user' ? <p>{m.content}</p> : <Answer text={m.content} basedOnLabel={wordsFor(m.language).basedOn} />}
             </li>
           ))}
@@ -109,9 +110,9 @@ export default function AskChart({ profileId, title }) {
       ) : null}
       <div ref={endRef} />
 
-      {messages && messages.length < 2 && !busy ? (
+      {messages && messages.length < 6 && !busy ? (
         <div className="chips" role="group" aria-label="Questions to start with" lang={language}>
-          {w.suggestions.map((s) => <button key={s} type="button" disabled={used} onClick={() => ask(s)}>{s}</button>)}
+          {w.suggestions.filter((s) => !messages.some((m) => m.content === s)).map((s) => <button key={s} type="button" disabled={used} onClick={() => ask(s)}>{s}</button>)}
         </div>
       ) : null}
 
@@ -119,7 +120,7 @@ export default function AskChart({ profileId, title }) {
       <form className="ask-form" onSubmit={(e) => { e.preventDefault(); ask(question); }}>
         <label htmlFor={inputId} className="visually-hidden">{title ?? w.askTitle}</label>
         <input id={inputId} lang={language} value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={500} placeholder={w.askPlaceholder} disabled={busy || used} autoComplete="off" />
-        <button type="submit" className="primary" disabled={busy || used || question.trim().length < 3}>{busy ? w.asking : w.ask}</button>
+        <button type="submit" className="send" aria-label={w.ask} disabled={busy || used || question.trim().length < 3}><Icon name="go" /></button>
       </form>
 
       <p className="hint" lang={language}>

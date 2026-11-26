@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../App.jsx';
+import Icon from '../components/Icon.jsx';
+
+const BENEFITS = [['sun', 'A reading for each day, made from your own chart'], ['chat', 'Answers to your questions, in plain words'], ['lock', 'Your birth details saved once, private to you']];
 
 export default function SignIn() {
   const { session } = useAuth();
@@ -14,6 +17,7 @@ export default function SignIn() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [sent, setSent] = useState(false);
+  const up = mode === 'sign-up';
 
   if (session) return <Navigate to={from} replace />;
 
@@ -22,7 +26,7 @@ export default function SignIn() {
     setBusy(true);
     setError(null);
     try {
-      if (mode === 'sign-up') {
+      if (up) {
         const { data, error: err } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
         if (err) throw err;
         if (!data.session) { setSent(true); return; }
@@ -46,35 +50,45 @@ export default function SignIn() {
     if (err) setError('Google sign-in could not start. Try again, or use email and password.');
   }
 
-  if (sent) {
-    return (
-      <>
-        <h1>Confirm your email</h1>
-        <p className="lede">A confirmation link is on its way to {email}. Open it to finish creating your account, then sign in here.</p>
-        <button type="button" className="button" onClick={() => { setSent(false); setMode('sign-in'); }}>Back to sign in</button>
-      </>
-    );
-  }
-
   return (
-    <div className="narrow">
-      <h1>{mode === 'sign-up' ? 'Create your account' : 'Sign in'}</h1>
-      <p className="lede">An account keeps your charts and matches private to you.</p>
-      <button type="button" className="button google" onClick={google}>Continue with Google</button>
-      <p className="or"><span>or use email</span></p>
-      <div className="segmented" role="tablist" aria-label="Account">
-        <button type="button" role="tab" aria-selected={mode === 'sign-in'} className={mode === 'sign-in' ? 'on' : undefined} onClick={() => setMode('sign-in')}>Sign in</button>
-        <button type="button" role="tab" aria-selected={mode === 'sign-up'} className={mode === 'sign-up' ? 'on' : undefined} onClick={() => setMode('sign-up')}>Create account</button>
-      </div>
-      <form onSubmit={submit} className="birth-form">
-        <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" /></label>
-        <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} autoComplete={mode === 'sign-up' ? 'new-password' : 'current-password'} /></label>
-        {mode === 'sign-up' ? <p className="hint">At least 8 characters.</p> : null}
-        {error ? <p className="error" role="alert">{error}</p> : null}
-        <button type="submit" className="primary" disabled={busy}>
-          {busy ? 'Please wait…' : mode === 'sign-up' ? 'Create account' : 'Sign in'}
-        </button>
-      </form>
+    <div className="auth">
+      <section className="auth-side" aria-hidden="true">
+        <img className="float" src="/brand/logo-symbol.svg" alt="" />
+        <p className="auth-headline">Your chart, kept in one place</p>
+        <ul>
+          {BENEFITS.map(([icon, text]) => <li key={text}><Icon name={icon} size={20} />{text}</li>)}
+        </ul>
+      </section>
+      <section className="auth-card">
+        {sent ? (
+          <>
+            <h1>Confirm your email</h1>
+            <p className="muted">A confirmation link is on its way to {email}. Open it to finish creating your account, then sign in here.</p>
+            <button type="button" className="btn" onClick={() => { setSent(false); setMode('sign-in'); }}>Back to sign in</button>
+          </>
+        ) : (
+          <>
+            <div>
+              <h1>{up ? 'Create your account' : 'Welcome back'}</h1>
+              <p className="muted">{up ? 'It takes a minute. Next, we ask for your birth details once.' : 'Sign in to see your day and your charts.'}</p>
+            </div>
+            <div className="switch" role="group" aria-label="Account">
+              <button type="button" aria-pressed={!up} className={!up ? 'on' : undefined} onClick={() => setMode('sign-in')}>Sign in</button>
+              <button type="button" aria-pressed={up} className={up ? 'on' : undefined} onClick={() => setMode('sign-up')}>Create account</button>
+            </div>
+            <button type="button" className="btn outline" onClick={google}><span className="g" aria-hidden="true">G</span>{up ? 'Sign up with Google' : 'Continue with Google'}</button>
+            <p className="or"><span>or use your email</span></p>
+            <form onSubmit={submit} className="auth-form">
+              <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" /></label>
+              <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} autoComplete={up ? 'new-password' : 'current-password'} placeholder={up ? 'At least 8 characters' : ''} /></label>
+              {error ? <p className="error" role="alert">{error}</p> : null}
+              <button type="submit" className="btn" disabled={busy}>
+                {busy ? 'Please wait…' : up ? 'Create my account' : 'Sign in'}<Icon name="go" size={20} />
+              </button>
+            </form>
+          </>
+        )}
+      </section>
     </div>
   );
 }

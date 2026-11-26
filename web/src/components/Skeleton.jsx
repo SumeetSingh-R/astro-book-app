@@ -46,7 +46,7 @@ export function ChartPageSkeleton({ label }) {
       <Bar w="12rem" className="heading" />
       <div className="plain"><Bar w="10rem" className="subtitle" /></div>
       <SkeletonLines count={4} className="large" last="45%" />
-      <div className="chart-grid the-chart">
+      <div className="chart-grid">
         <Bar className="square" />
         <div><SkeletonLines count={5} last="35%" /></div>
       </div>
@@ -59,7 +59,7 @@ export function DaySkeleton({ label }) {
   return (
     <Busy label={label} className="day">
       <div>
-        <Bar w="7rem" className="pill" />
+        <Bar w="7rem" className="chip" />
         <Bar w="80%" className="title tall" />
         <SkeletonLines count={5} className="large" last="55%" />
       </div>
@@ -101,7 +101,7 @@ export function ThreadSkeleton({ label }) {
 export function ReadingCardSkeleton({ label }) {
   return (
     <Busy label={label} className="reading">
-      <Bar w="7rem" className="pill" />
+      <Bar w="7rem" className="chip" />
       <Bar w="55%" className="subtitle" />
       <SkeletonLines count={4} className="large" last="50%" />
     </Busy>
