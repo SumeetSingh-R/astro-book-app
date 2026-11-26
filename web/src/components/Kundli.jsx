@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { RASHIS, SIGNS, dms } from '../lib/format.js';
+import { RASHIS, SIGNS, SIGN_GLYPHS, dms } from '../lib/format.js';
 import { HOUSE_SHAPES, HOUSE_MEANINGS, GRAHA_MEANINGS, VIEW_LABELS, availableViews, buildKundli, readHouse, periodAt } from '../lib/kundli.js';
 
 const ordinal = (n) => `${n}${['th', 'st', 'nd', 'rd'][n % 100 > 10 && n % 100 < 14 ? 0 : Math.min(n % 10, 4) % 4]}`;
@@ -53,7 +53,7 @@ export default function Kundli({ vedic, views = false, reader = true, whose = nu
   }
 
   const meaning = HOUSE_MEANINGS[current.house - 1];
-  const caption = view === 'lagna' ? 'House 1 (top centre) is the rising sign. The small numbers are the signs, counted from Mesha as 1.'
+  const caption = view === 'lagna' ? 'House 1 is the top-centre diamond, and the houses run anticlockwise from it. The symbol in each house is its sign.'
     : view === 'moon' ? (vedic.lagna ? 'Drawn from the Moon sign: the Moon\'s sign is house 1.' : 'The birth time is not known, so the chart is drawn from the Moon sign.')
       : 'The ninth-division chart.';
 
@@ -97,9 +97,19 @@ export default function Kundli({ vedic, views = false, reader = true, whose = nu
             const lines = [];
             for (let k = 0; k < h.planets.length; k += per) lines.push(h.planets.slice(k, k + per));
             const startY = pos.p[1] - ((lines.length - 1) * 17) / 2;
+            // The house number badge sits a little way from the sign symbol, towards the middle of the house.
+            const reach = Math.hypot(pos.p[0] - pos.s[0], pos.p[1] - pos.s[1]);
+            const nx = pos.s[0] + ((pos.p[0] - pos.s[0]) / reach) * 20;
+            const ny = pos.s[1] + ((pos.p[1] - pos.s[1]) / reach) * 20;
             return (
               <g key={h.house} className="kundli-house" aria-hidden="true">
-                <text x={pos.s[0]} y={pos.s[1]} className="kundli-sign" textAnchor="middle" dominantBaseline="central">{h.sign}</text>
+                <text x={pos.s[0]} y={pos.s[1]} className="kundli-sign" textAnchor="middle" dominantBaseline="central">{SIGN_GLYPHS[h.sign - 1]}</text>
+                {reader && h.house === selected ? (
+                  <g className="kundli-number">
+                    <circle cx={nx} cy={ny} r="8" />
+                    <text x={nx} y={ny} textAnchor="middle" dominantBaseline="central">{h.house}</text>
+                  </g>
+                ) : null}
                 {lines.map((line, li) => (
                   <text key={li} x={pos.p[0] - (side && per === 2 ? 4 : 0)} y={startY + li * 17} className="kundli-planets" textAnchor="middle" dominantBaseline="central">
                     {line.map((p, pi) => {

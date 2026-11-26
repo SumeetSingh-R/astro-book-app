@@ -344,7 +344,9 @@ figcaption { font-size: 0.8125rem; color: var(--muted); margin-top: 8px; }
 .kundli-paper { fill: var(--surface); }
 .kundli-lines { fill: none; stroke: var(--accent); stroke-width: 2.5; pointer-events: none; }
 .kundli-house { pointer-events: none; }
-.kundli-sign { font-family: var(--font-text); font-size: 13px; fill: var(--accent-text); }
+.kundli-sign { font-family: var(--font-text); font-size: 17px; fill: var(--accent-text); }
+.kundli-number circle { fill: var(--accent); }
+.kundli-number text { font-family: var(--font-text); font-size: 10px; font-weight: 700; fill: #fff; }
 .kundli-planets { font-family: var(--font-text); font-size: 15px; font-weight: 700; fill: var(--ink); }
 .kundli-retro { fill: var(--warn); }
 .kundli-hit { fill: transparent; cursor: pointer; outline: none; transition: fill 0.15s ease; }

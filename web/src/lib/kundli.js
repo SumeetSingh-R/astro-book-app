@@ -2,19 +2,19 @@
 import { GRAHA_ABBR } from './format.js';
 
 // The 12 houses of the diamond chart in a 400 x 400 box, anticlockwise from the top-centre diamond.
-// `d` is the house outline; `p` is where grahas are written; `s` is where the rashi number sits.
+// `d` is the house outline; `p` is where grahas are written; `s` is where the sign symbol sits.
 export const HOUSE_SHAPES = [
   { d: 'M200 0L300 100L200 200L100 100Z', p: [200, 96], s: [200, 172], perLine: 3 },
   { d: 'M0 0L200 0L100 100Z', p: [100, 40], s: [100, 84], perLine: 3 },
-  { d: 'M0 0L100 100L0 200Z', p: [40, 100], s: [84, 100], perLine: 1 },
+  { d: 'M0 0L100 100L0 200Z', p: [38, 100], s: [84, 100], perLine: 1 },
   { d: 'M0 200L100 100L200 200L100 300Z', p: [100, 200], s: [172, 200], perLine: 3 },
-  { d: 'M0 200L100 300L0 400Z', p: [40, 300], s: [84, 300], perLine: 1 },
+  { d: 'M0 200L100 300L0 400Z', p: [38, 300], s: [84, 300], perLine: 1 },
   { d: 'M0 400L100 300L200 400Z', p: [100, 362], s: [100, 318], perLine: 3 },
   { d: 'M200 400L100 300L200 200L300 300Z', p: [200, 306], s: [200, 230], perLine: 3 },
   { d: 'M200 400L300 300L400 400Z', p: [300, 362], s: [300, 318], perLine: 3 },
-  { d: 'M400 400L300 300L400 200Z', p: [360, 300], s: [316, 300], perLine: 1 },
+  { d: 'M400 400L300 300L400 200Z', p: [362, 300], s: [316, 300], perLine: 1 },
   { d: 'M400 200L300 300L200 200L300 100Z', p: [300, 200], s: [228, 200], perLine: 3 },
-  { d: 'M400 200L300 100L400 0Z', p: [360, 100], s: [316, 100], perLine: 1 },
+  { d: 'M400 200L300 100L400 0Z', p: [362, 100], s: [316, 100], perLine: 1 },
   { d: 'M400 0L300 100L200 0Z', p: [300, 40], s: [300, 84], perLine: 3 },
 ];
 
