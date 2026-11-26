@@ -3,3 +3,4 @@ node_modules/
 .env.*
 .netlify/
 dist/
+api/data/places.generated.mjs

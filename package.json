@@ -1,0 +1,21 @@
+{
+  "name": "astro-booklet",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Astro Booklet: Vedic and Western astrology web app",
+  "scripts": {
+    "test": "node --test engine/test/*.test.mjs api/test/*.test.mjs",
+    "build:places": "node scripts/build-places.mjs",
+    "build": "npm run build:places"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2",
+    "swisseph-wasm": "^0.1.0"
+  },
+  "devDependencies": {
+    "all-the-cities": "^3.1.0",
+    "astronomy-engine": "^2.1.19",
+    "tz-lookup": "^6.1.25"
+  }
+}

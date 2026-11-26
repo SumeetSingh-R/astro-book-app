@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = "web"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  # Swiss Ephemeris loads its .wasm and .data files from disk next to its own code,
+  # so it must stay an un-bundled module with those files shipped alongside.
+  external_node_modules = ["swisseph-wasm"]
+  included_files = ["node_modules/swisseph-wasm/wasm/**"]

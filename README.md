@@ -20,15 +20,19 @@ A Vedic and Western astrology web app.
 | Folder | Contents |
 |---|---|
 | `engine/` | Calculation engine and its tests |
-| `supabase/` | Database migrations and server functions |
-| `web/` | Frontend app (not started yet) |
+| `api/` | API handlers, place search and their tests |
+| `netlify/functions/` | Thin Netlify Function wrappers that expose the API |
+| `config/` | Public client configuration (Supabase URL and publishable key) |
+| `supabase/` | Database migrations |
+| `scripts/` | Build scripts (place dataset) |
+| `web/` | Frontend app (placeholder page for now) |
 
 ## Engine
 
 ```bash
-cd engine
 npm install
-npm test
+npm run build:places   # generates the place-lookup dataset
+npm test               # engine + API tests
 ```
 
 | Function | What it returns |
@@ -52,10 +56,24 @@ Conventions chosen (these vary between astrologers and can be changed):
 - Bhakoot and Nadi dosha cancellation rules are not applied
 - Daily horoscopes are evaluated at 06:00 India time and driven by the Moon's house from the sign
 
+## API
+
+Runs as Netlify Functions. Signed-in calls forward the user's Supabase token, so row-level security
+applies to everything the API reads or writes. No admin key is used anywhere.
+
+| Endpoint | Auth | Purpose |
+|---|---|---|
+| `POST /api/chart` `{ birthProfileId }` | Signed in | Returns the chart for a saved birth profile (calculated once, then served from the database) |
+| `POST /api/match` `{ system, groomProfileId, brideProfileId }` or `{ system: "western", profileAId, profileBId }` | Signed in | Runs and saves a compatibility match |
+| `GET /api/horoscope?system=&sign=&date=` | Public | Daily readings (all 12 signs when `sign` is omitted) |
+| `GET /api/places?q=&country=` | Public | Birth-place search: name, state, country, coordinates and timezone |
+
+Place data: GeoNames cities with population over 1,000 (about 135,000 places), timezone derived from coordinates.
+
 ## Database
 
 Five tables, all with row-level security: `profiles`, `birth_profiles`, `charts`, `matches`, `daily_horoscopes`.
-Users can only read and change their own data. Charts and matches are written by the server only.
+Users can only read and change their own data. Stored charts and matches are cleared automatically when a profile's birth details change.
 
 ## Licence note
 
