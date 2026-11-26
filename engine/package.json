@@ -1,0 +1,17 @@
+{
+  "name": "astro-booklet-engine",
+  "version": "0.1.0",
+  "description": "Astro Booklet calculation engine (Vedic + Western) on Swiss Ephemeris",
+  "main": "src/chart.mjs",
+  "scripts": {
+    "test": "node --test test/engine.test.mjs"
+  },
+  "dependencies": {
+    "swisseph-wasm": "^0.1.0"
+  },
+  "devDependencies": {
+    "astronomy-engine": "^2.1.19"
+  },
+  "private": true,
+  "type": "module"
+}
