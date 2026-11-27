@@ -68,6 +68,7 @@ export default function PhotoGrid({ userId, photos, onChange }) {
           <li key={p.id} className="photo">
             {links[p.path] ? <img src={links[p.path]} alt={t('Your photo {0}', [i + 1])} /> : <span className="skeleton" aria-hidden="true" />}
             {i === 0 ? <span className="tag">{t('Main')}</span> : <button type="button" className="photo-main" onClick={() => makeMain(p)}>{t('Make main')}</button>}
+            {p.status && p.status !== 'approved' ? <span className="tag white photo-status">{p.status === 'rejected' ? t('Not approved') : t('In review')}</span> : null}
             <button type="button" className="photo-remove" aria-label={t('Remove photo {0}', [i + 1])} onClick={() => remove(p)}><Icon name="x" size={16} /></button>
           </li>
         ))}
@@ -82,6 +83,7 @@ export default function PhotoGrid({ userId, photos, onChange }) {
       </ul>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={pick} />
       <p className="hint">{t('Up to 6 photos. A clear photo of your face first. No group photos.')}</p>
+      <p className="hint">{t('Each photo is checked before other people can see it.')}</p>
       {error ? <p className="error" role="alert">{error}</p> : null}
     </div>
   );

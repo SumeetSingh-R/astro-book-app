@@ -7,7 +7,7 @@ import { useProfiles } from './Profiles.jsx';
 import Icon from '../components/Icon.jsx';
 import { useT, msg, useLanguage } from '../lib/language.jsx';
 
-const KOOTA_ABOUT = {
+export const KOOTA_ABOUT = {
   Varna: msg('Outlook and values: whether the two see work and duty in a similar way.'),
   Vashya: msg('Mutual pull: how naturally each responds to the other.'),
   Tara: msg('Wellbeing together, counted from each birth star to the other.'),
@@ -18,7 +18,7 @@ const KOOTA_ABOUT = {
   Nadi: msg('Health and children. The heaviest test of the eight.'),
 };
 
-function Ring({ total, max }) {
+export function Ring({ total, max }) {
   const t = useT();
   const c = 2 * Math.PI * 54;
   return (

@@ -22,7 +22,7 @@ export async function addPhoto(userId, file, position) {
   const path = `${userId}/${crypto.randomUUID()}.jpg`;
   const up = await supabase.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000' });
   if (up.error) throw up.error;
-  const { data, error } = await supabase.from('meet_photos').insert({ user_id: userId, path, position }).select('id, path, position').single();
+  const { data, error } = await supabase.from('meet_photos').insert({ user_id: userId, path, position }).select('id, path, position, status').single();
   if (error) { await supabase.storage.from(BUCKET).remove([path]); throw error; }
   return data;
 }

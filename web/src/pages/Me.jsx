@@ -7,6 +7,7 @@ import { useAccount } from '../lib/account.jsx';
 import { useT } from '../lib/language.jsx';
 import { GENDERS, INTERESTED_IN, LOOKING_FOR, MARITAL, DIETS, DRINKING, SMOKING, FAMILY_TYPES, INCOMES, RELIGIONS, TONGUES, HEIGHTS, ageOn, blankProfile, completeness, toList } from '../lib/meet.js';
 import { photoLinks } from '../lib/photos.js';
+import { saveOwnKeys, forgetDiscover } from '../lib/meetData.js';
 import PhotoGrid from '../components/PhotoGrid.jsx';
 import Toggle from '../components/Toggle.jsx';
 import Icon from '../components/Icon.jsx';
@@ -19,7 +20,7 @@ export function useMeetProfile(userId) {
   return useRemembered(`meet:${userId}`, async () => {
     const [profile, photos] = await Promise.all([
       supabase.from('meet_profiles').select('*').eq('user_id', userId).maybeSingle(),
-      supabase.from('meet_photos').select('id, path, position').eq('user_id', userId).order('position'),
+      supabase.from('meet_photos').select('id, path, position, status').eq('user_id', userId).order('position'),
     ]);
     if (profile.error || photos.error) throw new Error('Your profile could not be loaded. Refresh the page to try again.');
     return { profile: profile.data, photos: photos.data ?? [] };
@@ -87,6 +88,9 @@ function MeForm({ userId, self, saved, photos: firstPhotos, cacheKey }) {
     if (err) { setError(t('Your profile could not be saved. Check the details and try again.')); return; }
     setExists(true);
     setDone(true);
+    // Matching reads a few facts from the chart; save them so other people can be matched with this profile.
+    saveOwnKeys(userId, self.id).catch(() => {});
+    forgetDiscover(userId);
     store(cacheKey, { profile: row, photos });
   }
 

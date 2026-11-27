@@ -59,7 +59,15 @@ The plan is a profile other people can see, a swipe-and-browse Discover ranked b
 - Tables `meet_profiles`, `meet_preferences`, `meet_photos`, and the private storage bucket `meet-photos`; every row and file is readable and writable by its owner only (`supabase/migrations/20261127010000_meet_profile.sql`). Profiles can only be made by adults (18+), checked by the database policy.
 - Birth date, time and place are never part of this profile. Only the year of birth (for age) and, later, the signs needed for matching are shared.
 
-**Next stages:** Discover (a filtered, read-only view of other profiles, and match keys so scores are computed without exposing birth details), likes and mutual matches, chat with report and block, photo checks before a photo is shown to others.
+**Stage 2 (built): Discover, likes and photo review.**
+
+- `/discover`: everyone the person can meet, as one card at a time (Swipe) or a list (Browse all), best fit first, with "Why you fit": the strongest of the eight tests, the one thing to talk about, and which preferences fit. `/matches` lists mutual likes.
+- Scores are real Ashtakoot results computed in the browser by the same engine (`scoreBetween` in `web/src/lib/meet.js`). Each person shares only "match keys" (`meet_keys`): the nakshatra quarter of the Moon and where Mars sits. A test proves the score from keys equals the score from full charts. A man and a woman take the groom and bride roles; any other pair is ordered by id so both see the same score.
+- Other people never read the profile tables. `discover_people()` returns a filtered copy: only discoverable profiles whose "show me" fits both ways, with religion, community and income removed where switched off.
+- Photos are `pending` until a reviewer approves them (`/admin/photos`, for accounts listed in `meet_admins`). Only approved photos of discoverable people can be fetched by others. People cannot change a photo's status themselves.
+- Likes and passes are in `meet_likes`; a person can see who liked them.
+
+**Next stages:** chat after a mutual like, report and block, a full profile page for another person, invite-to-match links.
 
 ### Switching the AI on
 

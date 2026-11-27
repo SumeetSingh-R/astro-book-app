@@ -18,6 +18,8 @@ import Ask from './pages/Ask.jsx';
 import Welcome from './pages/Welcome.jsx';
 import Profile from './pages/Profile.jsx';
 import Me from './pages/Me.jsx';
+import Discover, { Matches } from './pages/Discover.jsx';
+import AdminPhotos from './pages/AdminPhotos.jsx';
 import MeetPreferences from './pages/MeetPreferences.jsx';
 import About from './pages/About.jsx';
 
@@ -74,7 +76,7 @@ function NeedsProfile({ children }) {
   return children;
 }
 
-const TABS = [['/today', msg('Today'), 'sun'], ['/charts', msg('My charts'), 'chart'], ['/ask', msg('Ask'), 'chat'], ['/match', msg('Matching'), 'match']];
+const TABS = [['/today', msg('Today'), 'sun'], ['/discover', msg('Discover'), 'heart'], ['/charts', msg('My charts'), 'chart'], ['/ask', msg('Ask'), 'chat'], ['/match', msg('Matching'), 'match']];
 
 function Shell({ children }) {
   const t = useT();
@@ -93,6 +95,7 @@ function Shell({ children }) {
         {session ? (
           <nav className="main-nav" aria-label={t('Main')}>
             <NavLink to="/today">{t('Today')}</NavLink>
+            <NavLink to="/discover">{t('Discover')}</NavLink>
             <NavLink to="/charts">{t('My charts')}</NavLink>
             <NavLink to="/match">{t('Matching')}</NavLink>
           </nav>
@@ -161,6 +164,9 @@ export default function App() {
               <Route path="/today" element={<Private><NeedsProfile><Today /></NeedsProfile></Private>} />
               <Route path="/ask" element={<Private><NeedsProfile><Ask /></NeedsProfile></Private>} />
               <Route path="/profile" element={<Private><NeedsProfile><Profile /></NeedsProfile></Private>} />
+              <Route path="/discover" element={<Private><NeedsProfile><Discover /></NeedsProfile></Private>} />
+              <Route path="/matches" element={<Private><NeedsProfile><Matches /></NeedsProfile></Private>} />
+              <Route path="/admin/photos" element={<Private><AdminPhotos /></Private>} />
               <Route path="/me" element={<Private><NeedsProfile><Me /></NeedsProfile></Private>} />
               <Route path="/me/preferences" element={<Private><NeedsProfile><MeetPreferences /></NeedsProfile></Private>} />
               <Route path="/charts" element={<Private><Profiles /></Private>} />
