@@ -1,6 +1,10 @@
 # Astro Book
 
-A Vedic and Western astrology web app.
+Read your kundli. Meet people who fit it.
+
+A free web app that draws a person's birth chart, explains it in plain words, and shows them people whose charts fit theirs, with family invited in on the person's own terms. Vedic and Western astrology; made for young adults in India.
+
+**Positioning.** Astrology is what a person gets on day one, alone: their chart, a reading for each day, and answers from their own chart. Matching is what it leads to: a 36-point kundli match with the reasons shown, for someone they already know (by link) or for people they meet here. The person makes their own choices; a parent can help only as far as the person allows. The landing page (`web/src/pages/Home.jsx`) follows this order and says plainly that the app is new.
 
 ## Stack
 

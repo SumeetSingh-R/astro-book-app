@@ -6,7 +6,7 @@ export default function About() {
   return (
     <div className="prose">
       <h1>{t('About Astro Book')}</h1>
-      <p className="lede">{t('A simple way to read your own birth chart.')}</p>
+      <p className="lede">{t('Read your own birth chart, and meet people whose charts fit yours.')}</p>
       <h2>{t('How your readings are made')}</h2>
       <p>{t('Astro Book first calculates your chart from your birth details: where each graha stood, your houses, and the periods of your life. An AI model then turns those facts into plain words. It only explains; it never does the calculating.')}</p>
       <h2>{t('What to expect from it')}</h2>

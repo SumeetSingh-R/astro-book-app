@@ -56,7 +56,7 @@ export default function SignIn() {
     <div className="auth">
       <section className="auth-side" aria-hidden="true">
         <img className="float" src="/brand/logo-symbol.svg" alt="" />
-        <p className="auth-headline">{t('Your chart, kept in one place')}</p>
+        <p className="auth-headline">{t('Your chart and your matches, in one place')}</p>
         <ul>
           {BENEFITS.map(([icon, text]) => <li key={text}><Icon name={icon} size={20} />{t(text)}</li>)}
         </ul>
