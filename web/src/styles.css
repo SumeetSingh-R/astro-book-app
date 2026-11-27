@@ -137,6 +137,7 @@ button.link:hover { color: var(--ink); }
 .main-nav a:hover { background: var(--surface); transform: translateY(-2px); }
 .main-nav a.active { background: var(--btn); color: #fff; }
 .top-actions { display: flex; align-items: center; gap: 8px; }
+.top-actions .ghost, .top-actions .btn { white-space: nowrap; }
 [hidden] { display: none !important; }
 /* ---------- meet and match: discover ---------- */
 .discover { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 24px 56px; align-items: start; }
@@ -224,6 +225,11 @@ button.link:hover { color: var(--ink); }
 .steps li { counter-increment: step; display: grid; grid-template-columns: 32px 1fr; column-gap: 12px; align-items: start; }
 .steps li::before { content: counter(step); grid-row: span 2; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 16px; background: var(--btn); color: #fff; font-weight: 700; }
 .steps li .hint { grid-column: 2; }
+
+.plain-list { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+.account-delete { border-top: 1px solid var(--line); padding-top: 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.admin-row .link.quiet { align-self: flex-start; }
+.admin-confirm { margin-top: 10px; padding: 14px 16px; border-radius: 16px; background: var(--tint); display: flex; flex-direction: column; gap: 10px; }
 
 /* ---------- notifications ---------- */
 .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--btn); color: #fff; font-size: 0.75rem; font-weight: 700; line-height: 1; }

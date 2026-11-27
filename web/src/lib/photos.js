@@ -49,3 +49,26 @@ export async function photoLinks(paths) {
   if (error) throw error;
   return Object.fromEntries(data.filter((d) => d.signedUrl).map((d) => [d.path, d.signedUrl]));
 }
+
+/** Remove every stored photo file of one person: the signed-in person, or for an owner anyone. Used before an account is deleted. */
+export async function removeAllFiles(userId = null) {
+  const { data, error } = await supabase.rpc('account_files', userId ? { p_user: userId } : {});
+  if (error) throw error;
+  for (let i = 0; i < data.length; i += 100) {
+    const res = await supabase.storage.from(BUCKET).remove(data.slice(i, i + 100));
+    if (res.error) throw res.error;
+  }
+}
+
+/**
+ * Delete an account with a database function. The database refuses while photo files are left,
+ * so on that answer the files are removed and it is asked once more. Any other refusal is thrown.
+ */
+export async function deleteAccount(fn, args, userId = null) {
+  const first = await supabase.rpc(fn, args);
+  if (!first.error) return;
+  if (first.error.message !== 'delete:photos') throw new Error(first.error.message);
+  await removeAllFiles(userId);
+  const second = await supabase.rpc(fn, args);
+  if (second.error) throw new Error(second.error.message);
+}

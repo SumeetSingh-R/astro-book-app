@@ -4,6 +4,7 @@ import { useRemembered } from '../lib/cache.js';
 import { useAuth } from '../App.jsx';
 import { formatDate } from '../lib/format.js';
 import AdminPhotos from './AdminPhotos.jsx';
+import { deleteAccount } from '../lib/photos.js';
 import { ListSkeleton } from '../components/Skeleton.jsx';
 
 // The admin portal is a staff tool, so its own text is in English only.
@@ -31,12 +32,16 @@ function Overview() {
   return <ul className="stats">{stats.map(([label, value, note]) => <li key={label} className="card"><p className="note-label">{label}</p><p className="stat">{value}</p><p className="hint">{note}</p></li>)}</ul>;
 }
 
+const DELETE_ERRORS = { 'delete:admin': 'This person is on the admin team. Remove them from the team first, then delete the account.', 'delete:self': 'To delete your own account, use your profile page.' };
+
 function People({ owner }) {
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [reasonFor, setReasonFor] = useState(null);
   const [reason, setReason] = useState('');
   const [error, setError] = useState(null);
+  const [deleteFor, setDeleteFor] = useState(null);
+  const [busy, setBusy] = useState(false);
   const people = useRemembered(`admin:people:${query}`, () => call('admin_people', { p_search: query }), { maxAge: 0 });
 
   async function suspend(person, on) {
@@ -47,6 +52,17 @@ function People({ owner }) {
       setReasonFor(null);
       setReason('');
     } catch (e) { setError(e.message); }
+  }
+
+  // Owners only. Removes the sign-in and everything that belongs to it; the database checks the role again.
+  async function remove(person) {
+    setError(null);
+    setBusy(true);
+    try {
+      await deleteAccount('admin_delete_account', { p_user: person.user_id }, person.user_id);
+      people.set((list) => list.filter((p) => p.user_id !== person.user_id));
+      setDeleteFor(null);
+    } catch (e) { setError(DELETE_ERRORS[e.message] ?? 'The account could not be deleted. Try again.'); } finally { setBusy(false); }
   }
 
   return (
@@ -77,6 +93,15 @@ function People({ owner }) {
                   <button type="button" className="link" onClick={() => setReasonFor(null)}>Cancel</button>
                 </form>
               ) : null}
+              {owner && deleteFor === p.user_id ? (
+                <div className="admin-confirm" role="group" aria-label={`Delete ${p.display_name}'s account`}>
+                  <p><strong>Delete {p.display_name}'s account for good?</strong> Their profile, photos, matches, chats, charts and sign-in are removed. This cannot be undone.</p>
+                  <div className="admin-actions">
+                    <button type="button" className="btn small danger" disabled={busy} onClick={() => remove(p)}>{busy ? 'Deleting…' : 'Delete for good'}</button>
+                    <button type="button" className="link" onClick={() => setDeleteFor(null)}>Cancel</button>
+                  </div>
+                </div>
+              ) : owner && reasonFor !== p.user_id ? <button type="button" className="link quiet" onClick={() => { setDeleteFor(p.user_id); setError(null); }}>Delete account</button> : null}
             </div>
             {p.suspended ? <button type="button" className="btn small outline" onClick={() => suspend(p, false)}>Restore</button>
               : reasonFor === p.user_id ? null : <button type="button" className="btn small danger" onClick={() => { setReasonFor(p.user_id); setReason(''); }}>Suspend</button>}

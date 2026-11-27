@@ -13,6 +13,8 @@ export default function About() {
       <p>{t('Readings and answers describe tendencies, not certainties. Timing is given as ranges of months that tradition reads as supportive, never as a date or a promise. For health, legal or money decisions, please speak to a qualified professional.')}</p>
       <h2>{t('Your privacy')}</h2>
       <p>{t('Your profile and saved charts are visible only to you. When you ask a question, your question, your age and your chart positions are sent to the AI model. Your name, email, birth date and birth place are not.')}</p>
+      <p>{t('If you set up a meet-and-match profile, other signed-in people see what you put on it and your approved photos. They never see your date, time or place of birth.')}</p>
+      <p>{t('You can delete your account, and everything in it, from your profile page at any time.')}</p>
       <h2>{t('Credits')}</h2>
       <p>{t('Planet positions are calculated with Swiss Ephemeris, using the Lahiri ayanamsa for Vedic charts. Place names and coordinates come from GeoNames (CC BY 4.0).')}</p>
       <p>{t('Astro Book is open-source software under the AGPL-3.0 licence.')}{' '}<a href="https://github.com/SumeetSingh-R/astro-book-app">{t('See the source code')}</a>{' · '}<a href="https://www.astro.com/swisseph/">Swiss Ephemeris</a>{' · '}<a href="https://www.geonames.org/">GeoNames</a></p>

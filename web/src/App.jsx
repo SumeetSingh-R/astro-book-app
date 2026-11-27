@@ -127,6 +127,7 @@ function Shell({ children }) {
         </div>
       </header>
       <main className="page" key={location.pathname}>
+        {!session && new URLSearchParams(location.search).get('deleted') === '1' ? <p className="notice" role="status">{t('Your account and everything in it has been deleted.')}</p> : null}
         {authError && !session ? <p className="error" role="alert">{t('Sign-in did not complete: {0}. Try again from the sign-in page.', [authError])}</p> : null}
         {children}
       </main>

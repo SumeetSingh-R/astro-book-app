@@ -94,7 +94,9 @@ The plan is a profile other people can see, a swipe-and-browse Discover ranked b
 
 **Live delivery (built).** Messages, read receipts ("Seen") and notifications arrive over a socket, using Supabase Realtime: one connection per signed-in person, opened in `web/src/lib/inbox.jsx`, listening for changes to their own rows in `meet_messages` and `meet_notifications`. Row level security decides what a person is sent, so no extra server or secret is involved. If the socket cannot connect, the chat falls back to asking every 6 seconds; with it connected, it still asks every 30 seconds as a safety net. The free Supabase plan allows 200 people connected at the same time (`20261127090000_meet_live.sql`).
 
-**Next stages:** account deletion, alerts when the app is closed (email or phone), parent accounts.
+**Account deletion (built).** A person can delete their own account from the profile page; an owner can delete someone's account from the People tab of the admin portal (not their own, and not a team member's until they are taken off the team). Deleting the sign-in record removes everything that belongs to it, because every table refers to it with `on delete cascade`. Photo files go first, through the storage service, and the database refuses to delete an account while any file is left. The last owner cannot delete their own account (`20261127100000_account_deletion.sql`).
+
+**Next stages:** alerts when the app is closed (email or phone), parent accounts.
 
 ### Switching the AI on
 

@@ -8,6 +8,49 @@ import { LanguageSwitch, useT } from '../lib/language.jsx';
 import BirthForm from '../components/BirthForm.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAdminRole } from './Admin.jsx';
+import { deleteAccount } from '../lib/photos.js';
+
+/** Asks once, plainly, then deletes the signed-in person's account and everything in it. */
+function DeleteAccount({ onCancel }) {
+  const t = useT();
+  const [sure, setSure] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  async function run(e) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteAccount('delete_my_account');
+    } catch (err) {
+      setError(err.message === 'delete:last_owner'
+        ? t('You are the only owner of the admin portal. Add another owner there first, then delete your account.')
+        : t('Your account could not be deleted. Try again.'));
+      setBusy(false);
+      return;
+    }
+    await supabase.auth.signOut({ scope: 'local' }); // the account is gone; this only clears this device
+    // A full reload, so nothing of the deleted account is left in the page's memory.
+    window.location.replace('/?deleted=1');
+  }
+  return (
+    <div className="modal" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+      <form className="modal-card report" onSubmit={run}>
+        <h2 id="delete-title">{t('Delete your account?')}</h2>
+        <p>{t('This removes, for good:')}</p>
+        <ul className="plain-list">
+          <li>{t('Your birth details, charts, readings and questions')}</li>
+          <li>{t('Your meet-and-match profile, photos, likes and matches')}</li>
+          <li>{t('Your chats, for you and for the people you chatted with')}</li>
+        </ul>
+        <label className="check"><input type="checkbox" checked={sure} onChange={(e) => setSure(e.target.checked)} />{t('I understand this cannot be undone')}</label>
+        {error ? <p className="error" role="alert">{error}</p> : null}
+        <button type="submit" className="btn outline danger" disabled={!sure || busy}>{busy ? t('Deleting…') : t('Delete my account')}</button>
+        <button type="button" className="link" onClick={onCancel}>{t('Keep my account')}</button>
+      </form>
+    </div>
+  );
+}
 
 /** The person's own details. Saved once here, they feed Today, the chart, matching and questions. */
 export default function Profile() {
@@ -16,6 +59,7 @@ export default function Profile() {
   const { self, reload } = useAccount();
   const navigate = useNavigate();
   const [saved, setSaved] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const role = useAdminRole(session.user.id);
 
   async function save(values) {
@@ -58,6 +102,11 @@ export default function Profile() {
       </BirthForm>
       {role ? <Link className="btn outline" to="/admin">Admin portal</Link> : null}
       <button type="button" className="btn outline" onClick={signOut}>{t('Sign out')}</button>
+      <div className="account-delete">
+        <p className="hint">{t('You can delete your account and everything in it at any time.')}</p>
+        <button type="button" className="link quiet" onClick={() => setDeleting(true)}>{t('Delete my account')}</button>
+      </div>
+      {deleting ? <DeleteAccount onCancel={() => setDeleting(false)} /> : null}
     </div>
   );
 }
