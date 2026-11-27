@@ -27,7 +27,7 @@ export function summaryLines(person, t) {
 }
 
 /** Why two people fit: the tests that went best, the thing to talk about, and the preference checks. */
-function Why({ person }) {
+export function Why({ person, link = false }) {
   const t = useT();
   const { match, fit } = person;
   const { good, care } = whyLines(match);
@@ -57,6 +57,7 @@ function Why({ person }) {
       {facts.length ? <dl className="facts-list">{facts.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl> : null}
       {habits.length || person.interests.length ? <ul className="chip-list">{[...habits, ...person.interests].map((x) => <li key={x}>{x}</li>)}</ul> : null}
       <p className="private"><Icon name="lock" size={18} />{t('Neither of you can see the other\'s date, time or place of birth. Only the result is shared.')}</p>
+      {link ? <Link className="btn outline" to={`/people/${person.user_id}`}>{t('Open full profile')}<Icon name="go" size={20} /></Link> : null}
     </section>
   );
 }
@@ -147,7 +148,7 @@ function Deck({ userId, me, selfId }) {
               </ul>
             )}
           </div>
-          {open ? <Why person={open} /> : null}
+          {open ? <Why person={open} link /> : null}
         </div>
       )}
 

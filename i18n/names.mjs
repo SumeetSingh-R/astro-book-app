@@ -26,5 +26,6 @@ export default [
   'Your session has expired. Sign in again.',
   'Type a question about your chart.',
   'Keep the question under 500 characters.',
+  'Neither is Manglik.', 'One partner is Manglik and the other is not.', 'Both are Manglik, which is traditionally considered balanced.',
   'Lahiri', 'Excellent', 'Very good', 'Acceptable', 'Below the traditional minimum of 18',
 ];

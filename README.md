@@ -83,7 +83,10 @@ The plan is a profile other people can see, a swipe-and-browse Discover ranked b
 - The safety menu in every chat: unmatch, block, or report (reason, optional details, and "also block"). Blocking removes each person from the other's Discover and chats.
 - Admin portal, Reports tab: open reports with the reason and what the reporter wrote; "Suspend and close" or "Close". Admins never see conversations.
 
-**Next stages:** a full profile page for another person, invite-to-match links, live message delivery instead of polling, notifications.
+- `/people/:id` is another person's full profile: photos, details, the signs from their kundli (never their birth details), why the two fit, and all eight tests with scores. Like, pass, open the chat, or report and block from there.
+- Pausing a profile takes it out of Discover but existing matches keep each other in their chats and can still see approved photos (`20261127050000_meet_matches_stay.sql`).
+
+**Next stages:** invite-to-match links, live message delivery instead of polling, notifications, limits on how many messages can be sent.
 
 ### Switching the AI on
 

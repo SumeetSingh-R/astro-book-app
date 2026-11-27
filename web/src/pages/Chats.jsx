@@ -68,7 +68,7 @@ export default function Chats() {
   );
 }
 
-function Report({ person, userId, onDone, onCancel }) {
+export function Report({ person, userId, onDone, onCancel }) {
   const t = useT();
   const [reason, setReason] = useState('abusive');
   const [details, setDetails] = useState('');
@@ -169,7 +169,7 @@ export function Chat() {
       <header className="chat-head">
         <Link className="back" to="/chats" aria-label={t('Back to chats')}><Icon name="back" size={20} /></Link>
         <Face person={person} />
-        <div className="chat-who"><h1>{person.display_name}, {person.age}</h1><p className="hint">{summaryLines(person, t)[0] ?? ''} · {t('{0} of 36', [person.match.total])}</p></div>
+        <div className="chat-who"><h1><Link to={`/people/${person.user_id}`}>{person.display_name}, {person.age}</Link></h1><p className="hint">{summaryLines(person, t)[0] ?? ''} · {t('{0} of 36', [person.match.total])}</p></div>
         <div className="chat-menu">
           <button type="button" className="round small" aria-expanded={menu} aria-label={t('Safety options')} onClick={() => setMenu(!menu)}><Icon name="lock" size={20} /></button>
           {menu ? (

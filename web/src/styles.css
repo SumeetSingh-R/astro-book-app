@@ -186,6 +186,9 @@ button.link:hover { color: var(--ink); }
 .review-grid li { display: flex; flex-direction: column; gap: 12px; }
 .review-grid img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 12px; }
 @media (max-width: 900px) { .discover { grid-template-columns: minmax(0, 1fr); } }
+.facts-list.tests dt { display: flex; flex-direction: column; color: var(--ink); }
+.chat-who h1 a { color: var(--ink); text-decoration: none; }
+.chat-who h1 a:hover { text-decoration: underline; }
 /* ---------- meet and match: chats ---------- */
 .chat-row { text-decoration: none; color: var(--ink); }
 .chat-row:hover { color: var(--ink); border-color: var(--accent); }
