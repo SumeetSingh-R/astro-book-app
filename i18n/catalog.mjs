@@ -621,6 +621,7 @@ export default [
  "See how we match",
  "See how your charts fit.",
  "See the source code",
+ "Seen",
  "self, body and temperament",
  "self, vitality and authority",
  "Send",

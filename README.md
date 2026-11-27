@@ -92,7 +92,9 @@ The plan is a profile other people can see, a swipe-and-browse Discover ranked b
 
 **Notifications (built).** A bell in the header and a count on Chats. The database writes a notification when a like completes a match, when a photo is approved or rejected, and when an invite link is accepted; unread messages are counted from the messages themselves. Admins also see how many photos and reports are waiting. `/notifications` lists them and marks them as seen. The app asks once a minute while it is open (`meet_inbox`); nothing is sent by email or to a phone (`20261127070000_meet_limits_notifications.sql`).
 
-**Next stages:** live message delivery instead of polling, alerts when the app is closed (email or phone), parent accounts.
+**Live delivery (built).** Messages, read receipts ("Seen") and notifications arrive over a socket, using Supabase Realtime: one connection per signed-in person, opened in `web/src/lib/inbox.jsx`, listening for changes to their own rows in `meet_messages` and `meet_notifications`. Row level security decides what a person is sent, so no extra server or secret is involved. If the socket cannot connect, the chat falls back to asking every 6 seconds; with it connected, it still asks every 30 seconds as a safety net. The free Supabase plan allows 200 people connected at the same time (`20261127090000_meet_live.sql`).
+
+**Next stages:** account deletion, alerts when the app is closed (email or phone), parent accounts.
 
 ### Switching the AI on
 

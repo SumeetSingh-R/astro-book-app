@@ -38,6 +38,9 @@ export default function Chats() {
     if (error) throw new Error('Your chats could not be loaded. Refresh the page to try again.');
     return data;
   }, { maxAge: 0 });
+  const { listen } = useInbox();
+  const reload = inbox.refresh;
+  useEffect(() => listen((event) => { if (event.type !== 'read') reload(); }), [listen, reload]);
 
   if (!matches) return <ListSkeleton label={t('Loading…')} />;
   if (!hasProfile) return <div className="sheet"><h1>{t('Chats')}</h1><p className="muted">{t('Set up the profile other people will see, then come back here to find your matches.')}</p><Link className="btn" to="/me">{t('Set up my profile')}</Link></div>;
@@ -125,16 +128,33 @@ export function Chat() {
     return data;
   }, { maxAge: 0 });
   const mine = useRemembered(person ? `ownKeys:${userId}` : null, () => saveOwnKeys(userId, selfId), { maxAge: 12 * 3600 * 1000 });
-  const { refresh } = thread;
+  const { refresh, set } = thread;
+  const loaded = useRef(false);
+  loaded.current = Boolean(thread.data);
+  const { live, listen } = inbox;
   const count = thread.data?.length ?? 0;
   const unread = (thread.data ?? []).some((m) => m.sender === id && !m.read_at);
 
-  // New messages are picked up by asking again every few seconds while the chat is open.
+  // New messages and read receipts arrive over the socket the moment they happen.
   useEffect(() => {
     if (!person) return undefined;
-    const timer = setInterval(refresh, 6000);
+    return listen((event) => {
+      if (event.type === 'connected') { refresh(); return; }
+      if (!loaded.current) return; // the first load will include it
+      const { row } = event;
+      if (event.type === 'message' && row.sender === id) {
+        set((list) => (list.some((m) => m.id === row.id) ? list : [...list, { id: row.id, sender: row.sender, body: row.body, created_at: row.created_at, read_at: row.read_at }]));
+      } else if (event.type === 'read' && row.recipient === id) {
+        set((list) => list.map((m) => (m.id === row.id ? { ...m, read_at: row.read_at } : m)));
+      }
+    });
+  }, [person, id, listen, refresh, set]);
+  // Asking again on a timer stays as a safety net: every few seconds without the socket, rarely with it.
+  useEffect(() => {
+    if (!person) return undefined;
+    const timer = setInterval(refresh, live ? 30000 : 6000);
     return () => clearInterval(timer);
-  }, [person, refresh]);
+  }, [person, refresh, live]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }); }, [count]);
   const refreshInbox = inbox.refresh;
   useEffect(() => { if (unread) supabase.rpc('meet_mark_read', { p_other: id }).then(() => { forget(`inbox:${userId}`); refreshInbox(true); }); }, [unread, id, userId, refreshInbox]);
@@ -161,6 +181,7 @@ export function Chat() {
     forget(`inbox:${userId}`);
   }
   const waiting = waitingForReply(thread.data, userId);
+  const lastMine = (thread.data ?? []).findLast((m) => m.sender === userId) ?? null;
   async function leave(action) {
     setMenu(false);
     const res = action === 'block'
@@ -193,7 +214,7 @@ export function Chat() {
       {thread.error ? <p className="error" role="alert">{t(thread.error)}</p> : null}
       <ol className="dms" aria-live="polite">
         {(thread.data ?? []).map((m) => (
-          <li key={m.id} className={m.sender === userId ? 'dm mine msg' : 'dm msg'}><p>{m.body}</p><span className="hint">{formatDate(m.created_at, { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' })}</span></li>
+          <li key={m.id} className={m.sender === userId ? 'dm mine msg' : 'dm msg'}><p>{m.body}</p><span className="hint">{formatDate(m.created_at, { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' })}{m === lastMine && m.read_at ? ` · ${t('Seen')}` : ''}</span></li>
         ))}
         <li ref={endRef} aria-hidden="true" />
       </ol>

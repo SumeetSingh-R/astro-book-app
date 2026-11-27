@@ -622,6 +622,7 @@ export default {
  "See how we match": "देखें हम कितना मिलते हैं",
  "See how your charts fit.": "देखें आपकी कुंडलियाँ कितनी मिलती हैं।",
  "See the source code": "सोर्स कोड देखें",
+ "Seen": "देखा गया",
  "self, body and temperament": "स्वयं, शरीर और स्वभाव",
  "self, vitality and authority": "आत्मा, जीवन-शक्ति और अधिकार",
  "Send": "भेजें",
