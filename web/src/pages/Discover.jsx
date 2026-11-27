@@ -26,16 +26,21 @@ export function summaryLines(person, t) {
   return [line([person.city, person.work]), line([person.height_cm ? feetInches(person.height_cm) : null, line([person.religion, person.community]).replace(' · ', ', '), person.mother_tongue])].filter(Boolean);
 }
 
+/** The one thing most worth talking about, as a sentence. Null when there is nothing to flag. */
+export function careSentence(care, t) {
+  return !care ? null
+    : care.kind === 'dosha' ? t('{0} is present, so this is an area to talk through. The eight tests show the detail.', [t(care.name)])
+      : care.kind === 'cancelled' ? t('{0} is found, but tradition treats it as cancelled for the two of you.', [t(care.name)])
+        : care.kind === 'manglik' ? t('One of you is Manglik and the other is not. Many families ask about this.')
+          : t('{0} scores low: {1} of {2}.', [t(care.name), care.score, care.max]);
+}
+
 /** Why two people fit: the tests that went best, the thing to talk about, and the preference checks. */
 export function Why({ person, link = false }) {
   const t = useT();
   const { match, fit } = person;
   const { good, care } = whyLines(match);
-  const careText = !care ? null
-    : care.kind === 'dosha' ? t('{0} is present, so this is an area to talk through. The eight tests show the detail.', [t(care.name)])
-      : care.kind === 'cancelled' ? t('{0} is found, but tradition treats it as cancelled for the two of you.', [t(care.name)])
-        : care.kind === 'manglik' ? t('One of you is Manglik and the other is not. Many families ask about this.')
-          : t('{0} scores low: {1} of {2}.', [t(care.name), care.score, care.max]);
+  const careText = careSentence(care, t);
   const facts = [
     [t('Looking for'), t(labelOf(LOOKING_FOR, person.looking_for) ?? '')], [t('Education'), person.education], [t('Marital status'), t(labelOf(MARITAL, person.marital_status) ?? '')],
     [t('Income'), t(labelOf(INCOMES, person.income_range) ?? '')], [t('Family'), t(labelOf(FAMILY_TYPES, person.family_type) ?? '')], [t('Parents'), person.parents], [t('Siblings'), person.siblings],

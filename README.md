@@ -86,7 +86,9 @@ The plan is a profile other people can see, a swipe-and-browse Discover ranked b
 - `/people/:id` is another person's full profile: photos, details, the signs from their kundli (never their birth details), why the two fit, and all eight tests with scores. Like, pass, open the chat, or report and block from there.
 - Pausing a profile takes it out of Discover but existing matches keep each other in their chats and can still see approved photos (`20261127050000_meet_matches_stay.sql`).
 
-**Next stages:** invite-to-match links, live message delivery instead of polling, notifications, limits on how many messages can be sent.
+**Invite to match (built).** `/invite` makes a link (`/m/<code>`, valid 7 days) to send to someone you already know. They sign up or sign in, add their birth details if they have none, accept, and both people see the 36-point result with reasons and all eight tests. Neither needs a meet-and-match profile. Only a first name and the match keys are shared (`open_invite`, `accept_invite`, `my_invites` in `20261127060000_meet_invites.sql`).
+
+**Next stages:** live message delivery instead of polling, notifications, limits on how many messages can be sent.
 
 ### Switching the AI on
 

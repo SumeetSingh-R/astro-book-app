@@ -14,6 +14,12 @@ function pendingBirth() {
 }
 
 /** First sign-in: the person's own birth details, asked once and kept as their profile. */
+/** Where to go once the profile exists: back to an invite link if that is what brought the person here. */
+function nextPath() {
+  try { const p = sessionStorage.getItem('postProfilePath'); sessionStorage.removeItem('postProfilePath'); if (p && p.startsWith('/m/')) return p; } catch { /* storage unavailable */ }
+  return '/today';
+}
+
 export default function Welcome() {
   const t = useT();
   const { session } = useAuth();
@@ -36,7 +42,7 @@ export default function Welcome() {
     if (error) { setPickError(t('That could not be saved. Try again.')); return; }
     forget('profiles');
     await reload();
-    navigate('/today', { replace: true });
+    navigate(nextPath(), { replace: true });
   }
 
   if (!loading && self) return <Navigate to="/today" replace />;
@@ -47,7 +53,7 @@ export default function Welcome() {
     try { sessionStorage.removeItem('pendingBirth'); } catch { /* storage unavailable */ }
     forget('profiles');
     await reload();
-    navigate('/today', { replace: true });
+    navigate(nextPath(), { replace: true });
   }
 
   return (

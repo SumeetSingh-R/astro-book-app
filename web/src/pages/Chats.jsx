@@ -63,6 +63,7 @@ export default function Chats() {
           ))}
         </ul>
       )}
+      <Link className="card cta" to="/invite"><span className="cta-text"><Icon name="match" size={26} /><span><strong>{t('Match with someone you know')}</strong><span>{t('Send a link and compare your charts')}</span></span></span><Icon name="go" size={20} /></Link>
       <p className="private"><Icon name="lock" size={18} />{t('You can only chat after you have both liked each other. You can block or report from any chat.')}</p>
     </>
   );
@@ -120,7 +121,7 @@ export function Chat() {
     if (err) throw new Error('This chat could not be loaded. Refresh the page to try again.');
     return data;
   }, { maxAge: 0 });
-  const mine = useRemembered(person ? `meetKeys:${userId}` : null, () => saveOwnKeys(userId, selfId), { maxAge: 12 * 3600 * 1000 });
+  const mine = useRemembered(person ? `ownKeys:${userId}` : null, () => saveOwnKeys(userId, selfId), { maxAge: 12 * 3600 * 1000 });
   const { refresh } = thread;
   const count = thread.data?.length ?? 0;
   const unread = (thread.data ?? []).some((m) => m.sender === id && !m.read_at);

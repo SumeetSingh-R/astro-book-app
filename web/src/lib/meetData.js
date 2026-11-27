@@ -4,7 +4,9 @@ import { api } from './api.js';
 import { remember, useRemembered, forget } from './cache.js';
 import { keysFromChart, scoreBetween, fitsPreferences, blankPreferences } from './meet.js';
 
-/** Work out the signed-in person's match keys from their own chart and save them, once per visit. */
+/** Work out the signed-in person's match keys from their own chart and save them, once per visit.
+ * It remembers its answer under `meetKeys:<id>`, so a component must not wrap it in useRemembered with that same key:
+ * the wrapper would end up waiting on itself. */
 export function saveOwnKeys(userId, selfId) {
   return remember(`meetKeys:${userId}`, async () => {
     const { chart } = await remember(`chart:${selfId}`, () => api('/api/chart', { method: 'POST', auth: true, body: { birthProfileId: selfId } }), { maxAge: 7 * 24 * 3600 * 1000 });

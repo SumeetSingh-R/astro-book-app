@@ -187,6 +187,7 @@ button.link:hover { color: var(--ink); }
 .review-grid img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 12px; }
 @media (max-width: 900px) { .discover { grid-template-columns: minmax(0, 1fr); } }
 .facts-list.tests dt { display: flex; flex-direction: column; color: var(--ink); }
+.facts-list.tests dd { white-space: nowrap; flex: none; }
 .chat-who h1 a { color: var(--ink); text-decoration: none; }
 .chat-who h1 a:hover { text-decoration: underline; }
 /* ---------- meet and match: chats ---------- */
@@ -216,6 +217,13 @@ button.link:hover { color: var(--ink); }
 .compose { display: flex; gap: 8px; align-items: center; }
 .compose input { flex: 1; margin: 0; border-radius: 26px; }
 .modal-card.report { align-items: stretch; text-align: left; background: var(--surface); }
+
+.invite-link { display: flex; flex-direction: column; gap: 10px; }
+.link-text { font-weight: 700; overflow-wrap: anywhere; }
+.steps { margin: 0; padding: 0; list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 14px; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 32px 1fr; column-gap: 12px; align-items: start; }
+.steps li::before { content: counter(step); grid-row: span 2; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 16px; background: var(--btn); color: #fff; font-weight: 700; }
+.steps li .hint { grid-column: 2; }
 
 /* ---------- admin portal ---------- */
 .stats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }

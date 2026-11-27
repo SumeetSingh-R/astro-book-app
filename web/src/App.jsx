@@ -21,6 +21,7 @@ import Me from './pages/Me.jsx';
 import Discover from './pages/Discover.jsx';
 import Chats, { Chat } from './pages/Chats.jsx';
 import Person from './pages/Person.jsx';
+import Invite, { InviteLink } from './pages/Invite.jsx';
 import AdminPhotos from './pages/AdminPhotos.jsx';
 import Admin from './pages/Admin.jsx';
 import MeetPreferences from './pages/MeetPreferences.jsx';
@@ -169,6 +170,8 @@ export default function App() {
               <Route path="/ask" element={<Private><NeedsProfile><Ask /></NeedsProfile></Private>} />
               <Route path="/profile" element={<Private><NeedsProfile><Profile /></NeedsProfile></Private>} />
               <Route path="/discover" element={<Private><NeedsProfile><Discover /></NeedsProfile></Private>} />
+              <Route path="/invite" element={<Private><NeedsProfile><Invite /></NeedsProfile></Private>} />
+              <Route path="/m/:code" element={<Private><InviteLink /></Private>} />
               <Route path="/people/:id" element={<Private><NeedsProfile><Person /></NeedsProfile></Private>} />
               <Route path="/chats" element={<Private><NeedsProfile><Chats /></NeedsProfile></Private>} />
               <Route path="/chats/:id" element={<Private><NeedsProfile><Chat /></NeedsProfile></Private>} />
