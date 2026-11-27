@@ -159,8 +159,8 @@ button.link:hover { color: var(--ink); }
 .face { display: block; flex: none; width: 64px; height: 64px; border-radius: 32px; object-fit: cover; font-size: 1.6rem; }
 .face.large { width: 112px; height: 112px; border-radius: 56px; font-size: 3rem; }
 .meet-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
-.person { display: flex; align-items: center; gap: 12px; padding: 10px 12px; transition: border-color 0.18s ease; }
-.person.on { border-color: var(--accent); }
+.meet-person { display: flex; align-items: center; gap: 12px; padding: 10px 12px; transition: border-color 0.18s ease; }
+.meet-person.on { border-color: var(--accent); }
 .person-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; text-align: left; background: none; border: 0; padding: 0; color: var(--ink); }
 .person-open > span { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
 .why-fit { display: flex; flex-direction: column; gap: 16px; }
@@ -186,11 +186,40 @@ button.link:hover { color: var(--ink); }
 .review-grid li { display: flex; flex-direction: column; gap: 12px; }
 .review-grid img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 12px; }
 @media (max-width: 900px) { .discover { grid-template-columns: minmax(0, 1fr); } }
+/* ---------- meet and match: chats ---------- */
+.chat-row { text-decoration: none; color: var(--ink); }
+.chat-row:hover { color: var(--ink); border-color: var(--accent); }
+.chat-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.chat-row-text .hint { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat { gap: 16px; }
+.chat-head { display: flex; align-items: center; gap: 12px; }
+.chat-head .back { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 22px; }
+.chat-who { flex: 1; min-width: 0; }
+.chat-who h1 { font-size: 1.4rem; }
+.chat-menu { position: relative; }
+.menu { position: absolute; top: 56px; right: 0; z-index: 5; width: 230px; padding: 6px; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+.menu button { min-height: 44px; text-align: left; padding: 0 12px; border: 0; border-radius: 12px; background: none; color: var(--ink); }
+.menu button:hover { background: var(--raised); }
+.menu button.warn { color: var(--warn); font-weight: 700; }
+.dms { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; min-height: 240px; max-height: 52vh; overflow-y: auto; }
+.dm { align-self: flex-start; max-width: 82%; display: flex; flex-direction: column; gap: 2px; }
+.dm p { background: var(--raised); border-radius: 20px 20px 20px 6px; padding: 10px 14px; overflow-wrap: anywhere; }
+.dm.mine { align-self: flex-end; align-items: flex-end; }
+.dm.mine p { background: var(--btn); color: #fff; border-radius: 20px 20px 6px 20px; }
+.dm .hint { font-size: 0.75rem; }
+.starters { display: flex; flex-direction: column; gap: 8px; }
+.starter { text-align: left; background: var(--raised); border: 0; border-radius: 16px; padding: 10px 14px; color: var(--ink); transition: transform 0.18s ease; }
+.starter:hover { transform: translateY(-2px); }
+.compose { display: flex; gap: 8px; align-items: center; }
+.compose input { flex: 1; margin: 0; border-radius: 26px; }
+.modal-card.report { align-items: stretch; text-align: left; background: var(--surface); }
+
 /* ---------- admin portal ---------- */
 .stats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
 .stat { font-family: var(--font-display); font-size: 2.4rem; line-height: 1.1; }
 .admin-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.admin-row > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.admin-row > div:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.admin-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .admin-search { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .admin-search input { flex: 1 1 220px; width: auto; margin: 0; }
 .admin-search select { width: auto; margin: 0; }

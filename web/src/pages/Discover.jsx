@@ -136,7 +136,7 @@ function Deck({ userId, me, selfId }) {
             )) : (
               <ul className="meet-list">
                 {shown.map((p) => (
-                  <li key={p.user_id} className={open?.user_id === p.user_id ? 'card person on' : 'card person'}>
+                  <li key={p.user_id} className={open?.user_id === p.user_id ? 'card meet-person on' : 'card meet-person'}>
                     <button type="button" className="person-open" aria-pressed={open?.user_id === p.user_id} onClick={() => setOpenId(p.user_id)}>
                       <Face person={p} />
                       <span><strong>{p.display_name}, {p.age}</strong>{summaryLines(p, t).map((x) => <span key={x} className="hint">{x}</span>)}<span className="tag">{t('{0} of 36', [p.match.total])} · {t(p.match.band)}</span></span>
@@ -157,7 +157,7 @@ function Deck({ userId, me, selfId }) {
             <Face person={matched} className="face large" />
             <h2 id="matched-title">{t('You both said yes')}</h2>
             <p>{t('You and {0} liked each other. Your charts score {1} of 36.', [matched.display_name, matched.match.total])}</p>
-            <Link className="btn" to="/matches">{t('See my matches')}<Icon name="go" size={20} /></Link>
+            <Link className="btn" to={`/chats/${matched.user_id}`}>{t('Say hello')}<Icon name="go" size={20} /></Link>
             <button type="button" className="link" onClick={() => setMatched(null)}>{t('Keep looking')}</button>
           </div>
         </div>
@@ -185,32 +185,4 @@ export default function Discover() {
     );
   }
   return <Deck userId={userId} me={meet.data.profile} selfId={self.id} />;
-}
-
-/** People you and they have both liked. */
-export function Matches() {
-  const t = useT();
-  const { session } = useAuth();
-  const { self } = useAccount();
-  const userId = session.user.id;
-  const meet = useMeetProfile(userId);
-  const { data: people } = useDiscover(userId, meet.data?.profile ?? null, self.id);
-  if (meet.data && !meet.data.profile) return <div className="sheet"><h1>{t('My matches')}</h1><p className="muted">{t('Set up the profile other people will see, then come back here to find your matches.')}</p><Link className="btn" to="/me">{t('Set up my profile')}</Link></div>;
-  if (!people) return <ListSkeleton label={t('Loading…')} />;
-  const mutual = people.filter((p) => p.liked_me && p.my_kind === 'like');
-  return (
-    <>
-      <div><h1>{t('My matches')}</h1><p className="muted">{t('People you liked who liked you back.')}</p></div>
-      {mutual.length === 0 ? (
-        <div className="empty card"><p>{t('No matches yet. Like someone in Discover; when they like you back, they appear here.')}</p><Link className="btn" to="/discover">{t('Go to Discover')}</Link></div>
-      ) : (
-        <ul className="meet-list">
-          {mutual.map((p) => (
-            <li key={p.user_id} className="card person"><span className="person-open"><Face person={p} /><span><strong>{p.display_name}, {p.age}</strong>{summaryLines(p, t).map((x) => <span key={x} className="hint">{x}</span>)}<span className="tag">{t('{0} of 36', [p.match.total])} · {t(p.match.band)}</span></span></span></li>
-          ))}
-        </ul>
-      )}
-      <p className="notice">{t('Chat with your matches is the next thing being built.')}</p>
-    </>
-  );
 }

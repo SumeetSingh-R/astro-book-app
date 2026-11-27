@@ -71,11 +71,19 @@ The plan is a profile other people can see, a swipe-and-browse Discover ranked b
 
 - Overview: counts of accounts, profiles, photos to review, likes, mutual matches and suspensions.
 - Photos: approve or reject.
+- Reports: what people have reported, with suspend or close.
 - People: search profiles, suspend one with a reason the person sees, or restore it. A suspended profile leaves Discover and its photos are hidden.
 - Team (owners only): add an existing account by email as reviewer or owner, or remove someone. Reviewers never see emails.
 - Admins cannot see birth details, charts, readings or conversations. The first owner is added once, directly in the database.
 
-**Next stages:** chat after a mutual like, report and block, a full profile page for another person, invite-to-match links.
+**Stage 3 (built): chat, block, report and unmatch.**
+
+- `/chats` lists matches with the latest message and an unread count; `/chats/:id` is the conversation, with three conversation starters and both Moon signs when it is empty. New messages are fetched every few seconds while a chat is open.
+- A message can be sent only while both people like each other, neither has blocked the other and neither is suspended (`meet_can_chat`, checked by the database on every insert). Messages cannot be edited or deleted.
+- The safety menu in every chat: unmatch, block, or report (reason, optional details, and "also block"). Blocking removes each person from the other's Discover and chats.
+- Admin portal, Reports tab: open reports with the reason and what the reporter wrote; "Suspend and close" or "Close". Admins never see conversations.
+
+**Next stages:** a full profile page for another person, invite-to-match links, live message delivery instead of polling, notifications.
 
 ### Switching the AI on
 

@@ -87,6 +87,41 @@ function People({ owner }) {
   );
 }
 
+const REPORT_REASONS = { fake: 'Fake profile', photos: 'Unsuitable photos', abusive: 'Rude or abusive messages', money: 'Asking for money', other: 'Something else' };
+function Reports() {
+  const reports = useRemembered('admin:reports', () => call('admin_reports'), { maxAge: 0 });
+  const [error, setError] = useState(null);
+  async function act(report, suspend) {
+    setError(null);
+    try {
+      if (suspend) await call('admin_set_suspended', { p_user: report.reported_id, p_on: true, p_reason: `Reported: ${REPORT_REASONS[report.reason].toLowerCase()}` });
+      await call('admin_close_report', { p_id: report.id });
+      reports.set((list) => list.filter((r) => r.id !== report.id));
+    } catch (e) { setError(e.message); }
+  }
+  if (reports.error) return <p className="error" role="alert">{reports.error}</p>;
+  if (!reports.data) return <ListSkeleton label="Loading…" />;
+  return (
+    <>
+      <p className="muted">You see what the reporter wrote. Conversations are never shown here.</p>
+      {error ? <p className="error" role="alert">{error}</p> : null}
+      {reports.data.length === 0 ? <p className="notice">No open reports.</p> : null}
+      <ul className="meet-list">
+        {reports.data.map((r) => (
+          <li key={r.id} className="card admin-row">
+            <div>
+              <p><strong>{r.reported}</strong> <span className="hint">{r.reported_city ? `${r.reported_city} · ` : ''}reported by {r.reporter} on {formatDate(r.created_at)}</span></p>
+              <p className="pills"><span className="tag">{REPORT_REASONS[r.reason]}</span> {r.reports_against > 1 ? <span className="tag plain">{r.reports_against} reports in all</span> : null} {r.suspended ? <span className="tag plain">Already suspended</span> : null}</p>
+              {r.details ? <p>{r.details}</p> : <p className="hint">No details given.</p>}
+            </div>
+            <div className="admin-actions">{r.suspended ? null : <button type="button" className="btn small danger" onClick={() => act(r, true)}>Suspend and close</button>}<button type="button" className="btn small outline" onClick={() => act(r, false)}>Close</button></div>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 function Team({ userId }) {
   const team = useRemembered('admin:team', () => call('admin_team'), { maxAge: 0 });
   const [email, setEmail] = useState('');
@@ -144,7 +179,7 @@ export default function Admin() {
   const [tab, setTab] = useState('overview');
   if (role === null) return <ListSkeleton label="Loading…" />;
   if (!role) return <div className="sheet"><h1>Page not found</h1></div>;
-  const tabs = [['overview', 'Overview'], ['photos', 'Photos'], ['people', 'People'], ...(role === 'owner' ? [['team', 'Team']] : [])];
+  const tabs = [['overview', 'Overview'], ['photos', 'Photos'], ['reports', 'Reports'], ['people', 'People'], ...(role === 'owner' ? [['team', 'Team']] : [])];
   return (
     <>
       <div className="title-row">
@@ -155,6 +190,7 @@ export default function Admin() {
       </div>
       {tab === 'overview' ? <Overview /> : null}
       {tab === 'photos' ? <AdminPhotos embedded /> : null}
+      {tab === 'reports' ? <Reports /> : null}
       {tab === 'people' ? <People owner={role === 'owner'} /> : null}
       {tab === 'team' && role === 'owner' ? <Team userId={userId} /> : null}
     </>

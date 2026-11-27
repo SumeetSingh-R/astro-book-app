@@ -18,7 +18,8 @@ import Ask from './pages/Ask.jsx';
 import Welcome from './pages/Welcome.jsx';
 import Profile from './pages/Profile.jsx';
 import Me from './pages/Me.jsx';
-import Discover, { Matches } from './pages/Discover.jsx';
+import Discover from './pages/Discover.jsx';
+import Chats, { Chat } from './pages/Chats.jsx';
 import AdminPhotos from './pages/AdminPhotos.jsx';
 import Admin from './pages/Admin.jsx';
 import MeetPreferences from './pages/MeetPreferences.jsx';
@@ -77,7 +78,7 @@ function NeedsProfile({ children }) {
   return children;
 }
 
-const TABS = [['/today', msg('Today'), 'sun'], ['/discover', msg('Discover'), 'heart'], ['/charts', msg('My charts'), 'chart'], ['/ask', msg('Ask'), 'chat'], ['/match', msg('Matching'), 'match']];
+const TABS = [['/today', msg('Today'), 'sun'], ['/discover', msg('Discover'), 'heart'], ['/chats', msg('Chats'), 'chat'], ['/charts', msg('My charts'), 'chart'], ['/ask', msg('Ask'), 'planet']];
 
 function Shell({ children }) {
   const t = useT();
@@ -97,6 +98,7 @@ function Shell({ children }) {
           <nav className="main-nav" aria-label={t('Main')}>
             <NavLink to="/today">{t('Today')}</NavLink>
             <NavLink to="/discover">{t('Discover')}</NavLink>
+            <NavLink to="/chats">{t('Chats')}</NavLink>
             <NavLink to="/charts">{t('My charts')}</NavLink>
             <NavLink to="/match">{t('Matching')}</NavLink>
           </nav>
@@ -166,7 +168,9 @@ export default function App() {
               <Route path="/ask" element={<Private><NeedsProfile><Ask /></NeedsProfile></Private>} />
               <Route path="/profile" element={<Private><NeedsProfile><Profile /></NeedsProfile></Private>} />
               <Route path="/discover" element={<Private><NeedsProfile><Discover /></NeedsProfile></Private>} />
-              <Route path="/matches" element={<Private><NeedsProfile><Matches /></NeedsProfile></Private>} />
+              <Route path="/chats" element={<Private><NeedsProfile><Chats /></NeedsProfile></Private>} />
+              <Route path="/chats/:id" element={<Private><NeedsProfile><Chat /></NeedsProfile></Private>} />
+              <Route path="/matches" element={<Navigate to="/chats" replace />} />
               <Route path="/admin" element={<Private><Admin /></Private>} />
               <Route path="/admin/photos" element={<Private><AdminPhotos /></Private>} />
               <Route path="/me" element={<Private><NeedsProfile><Me /></NeedsProfile></Private>} />
