@@ -20,6 +20,7 @@ import Profile from './pages/Profile.jsx';
 import Me from './pages/Me.jsx';
 import Discover, { Matches } from './pages/Discover.jsx';
 import AdminPhotos from './pages/AdminPhotos.jsx';
+import Admin from './pages/Admin.jsx';
 import MeetPreferences from './pages/MeetPreferences.jsx';
 import About from './pages/About.jsx';
 
@@ -166,6 +167,7 @@ export default function App() {
               <Route path="/profile" element={<Private><NeedsProfile><Profile /></NeedsProfile></Private>} />
               <Route path="/discover" element={<Private><NeedsProfile><Discover /></NeedsProfile></Private>} />
               <Route path="/matches" element={<Private><NeedsProfile><Matches /></NeedsProfile></Private>} />
+              <Route path="/admin" element={<Private><Admin /></Private>} />
               <Route path="/admin/photos" element={<Private><AdminPhotos /></Private>} />
               <Route path="/me" element={<Private><NeedsProfile><Me /></NeedsProfile></Private>} />
               <Route path="/me/preferences" element={<Private><NeedsProfile><MeetPreferences /></NeedsProfile></Private>} />

@@ -67,6 +67,14 @@ The plan is a profile other people can see, a swipe-and-browse Discover ranked b
 - Photos are `pending` until a reviewer approves them (`/admin/photos`, for accounts listed in `meet_admins`). Only approved photos of discoverable people can be fetched by others. People cannot change a photo's status themselves.
 - Likes and passes are in `meet_likes`; a person can see who liked them.
 
+**Admin portal (built).** `/admin`, reached from the Profile page by admins only. Admins sign in like anyone else; a row in `meet_admins` (role `owner` or `reviewer`) is what the database checks on every admin action, so the page itself grants nothing.
+
+- Overview: counts of accounts, profiles, photos to review, likes, mutual matches and suspensions.
+- Photos: approve or reject.
+- People: search profiles, suspend one with a reason the person sees, or restore it. A suspended profile leaves Discover and its photos are hidden.
+- Team (owners only): add an existing account by email as reviewer or owner, or remove someone. Reviewers never see emails.
+- Admins cannot see birth details, charts, readings or conversations. The first owner is added once, directly in the database.
+
 **Next stages:** chat after a mutual like, report and block, a full profile page for another person, invite-to-match links.
 
 ### Switching the AI on

@@ -7,7 +7,7 @@ import { photoLinks } from '../lib/photos.js';
 import { ListSkeleton } from '../components/Skeleton.jsx';
 
 /** For photo reviewers only: approve or reject new photos before anyone else can see them. */
-export default function AdminPhotos() {
+export default function AdminPhotos({ embedded = false }) {
   const t = useT();
   const { session } = useAuth();
   const [error, setError] = useState(null);
@@ -32,7 +32,7 @@ export default function AdminPhotos() {
   if (!queue.data.admin) return <div className="sheet"><h1>{t('Page not found')}</h1></div>;
   return (
     <>
-      <div><h1>{t('Photos to review')}</h1><p className="muted">{t('Approve a photo if it clearly shows one adult and nothing unsuitable. Rejected photos stay hidden from everyone but their owner.')}</p></div>
+      <div>{embedded ? <h2>{t('Photos to review')}</h2> : <h1>{t('Photos to review')}</h1>}<p className="muted">{t('Approve a photo if it clearly shows one adult and nothing unsuitable. Rejected photos stay hidden from everyone but their owner.')}</p></div>
       {error ? <p className="error" role="alert">{error}</p> : null}
       {queue.data.photos.length === 0 ? <p className="notice">{t('Nothing waiting for review.')}</p> : (
         <ul className="review-grid">

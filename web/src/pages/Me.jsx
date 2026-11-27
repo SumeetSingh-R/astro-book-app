@@ -66,6 +66,7 @@ function MeForm({ userId, self, saved, photos: firstPhotos, cacheKey }) {
     return data ?? {};
   }, { maxAge: 10 * 60 * 1000 });
 
+  const suspension = useRemembered(`suspension:${userId}`, async () => (await supabase.from('meet_suspensions').select('reason').eq('user_id', userId).maybeSingle()).data ?? false, { maxAge: 60 * 1000 });
   const interests = toList(interestText);
   const state = completeness({ ...p, interests }, photos.length);
   const age = ageOn(self.birth_date);
@@ -103,6 +104,7 @@ function MeForm({ userId, self, saved, photos: firstPhotos, cacheKey }) {
           <p className="muted">{exists ? t('This is how others will see you.') : t('Set up the profile other people will see.')}</p>
         </div>
       </div>
+      {suspension.data ? <p className="notice" role="status">{t('An admin has hidden your profile from Discover for now.')}{suspension.data.reason ? ` ${t('Reason given: {0}', [suspension.data.reason])}` : ''}</p> : null}
       <div className="card complete">
         <div className="title-row"><strong>{t('Profile {0}% complete', [state.percent])}</strong><span className="hint">{state.next ? t(state.next) : t('Nothing missing.')}</span></div>
         <span className="bar" aria-hidden="true"><span style={{ width: `${state.percent}%` }} /></span>

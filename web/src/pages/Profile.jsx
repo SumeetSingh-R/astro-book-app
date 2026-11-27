@@ -7,6 +7,7 @@ import { useAccount, toFormValues, toRow } from '../lib/account.jsx';
 import { LanguageSwitch, useT } from '../lib/language.jsx';
 import BirthForm from '../components/BirthForm.jsx';
 import Icon from '../components/Icon.jsx';
+import { useAdminRole } from './Admin.jsx';
 
 /** The person's own details. Saved once here, they feed Today, the chart, matching and questions. */
 export default function Profile() {
@@ -15,6 +16,7 @@ export default function Profile() {
   const { self, reload } = useAccount();
   const navigate = useNavigate();
   const [saved, setSaved] = useState(false);
+  const role = useAdminRole(session.user.id);
 
   async function save(values) {
     setSaved(false);
@@ -54,6 +56,7 @@ export default function Profile() {
         </fieldset>
         <p className="private"><Icon name="lock" size={18} />{t('Your birth details are private to your account and are used only to draw your chart.')}</p>
       </BirthForm>
+      {role ? <Link className="btn outline" to="/admin">Admin portal</Link> : null}
       <button type="button" className="btn outline" onClick={signOut}>{t('Sign out')}</button>
     </div>
   );
