@@ -91,6 +91,10 @@ export default function Profile() {
         <span className="cta-text"><Icon name="heart" size={26} /><span><strong>{t('Meet and match')}</strong><span>{t('Add photos and details to the profile other people will see')}</span></span></span>
         <Icon name="go" size={20} />
       </Link>
+      <Link className="card cta" to="/family">
+        <span className="cta-text"><Icon name="match" size={26} /><span><strong>{t('Family help')}</strong><span>{t('Invite a parent to look for matches with you')}</span></span></span>
+        <Icon name="go" size={20} />
+      </Link>
       <h2>{t('Your birth details')}</h2>
       <BirthForm key={self.id} kind="self" initial={toFormValues(self)} submitLabel={t('Save changes')} busyLabel={t('Saving…')} onSubmit={save}
         done={saved ? t('Saved. Your chart and readings are up to date.') : null}>

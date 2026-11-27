@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../App.jsx';
 import { useAccount } from '../lib/account.jsx';
 import { useRemembered } from '../lib/cache.js';
 import { useT } from '../lib/language.jsx';
 import { LOOKING_FOR, MARITAL, DIETS, DRINKING, SMOKING, FAMILY_TYPES, INCOMES, labelOf, feetInches, whyLines } from '../lib/meet.js';
-import { useDiscover, decide } from '../lib/meetData.js';
+import { useDiscover, decide, setSuggestion } from '../lib/meetData.js';
+import { useActor } from '../lib/acting.jsx';
 import { photoLinks } from '../lib/photos.js';
 import { useMeetProfile } from './Me.jsx';
 import { KOOTA_ABOUT, Ring } from './Match.jsx';
@@ -36,7 +36,7 @@ export function careSentence(care, t) {
 }
 
 /** Why two people fit: the tests that went best, the thing to talk about, and the preference checks. */
-export function Why({ person, link = false }) {
+export function Why({ person, link = false, base = '', forName = null }) {
   const t = useT();
   const { match, fit } = person;
   const { good, care } = whyLines(match);
@@ -48,28 +48,32 @@ export function Why({ person, link = false }) {
   const habits = [labelOf(DIETS, person.diet), labelOf(DRINKING, person.drinking), labelOf(SMOKING, person.smoking)].filter(Boolean).map((x) => t(x));
   return (
     <section className="why-fit" aria-labelledby="why-fit-title" aria-live="polite">
-      <h2 id="why-fit-title">{t('Why you and {0} fit', [person.display_name])}</h2>
+      <h2 id="why-fit-title">{forName ? t('Why {0} and {1} fit', [forName, person.display_name]) : t('Why you and {0} fit', [person.display_name])}</h2>
       <div className="banner"><div><p><strong>{t('{0} of 36', [match.total])} · {t(match.band)}</strong></p><p className="hint">{t('18 is the traditional pass mark.')} {t('Worked out from both birth charts.')}</p></div></div>
+      {person.family_helps ? <p className="hint family-note"><Icon name="match" size={16} />{t('A family member helps {0} with this profile.', [person.display_name])}</p> : null}
       {good.map((k) => (
         <p key={k.name} className="why-line"><span className="why-mark good"><Icon name="check" size={18} /></span><span><strong>{t(k.name)} {k.score} / {k.max}.</strong> <span className="muted">{t(KOOTA_ABOUT[k.name])}</span></span></p>
       ))}
       {careText ? <p className="why-line care"><span className="why-mark"><Icon name="chat" size={18} /></span><span><strong>{t('Worth a conversation.')}</strong> {careText}</span></p> : null}
       <div className="card">
-        <p><strong>{t('Fits {0} of your {1} preferences', [fit.passed, fit.checks.length])}</strong></p>
+        <p><strong>{forName ? t('Fits {0} of {1} preferences', [fit.passed, fit.checks.length]) : t('Fits {0} of your {1} preferences', [fit.passed, fit.checks.length])}</strong></p>
         <ul className="checks">{fit.checks.map(([label, ok]) => <li key={label} className={ok ? 'ok' : 'miss'}><Icon name={ok ? 'check' : 'x'} size={14} />{t(label)}</li>)}</ul>
       </div>
       {person.about ? <div className="card"><p className="note-label">{t('Perks of dating me')}</p><p className="quote">{person.about}</p></div> : null}
       {facts.length ? <dl className="facts-list">{facts.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl> : null}
       {habits.length || person.interests.length ? <ul className="chip-list">{[...habits, ...person.interests].map((x) => <li key={x}>{x}</li>)}</ul> : null}
       <p className="private"><Icon name="lock" size={18} />{t('Neither of you can see the other\'s date, time or place of birth. Only the result is shared.')}</p>
-      {link ? <Link className="btn outline" to={`/people/${person.user_id}`}>{t('Open full profile')}<Icon name="go" size={20} /></Link> : null}
+      {link ? <Link className="btn outline" to={`${base}/people/${person.user_id}`}>{t('Open full profile')}<Icon name="go" size={20} /></Link> : null}
     </section>
   );
 }
 
 function Deck({ userId, me, selfId }) {
   const t = useT();
-  const { data: people, error, set } = useDiscover(userId, me, selfId);
+  const { own, acting, base } = useActor();
+  const { data: people, error, set } = useDiscover(userId, me, selfId, Boolean(acting));
+  const canLike = !acting || acting.can_like; // a helper without this can only suggest
+  const [skipped, setSkipped] = useState(() => new Set());
   const [view, setView] = useState('swipe');
   const [everyone, setEveryone] = useState(false);
   const [openId, setOpenId] = useState(null);
@@ -80,7 +84,8 @@ function Deck({ userId, me, selfId }) {
   if (!people) return <ListSkeleton label={t('Finding people…')} />;
 
   const shown = people.filter((p) => everyone || p.fit.fits);
-  const queue = shown.filter((p) => !p.my_kind);
+  const isSuggested = (p) => p.suggested_by !== null && p.suggested_by !== undefined;
+  const queue = shown.filter((p) => !p.my_kind && (canLike || (!skipped.has(p.user_id) && !isSuggested(p))));
   const current = queue[0] ?? null;
   const open = view === 'swipe' ? current : shown.find((p) => p.user_id === openId) ?? shown[0] ?? null;
 
@@ -96,6 +101,18 @@ function Deck({ userId, me, selfId }) {
     }
   }
 
+  async function suggest(person) {
+    setActionError(null);
+    const before = person.suggested_by ?? null;
+    const on = !isSuggested(person);
+    set((list) => list.map((p) => (p.user_id === person.user_id ? { ...p, suggested_by: on ? '' : null } : p)));
+    try { await setSuggestion(own, userId, person.user_id, on); } catch {
+      set((list) => list.map((p) => (p.user_id === person.user_id ? { ...p, suggested_by: before } : p)));
+      setActionError(t('That could not be saved. Try again.'));
+    }
+  }
+  const suggestedTag = (p) => (!acting && isSuggested(p) ? <span className="tag focus">{t('{0} suggests', [p.suggested_by || t('Family')])}</span> : null);
+
   const hidden = people.length - people.filter((p) => p.fit.fits).length;
   return (
     <>
@@ -107,7 +124,7 @@ function Deck({ userId, me, selfId }) {
         <p className="hint">
           {everyone ? t('{0} people', [people.length]) : t('{0} people fit your filters', [shown.length])}
           {hidden > 0 || everyone ? <>{' · '}<button type="button" className="link" onClick={() => setEveryone(!everyone)}>{everyone ? t('Only my filters') : t('Show everyone')}</button></> : null}
-          {' · '}<Link to="/me/preferences">{t('Change my filters')}</Link>
+          {acting ? null : <>{' · '}<Link to="/me/preferences">{t('Change my filters')}</Link></>}
         </p>
       </div>
       {actionError ? <p className="error" role="alert">{actionError}</p> : null}
@@ -124,20 +141,28 @@ function Deck({ userId, me, selfId }) {
                   <div className="deck-text">
                     <p className="deck-name">{current.display_name}, {current.age}</p>
                     {summaryLines(current, t).map((x) => <p key={x}>{x}</p>)}
+                    {suggestedTag(current)}
                   </div>
                 </article>
                 <div className="card deck-score"><Ring total={current.match.total} max={36} /><div><p><strong>{t(current.match.band)}</strong></p><p className="hint">{t('Fits {0} of your {1} preferences', [current.fit.passed, current.fit.checks.length])}</p></div></div>
-                <div className="deck-actions">
-                  <button type="button" className="round" aria-label={t('Pass on {0}', [current.display_name])} onClick={() => act(current, 'pass')}><Icon name="x" size={28} /></button>
-                  <button type="button" className="round like" aria-label={t('Like {0}', [current.display_name])} onClick={() => act(current, 'like')}><Icon name="heart" size={28} /></button>
-                </div>
+                {canLike ? (
+                  <div className="deck-actions">
+                    <button type="button" className="round" aria-label={t('Pass on {0}', [current.display_name])} onClick={() => act(current, 'pass')}><Icon name="x" size={28} /></button>
+                    <button type="button" className="round like" aria-label={t('Like {0}', [current.display_name])} onClick={() => act(current, 'like')}><Icon name="heart" size={28} /></button>
+                  </div>
+                ) : (
+                  <div className="deck-actions">
+                    <button type="button" className="round" aria-label={t('Skip {0}', [current.display_name])} onClick={() => setSkipped((old) => new Set(old).add(current.user_id))}><Icon name="x" size={28} /></button>
+                    <button type="button" className="btn" onClick={() => suggest(current)}><Icon name="star" size={20} />{t('Suggest to {0}', [acting.name])}</button>
+                  </div>
+                )}
               </>
             ) : (
               <div className="empty card">
                 <h1>{t('You\'ve seen everyone who fits')}</h1>
                 <p className="muted">{t('Widen your filters to meet more people, or browse the full list.')}</p>
                 <button type="button" className="btn" onClick={() => setView('browse')}>{t('Browse everyone')}<Icon name="go" size={20} /></button>
-                <Link className="btn outline" to="/me/preferences"><Icon name="sliders" size={20} />{t('Change my filters')}</Link>
+                {acting ? null : <Link className="btn outline" to="/me/preferences"><Icon name="sliders" size={20} />{t('Change my filters')}</Link>}
               </div>
             )) : (
               <ul className="meet-list">
@@ -145,15 +170,17 @@ function Deck({ userId, me, selfId }) {
                   <li key={p.user_id} className={open?.user_id === p.user_id ? 'card meet-person on' : 'card meet-person'}>
                     <button type="button" className="person-open" aria-pressed={open?.user_id === p.user_id} onClick={() => setOpenId(p.user_id)}>
                       <Face person={p} />
-                      <span><strong>{p.display_name}, {p.age}</strong>{summaryLines(p, t).map((x) => <span key={x} className="hint">{x}</span>)}<span className="tag">{t('{0} of 36', [p.match.total])} · {t(p.match.band)}</span></span>
+                      <span><strong>{p.display_name}, {p.age}</strong>{summaryLines(p, t).map((x) => <span key={x} className="hint">{x}</span>)}<span className="tag">{t('{0} of 36', [p.match.total])} · {t(p.match.band)}</span>{suggestedTag(p)}</span>
                     </button>
-                    <button type="button" className={p.my_kind === 'like' ? 'round small like' : 'round small'} aria-pressed={p.my_kind === 'like'} aria-label={t('Like {0}', [p.display_name])} onClick={() => act(p, p.my_kind === 'like' ? 'pass' : 'like')}><Icon name="heart" size={22} /></button>
+                    {canLike
+                      ? <button type="button" className={p.my_kind === 'like' ? 'round small like' : 'round small'} aria-pressed={p.my_kind === 'like'} aria-label={t('Like {0}', [p.display_name])} onClick={() => act(p, p.my_kind === 'like' ? 'pass' : 'like')}><Icon name="heart" size={22} /></button>
+                      : <button type="button" className={isSuggested(p) ? 'round small like' : 'round small'} aria-pressed={isSuggested(p)} aria-label={t('Suggest {0} to {1}', [p.display_name, acting.name])} onClick={() => suggest(p)}><Icon name="star" size={22} /></button>}
                   </li>
                 ))}
               </ul>
             )}
           </div>
-          {open ? <Why person={open} link /> : null}
+          {open ? <Why person={open} link base={base} forName={acting?.name ?? null} /> : null}
         </div>
       )}
 
@@ -162,8 +189,8 @@ function Deck({ userId, me, selfId }) {
           <div className="modal-card msg">
             <Face person={matched} className="face large" />
             <h2 id="matched-title">{t('You both said yes')}</h2>
-            <p>{t('You and {0} liked each other. Your charts score {1} of 36.', [matched.display_name, matched.match.total])}</p>
-            <Link className="btn" to={`/chats/${matched.user_id}`}>{t('Say hello')}<Icon name="go" size={20} /></Link>
+            <p>{acting ? t('{0} and {1} liked each other. Their charts score {2} of 36.', [acting.name, matched.display_name, matched.match.total]) : t('You and {0} liked each other. Your charts score {1} of 36.', [matched.display_name, matched.match.total])}</p>
+            {!acting || acting.can_chat ? <Link className="btn" to={`${base}/chats/${matched.user_id}`}>{t('Say hello')}<Icon name="go" size={20} /></Link> : null}
             <button type="button" className="link" onClick={() => setMatched(null)}>{t('Keep looking')}</button>
           </div>
         </div>
@@ -175,12 +202,20 @@ function Deck({ userId, me, selfId }) {
 /** Meet people: one card at a time, or the whole list, best kundli match first. */
 export default function Discover() {
   const t = useT();
-  const { session } = useAuth();
+  const { userId, acting } = useActor();
   const { self } = useAccount();
-  const userId = session.user.id;
   const meet = useMeetProfile(userId);
   if (meet.error) return <p className="error" role="alert">{t(meet.error)}</p>;
   if (!meet.data) return <ListSkeleton label={t('Loading…')} />;
+  if (!meet.data.profile && acting) {
+    return (
+      <div className="sheet">
+        <h1>{t('{0} has not set up a profile yet', [acting.name])}</h1>
+        <p className="muted">{t('They need to add their own details and photos first. Then you can look for matches together.')}</p>
+        <Link className="btn" to="/family">{t('Back to family')}</Link>
+      </div>
+    );
+  }
   if (!meet.data.profile) {
     return (
       <div className="sheet">
@@ -190,5 +225,5 @@ export default function Discover() {
       </div>
     );
   }
-  return <Deck userId={userId} me={meet.data.profile} selfId={self.id} />;
+  return <Deck userId={userId} me={meet.data.profile} selfId={self?.id ?? null} />;
 }

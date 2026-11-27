@@ -17,18 +17,27 @@ export function saveOwnKeys(userId, selfId) {
   }, { maxAge: 12 * 3600 * 1000 });
 }
 
+/** The saved match keys of the person a helper is acting for. A helper cannot work them out: they never see birth details. */
+async function theirKeys(userId) {
+  const { data, error } = await supabase.from('meet_keys').select('moon_pada, mars_rashi, mars_house, lagna_rashi, time_known').eq('user_id', userId).maybeSingle();
+  if (error || !data) throw new Error('Their chart is not ready yet. Ask them to open Astro Book once.');
+  return data;
+}
+
 /**
  * Everyone the person can meet, each with their kundli match and how they fit the person's
- * preferences, best match first. Null while loading.
+ * preferences, best match first. Null while loading. `acting` is true when a family helper is
+ * looking on the person's behalf.
  */
-export function useDiscover(userId, me, selfId) {
+export function useDiscover(userId, me, selfId, acting = false) {
   return useRemembered(me ? `discover:${userId}` : null, async () => {
     const [keys, people, prefs] = await Promise.all([
-      saveOwnKeys(userId, selfId),
-      supabase.rpc('discover_people'),
+      acting ? theirKeys(userId) : saveOwnKeys(userId, selfId),
+      supabase.rpc('discover_people', acting ? { p_as: userId } : {}),
       supabase.from('meet_preferences').select('*').eq('user_id', userId).maybeSingle(),
     ]);
     if (people.error) throw new Error('People could not be loaded. Refresh the page to try again.');
+    if (!keys) throw new Error('People could not be loaded. Refresh the page to try again.');
     const mine = { user_id: userId, gender: me.gender, keys };
     const wants = { ...blankPreferences(), ...(prefs.data ?? {}) };
     return (people.data ?? []).map((person) => {
@@ -43,5 +52,13 @@ export async function decide(userId, person, kind) {
   const { error } = await supabase.from('meet_likes').upsert({ liker: userId, liked: person.user_id, kind }, { onConflict: 'liker,liked' });
   if (error) throw new Error('like');
   return kind === 'like' && person.liked_me;
+}
+/** A helper suggests someone to the person they help, or takes the suggestion back. */
+export async function setSuggestion(helperId, personId, suggestedId, on) {
+  const table = supabase.from('family_suggestions');
+  const { error } = on
+    ? await table.upsert({ person: personId, suggested: suggestedId, helper: helperId }, { onConflict: 'person,suggested', ignoreDuplicates: true })
+    : await table.delete().eq('person', personId).eq('suggested', suggestedId);
+  if (error) throw new Error('suggest');
 }
 export const forgetDiscover = (userId) => forget(`discover:${userId}`);

@@ -14,6 +14,7 @@ export default function About() {
       <h2>{t('Your privacy')}</h2>
       <p>{t('Your profile and saved charts are visible only to you. When you ask a question, your question, your age and your chart positions are sent to the AI model. Your name, email, birth date and birth place are not.')}</p>
       <p>{t('If you set up a meet-and-match profile, other signed-in people see what you put on it and your approved photos. They never see your date, time or place of birth.')}</p>
+      <p>{t('If you invite a family member to help, they see the people you can meet. They can like or chat for you only if you allow it, you see everything they do, and you can stop it at any time.')}</p>
       <p>{t('You can delete your account, and everything in it, from your profile page at any time.')}</p>
       <h2>{t('Credits')}</h2>
       <p>{t('Planet positions are calculated with Swiss Ephemeris, using the Lahiri ayanamsa for Vedic charts. Place names and coordinates come from GeoNames (CC BY 4.0).')}</p>

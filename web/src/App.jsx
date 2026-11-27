@@ -24,6 +24,8 @@ import Chats, { Chat } from './pages/Chats.jsx';
 import Person from './pages/Person.jsx';
 import Invite, { InviteLink } from './pages/Invite.jsx';
 import Notifications from './pages/Notifications.jsx';
+import Family, { FamilyLink } from './pages/Family.jsx';
+import { Acting, useFamily } from './lib/acting.jsx';
 import AdminPhotos from './pages/AdminPhotos.jsx';
 import Admin from './pages/Admin.jsx';
 import MeetPreferences from './pages/MeetPreferences.jsx';
@@ -78,8 +80,17 @@ function NeedsProfile({ children }) {
   const t = useT();
   const { self, loading } = useAccount();
   if (loading) return <DaySkeleton label={t('Loading your profile…')} />;
-  if (!self) return <Navigate to="/welcome" replace />;
+  if (!self) return <NoProfile />;
   return children;
+}
+
+/** No birth details yet: a family helper goes to the people they help; everyone else is asked for their details. */
+function NoProfile() {
+  const t = useT();
+  const { session } = useAuth();
+  const family = useFamily(session.user.id);
+  if (!family.data && !family.error) return <DaySkeleton label={t('Loading your profile…')} />;
+  return <Navigate to={family.data?.helping.length ? '/family' : '/welcome'} replace />;
 }
 
 const TABS = [['/today', msg('Today'), 'sun'], ['/discover', msg('Discover'), 'heart'], ['/chats', msg('Chats'), 'chat'], ['/charts', msg('My charts'), 'chart'], ['/ask', msg('Ask'), 'planet']];
@@ -179,6 +190,12 @@ export default function App() {
               <Route path="/discover" element={<Private><NeedsProfile><Discover /></NeedsProfile></Private>} />
               <Route path="/invite" element={<Private><NeedsProfile><Invite /></NeedsProfile></Private>} />
               <Route path="/m/:code" element={<Private><InviteLink /></Private>} />
+              <Route path="/family" element={<Private><Family /></Private>} />
+              <Route path="/f/:code" element={<Private><FamilyLink /></Private>} />
+              <Route path="/family/:person/discover" element={<Private><Acting><Discover /></Acting></Private>} />
+              <Route path="/family/:person/people/:id" element={<Private><Acting><Person /></Acting></Private>} />
+              <Route path="/family/:person/chats" element={<Private><Acting><Chats /></Acting></Private>} />
+              <Route path="/family/:person/chats/:id" element={<Private><Acting><Chat /></Acting></Private>} />
               <Route path="/notifications" element={<Private><Notifications /></Private>} />
               <Route path="/people/:id" element={<Private><NeedsProfile><Person /></NeedsProfile></Private>} />
               <Route path="/chats" element={<Private><NeedsProfile><Chats /></NeedsProfile></Private>} />

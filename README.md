@@ -98,7 +98,11 @@ The plan is a profile other people can see, a swipe-and-browse Discover ranked b
 
 **Typing and online (built).** "Dev is typing…" is sent over a private socket channel named for the two people; the database lets only that matched pair join, listen or send (`meet_chat_topic_ok`, policies on `realtime.messages`). Online status needs no extra connection: each inbox check notes the time, and a person seen in the last two minutes shows a green dot to their matches only. "Show when I am online" on the profile page turns it off both ways (`20261127110000_meet_typing_online.sql`).
 
-**Next stages:** alerts when the app is closed (email or phone), parent accounts.
+**Family help (built).** A person invites a parent (or another family member) with a one-person link from `/family`, and chooses what they may do: seeing people and suggesting them is always included; liking or passing, and reading and replying to chats, are separate switches. The person can change these, pause the helper or remove them at any time, and sees a list of everything the helper did. The helper signs in with their own account (no birth details needed) and uses the same Discover, profile and chat pages under `/family/<person>/…`, with a bar that says whose pages they are.
+
+How it is enforced: the database function `meet_acts_for(person, what)` answers whether the signed-in person may act for someone, and the row level security policies on profiles, filters, match keys, likes and messages use it. Every like and message made by a helper is stamped by the database (`acted_by`, `sent_by`), messages show "Sent by family" to both sides, and a profile with an active helper says so to other people. A helper never sees birth details, and cannot edit the profile, photos or filters, block, report, or invite others (`20261127120000_family.sql`).
+
+**Next stages:** alerts when the app is closed (email or phone).
 
 ### Switching the AI on
 

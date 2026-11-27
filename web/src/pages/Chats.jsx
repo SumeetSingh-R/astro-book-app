@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
 import { useRemembered, forget } from '../lib/cache.js';
-import { useAuth } from '../App.jsx';
 import { useAccount } from '../lib/account.jsx';
 import { useT, msg } from '../lib/language.jsx';
 import { RASHIS, formatDate } from '../lib/format.js';
 import { useDiscover, saveOwnKeys, forgetDiscover } from '../lib/meetData.js';
 import { FIRST_MESSAGES, limitText, waitingForReply } from '../lib/meet.js';
 import { useInbox } from '../lib/inbox.jsx';
+import { useActor } from '../lib/acting.jsx';
 import { useMeetProfile } from './Me.jsx';
 import { Face, summaryLines } from './Discover.jsx';
 import Icon from '../components/Icon.jsx';
@@ -20,21 +20,21 @@ const moonSign = (keys) => RASHIS[Math.floor(keys.moon_pada / 9)];
 
 /** The people the signed-in person has matched with (both liked each other). Null while loading. */
 function useMatches() {
-  const { session } = useAuth();
+  const { userId, acting, base } = useActor();
   const { self } = useAccount();
-  const userId = session.user.id;
   const meet = useMeetProfile(userId);
-  const { data: people } = useDiscover(userId, meet.data?.profile ?? null, self.id);
+  const { data: people } = useDiscover(userId, meet.data?.profile ?? null, self?.id ?? null, Boolean(acting));
   const ready = meet.data && (!meet.data.profile || people);
-  return { userId, selfId: self.id, hasProfile: Boolean(meet.data?.profile), matches: ready ? (people ?? []).filter((p) => p.liked_me && p.my_kind === 'like') : null };
+  return { userId, selfId: self?.id ?? null, acting, base, hasProfile: Boolean(meet.data?.profile), matches: ready ? (people ?? []).filter((p) => p.liked_me && p.my_kind === 'like') : null };
 }
 
 /** Matches and conversations, newest first. */
 export default function Chats() {
   const t = useT();
-  const { userId, hasProfile, matches } = useMatches();
+  const { userId, acting, base, hasProfile, matches } = useMatches();
   const inbox = useRemembered(`inbox:${userId}`, async () => {
-    const { data, error } = await supabase.from('meet_messages').select('id, sender, recipient, body, created_at, read_at').order('created_at', { ascending: false }).limit(300);
+    const { data, error } = await supabase.from('meet_messages').select('id, sender, recipient, body, created_at, read_at')
+      .or(`sender.eq.${userId},recipient.eq.${userId}`).order('created_at', { ascending: false }).limit(300); // always say whose: a family helper's sign-in can read two people's chats
     if (error) throw new Error('Your chats could not be loaded. Refresh the page to try again.');
     return data;
   }, { maxAge: 0 });
@@ -42,7 +42,9 @@ export default function Chats() {
   const reload = inbox.refresh;
   useEffect(() => listen((event) => { if (event.type !== 'read') reload(); }), [listen, reload]);
 
+  if (acting && !acting.can_chat) return <div className="sheet"><h1>{t('Chats')}</h1><p className="muted">{t('{0} has not let family read or reply to chats. Only they can change that.', [acting.name])}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Discover')}</Link></div>;
   if (!matches) return <ListSkeleton label={t('Loading…')} />;
+  if (!hasProfile && acting) return <div className="sheet"><h1>{t('{0} has not set up a profile yet', [acting.name])}</h1><Link className="btn" to="/family">{t('Back to family')}</Link></div>;
   if (!hasProfile) return <div className="sheet"><h1>{t('Chats')}</h1><p className="muted">{t('Set up the profile other people will see, then come back here to find your matches.')}</p><Link className="btn" to="/me">{t('Set up my profile')}</Link></div>;
   const rows = matches.map((p) => {
     const mine = (inbox.data ?? []).filter((m) => m.sender === p.user_id || m.recipient === p.user_id);
@@ -50,16 +52,16 @@ export default function Chats() {
   }).sort((a, b) => String(b.last?.created_at ?? '').localeCompare(String(a.last?.created_at ?? '')));
   return (
     <>
-      <div><h1>{t('Chats')}</h1><p className="muted">{t('People you liked who liked you back.')}</p></div>
+      <div><h1>{t('Chats')}</h1><p className="muted">{acting ? t('People {0} matched with.', [acting.name]) : t('People you liked who liked you back.')}</p></div>
       {inbox.error ? <p className="error" role="alert">{t(inbox.error)}</p> : null}
       {rows.length === 0 ? (
-        <div className="empty card"><p>{t('No matches yet. Like someone in Discover; when they like you back, they appear here.')}</p><Link className="btn" to="/discover">{t('Go to Discover')}</Link></div>
+        <div className="empty card"><p>{acting ? t('No matches yet.') : t('No matches yet. Like someone in Discover; when they like you back, they appear here.')}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Discover')}</Link></div>
       ) : (
         <ul className="meet-list">
           {rows.map(({ p, last, unread }) => (
             <li key={p.user_id}>
-              <Link className="card meet-person chat-row" to={`/chats/${p.user_id}`}>
-                <span className="face-wrap"><Face person={p} />{online.has(p.user_id) ? <span className="online-dot" role="img" aria-label={t('Online')} /> : null}</span>
+              <Link className="card meet-person chat-row" to={`${base}/chats/${p.user_id}`}>
+                <span className="face-wrap"><Face person={p} />{!acting && online.has(p.user_id) ? <span className="online-dot" role="img" aria-label={t('Online')} /> : null}</span>
                 <span className="chat-row-text"><strong>{p.display_name}, {p.age}</strong>
                   <span className="hint">{last ? `${last.sender === p.user_id ? '' : `${t('You')}: `}${last.body}` : t('You matched. Say hello.')}</span></span>
                 {unread ? <span className="tag focus" aria-label={t('{0} new messages', [unread])}>{unread}</span> : <span className="tag">{t('{0} of 36', [p.match.total])}</span>}
@@ -68,7 +70,7 @@ export default function Chats() {
           ))}
         </ul>
       )}
-      <Link className="card cta" to="/invite"><span className="cta-text"><Icon name="match" size={26} /><span><strong>{t('Match with someone you know')}</strong><span>{t('Send a link and compare your charts')}</span></span></span><Icon name="go" size={20} /></Link>
+      {acting ? null : <Link className="card cta" to="/invite"><span className="cta-text"><Icon name="match" size={26} /><span><strong>{t('Match with someone you know')}</strong><span>{t('Send a link and compare your charts')}</span></span></span><Icon name="go" size={20} /></Link>}
       <p className="private"><Icon name="lock" size={18} />{t('You can only chat after you have both liked each other. You can block or report from any chat.')}</p>
     </>
   );
@@ -111,7 +113,7 @@ export function Chat() {
   const t = useT();
   const { id } = useParams();
   const navigate = useNavigate();
-  const { userId, selfId, matches } = useMatches();
+  const { userId, selfId, matches, acting, base } = useMatches();
   const [draft, setDraft] = useState('');
   const [error, setError] = useState(null);
   const [menu, setMenu] = useState(false);
@@ -125,12 +127,12 @@ export function Chat() {
   const person = matches?.find((p) => p.user_id === id) ?? null;
 
   const thread = useRemembered(person ? `thread:${userId}:${id}` : null, async () => {
-    const { data, error: err } = await supabase.from('meet_messages').select('id, sender, body, created_at, read_at')
+    const { data, error: err } = await supabase.from('meet_messages').select('id, sender, body, created_at, read_at, sent_by')
       .or(`and(sender.eq.${userId},recipient.eq.${id}),and(sender.eq.${id},recipient.eq.${userId})`).order('created_at').limit(300);
     if (err) throw new Error('This chat could not be loaded. Refresh the page to try again.');
     return data;
   }, { maxAge: 0 });
-  const mine = useRemembered(person ? `ownKeys:${userId}` : null, () => saveOwnKeys(userId, selfId), { maxAge: 12 * 3600 * 1000 });
+  const mine = useRemembered(person && !acting ? `ownKeys:${userId}` : null, () => saveOwnKeys(userId, selfId), { maxAge: 12 * 3600 * 1000 });
   const { refresh, set } = thread;
   const loaded = useRef(false);
   loaded.current = Boolean(thread.data);
@@ -140,21 +142,21 @@ export function Chat() {
 
   // New messages and read receipts arrive over the socket the moment they happen.
   useEffect(() => {
-    if (!person) return undefined;
+    if (!person || acting) return undefined; // a helper's socket carries their own messages, not the person's
     return listen((event) => {
       if (event.type === 'connected') { refresh(); return; }
       if (!loaded.current) return; // the first load will include it
       const { row } = event;
       if (event.type === 'message' && row.sender === id) {
         setTyping(false);
-        set((list) => (list.some((m) => m.id === row.id) ? list : [...list, { id: row.id, sender: row.sender, body: row.body, created_at: row.created_at, read_at: row.read_at }]));
+        set((list) => (list.some((m) => m.id === row.id) ? list : [...list, { id: row.id, sender: row.sender, body: row.body, created_at: row.created_at, read_at: row.read_at, sent_by: row.sent_by ?? null }]));
       } else if (event.type === 'read' && row.recipient === id) {
         set((list) => list.map((m) => (m.id === row.id ? { ...m, read_at: row.read_at } : m)));
       }
     });
-  }, [person, id, listen, refresh, set]);
+  }, [person, acting, id, listen, refresh, set]);
   // "Typing…" travels on a private channel that only the two matched people may join.
-  const matched = Boolean(person);
+  const matched = Boolean(person) && !acting; // only the two people themselves share the typing channel
   useEffect(() => {
     if (!matched) return undefined;
     let clear = null;
@@ -180,15 +182,16 @@ export function Chat() {
   // Asking again on a timer stays as a safety net: every few seconds without the socket, rarely with it.
   useEffect(() => {
     if (!person) return undefined;
-    const timer = setInterval(refresh, live ? 30000 : 6000);
+    const timer = setInterval(refresh, live && !acting ? 30000 : 6000);
     return () => clearInterval(timer);
-  }, [person, refresh, live]);
+  }, [person, refresh, live, acting]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }); }, [count]);
   const refreshInbox = inbox.refresh;
-  useEffect(() => { if (unread) supabase.rpc('meet_mark_read', { p_other: id }).then(() => { forget(`inbox:${userId}`); refreshInbox(true); }); }, [unread, id, userId, refreshInbox]);
+  useEffect(() => { if (unread && !acting) supabase.rpc('meet_mark_read', { p_other: id }).then(() => { forget(`inbox:${userId}`); refreshInbox(true); }); }, [unread, acting, id, userId, refreshInbox]);
 
+  if (acting && !acting.can_chat) return <div className="sheet"><h1>{t('Chats')}</h1><p className="muted">{t('{0} has not let family read or reply to chats. Only they can change that.', [acting.name])}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Discover')}</Link></div>;
   if (!matches) return <ListSkeleton label={t('Loading…')} />;
-  if (!person) return <div className="sheet"><h1>{t('This chat is not available')}</h1><p className="muted">{t('You can chat with someone only while you are both matched.')}</p><Link className="btn" to="/chats">{t('Back to chats')}</Link></div>;
+  if (!person) return <div className="sheet"><h1>{t('This chat is not available')}</h1><p className="muted">{t('You can chat with someone only while you are both matched.')}</p><Link className="btn" to={`${base}/chats`}>{t('Back to chats')}</Link></div>;
 
   async function send(text) {
     const body = text.trim().slice(0, 1000);
@@ -197,7 +200,7 @@ export function Chat() {
     const pending = { id: `pending-${Date.now()}`, sender: userId, body, created_at: new Date().toISOString(), read_at: null };
     thread.set((list) => [...(list ?? []), pending]);
     setDraft('');
-    const { data, error: err } = await supabase.from('meet_messages').insert({ sender: userId, recipient: id, body }).select('id, sender, body, created_at, read_at').single();
+    const { data, error: err } = await supabase.from('meet_messages').insert({ sender: userId, recipient: id, body }).select('id, sender, body, created_at, read_at, sent_by').single();
     if (err) {
       thread.set((list) => list.filter((m) => m.id !== pending.id));
       setDraft(body);
@@ -223,10 +226,10 @@ export function Chat() {
   return (
     <div className="chat sheet">
       <header className="chat-head">
-        <Link className="back" to="/chats" aria-label={t('Back to chats')}><Icon name="back" size={20} /></Link>
+        <Link className="back" to={`${base}/chats`} aria-label={t('Back to chats')}><Icon name="back" size={20} /></Link>
         <Face person={person} />
-        <div className="chat-who"><h1><Link to={`/people/${person.user_id}`}>{person.display_name}, {person.age}</Link></h1><p className="hint">{inbox.online.has(person.user_id) ? <span className="online-text"><span className="online-dot inline" aria-hidden="true" />{t('Online')} · </span> : null}{summaryLines(person, t)[0] ?? ''} · {t('{0} of 36', [person.match.total])}</p></div>
-        <div className="chat-menu">
+        <div className="chat-who"><h1><Link to={`${base}/people/${person.user_id}`}>{person.display_name}, {person.age}</Link></h1><p className="hint">{!acting && inbox.online.has(person.user_id) ? <span className="online-text"><span className="online-dot inline" aria-hidden="true" />{t('Online')} · </span> : null}{summaryLines(person, t)[0] ?? ''} · {t('{0} of 36', [person.match.total])}</p></div>
+        {acting ? null : <div className="chat-menu">
           <button type="button" className="round small" aria-expanded={menu} aria-label={t('Safety options')} onClick={() => setMenu(!menu)}><Icon name="lock" size={20} /></button>
           {menu ? (
             <div className="card menu msg">
@@ -235,14 +238,14 @@ export function Chat() {
               <button type="button" className="warn" onClick={() => { setMenu(false); setReporting(true); }}>{t('Report {0}', [person.display_name])}</button>
             </div>
           ) : null}
-        </div>
+        </div>}
       </header>
 
       {notice ? <p className="notice" role="status">{notice}</p> : null}
       {thread.error ? <p className="error" role="alert">{t(thread.error)}</p> : null}
       <ol className="dms" aria-live="polite">
         {(thread.data ?? []).map((m) => (
-          <li key={m.id} className={m.sender === userId ? 'dm mine msg' : 'dm msg'}><p>{m.body}</p><span className="hint">{formatDate(m.created_at, { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' })}{m === lastMine && m.read_at ? ` · ${t('Seen')}` : ''}</span></li>
+          <li key={m.id} className={m.sender === userId ? 'dm mine msg' : 'dm msg'}><p>{m.body}</p><span className="hint">{formatDate(m.created_at, { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' })}{m.sent_by ? ` · ${t('Sent by family')}` : ''}{m === lastMine && m.read_at ? ` · ${t('Seen')}` : ''}</span></li>
         ))}
         <li ref={endRef} aria-hidden="true" />
       </ol>
@@ -256,6 +259,7 @@ export function Chat() {
 
       <p className="typing" aria-live="polite">{typing ? <><span className="typing-dots" aria-hidden="true"><i /><i /><i /></span>{t('{0} is typing…', [person.display_name])}</> : null}</p>
       {error ? <p className="error" role="alert">{error}</p> : null}
+      {acting ? <p className="hint">{t('What you send is marked "Sent by family" for both {0} and {1}.', [acting.name, person.display_name])}</p> : null}
       {waiting ? <p className="notice" role="status">{t('You have sent {0} messages. You can send more when {1} replies.', [FIRST_MESSAGES, person.display_name])}</p> : null}
       <form className="compose" onSubmit={(e) => { e.preventDefault(); send(draft); }}>
         <label className="visually-hidden" htmlFor="dm-input">{t('Message {0}', [person.display_name])}</label>

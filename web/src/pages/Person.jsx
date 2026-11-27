@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../App.jsx';
 import { useAccount } from '../lib/account.jsx';
 import { useRemembered } from '../lib/cache.js';
 import { useT } from '../lib/language.jsx';
 import { RASHIS } from '../lib/format.js';
 import { chartFromKeys } from '../lib/meet.js';
-import { useDiscover, decide, forgetDiscover } from '../lib/meetData.js';
+import { useDiscover, decide, forgetDiscover, setSuggestion } from '../lib/meetData.js';
+import { useActor } from '../lib/acting.jsx';
 import { photoLinks } from '../lib/photos.js';
 import { NAKSHATRAS } from '../../../engine/src/constants.mjs';
 import { manglik } from '../../../engine/src/match.mjs';
@@ -22,11 +22,10 @@ export default function Person() {
   const t = useT();
   const { id } = useParams();
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { own, userId, acting, base } = useActor();
   const { self } = useAccount();
-  const userId = session.user.id;
   const meet = useMeetProfile(userId);
-  const { data: people, set } = useDiscover(userId, meet.data?.profile ?? null, self.id);
+  const { data: people, set } = useDiscover(userId, meet.data?.profile ?? null, self?.id ?? null, Boolean(acting));
   const [shown, setShown] = useState(0);
   const [reporting, setReporting] = useState(false);
   const [note, setNote] = useState(null);
@@ -34,10 +33,15 @@ export default function Person() {
   const paths = person?.photos ?? [];
   const links = useRemembered(paths.length ? `photoLinks:${paths.join('|')}` : null, () => photoLinks(paths), { maxAge: 50 * 60 * 1000 });
 
-  if (meet.data && !meet.data.profile) return <div className="sheet"><h1>{t('Meet people who fit your kundli')}</h1><Link className="btn" to="/me">{t('Set up my profile')}</Link></div>;
+  if (meet.data && !meet.data.profile) return acting
+    ? <div className="sheet"><h1>{t('{0} has not set up a profile yet', [acting.name])}</h1><Link className="btn" to="/family">{t('Back to family')}</Link></div>
+    : <div className="sheet"><h1>{t('Meet people who fit your kundli')}</h1><Link className="btn" to="/me">{t('Set up my profile')}</Link></div>;
   if (!people) return <ListSkeleton label={t('Loading…')} />;
-  if (!person) return <div className="sheet"><h1>{t('This profile is not available')}</h1><p className="muted">{t('They may have paused or removed their profile.')}</p><Link className="btn" to="/discover">{t('Go to Discover')}</Link></div>;
+  if (!person) return <div className="sheet"><h1>{t('This profile is not available')}</h1><p className="muted">{t('They may have paused or removed their profile.')}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Discover')}</Link></div>;
 
+  const canLike = !acting || acting.can_like;
+  const canChat = !acting || acting.can_chat;
+  const suggested = person.suggested_by !== null && person.suggested_by !== undefined;
   const matched = person.liked_me && person.my_kind === 'like';
   const url = links.data?.[paths[shown]] ?? null;
   const keys = person.keys;
@@ -53,17 +57,26 @@ export default function Person() {
     const before = person.my_kind;
     set((list) => list.map((p) => (p.user_id === id ? { ...p, my_kind: kind } : p)));
     try {
-      if (await decide(userId, person, kind)) navigate(`/chats/${id}`);
-      else if (kind === 'pass') navigate('/discover');
+      if (await decide(userId, person, kind)) { if (canChat) navigate(`${base}/chats/${id}`); } else if (kind === 'pass') navigate(`${base}/discover`);
     } catch {
       set((list) => list.map((p) => (p.user_id === id ? { ...p, my_kind: before } : p)));
       setNote(t('That could not be saved. Try again.'));
     }
   }
 
+  async function suggest() {
+    setNote(null);
+    const on = !suggested;
+    set((list) => list.map((p) => (p.user_id === id ? { ...p, suggested_by: on ? '' : null } : p)));
+    try { await setSuggestion(own, userId, id, on); } catch {
+      set((list) => list.map((p) => (p.user_id === id ? { ...p, suggested_by: on ? null : '' } : p)));
+      setNote(t('That could not be saved. Try again.'));
+    }
+  }
+
   return (
     <>
-      <p><Link className="back" to="/discover"><Icon name="back" size={18} />{t('Discover')}</Link></p>
+      <p><Link className="back" to={`${base}/discover`}><Icon name="back" size={18} />{t('Discover')}</Link></p>
       <div className="discover">
         <div className="discover-main">
           <div className="deck-card">
@@ -80,23 +93,26 @@ export default function Person() {
           ) : null}
           {paths.length === 0 ? <p className="hint">{t('No photos yet. Photos appear once they have been checked.')}</p> : null}
           {note ? <p className="error" role="alert">{note}</p> : null}
+          {!acting && suggested ? <p className="banner"><Icon name="star" size={20} />{t('{0} suggested {1} for you.', [person.suggested_by || t('Family'), person.display_name])}</p> : null}
           {matched ? (
-            <Link className="btn" to={`/chats/${id}`}><Icon name="chat" size={20} />{t('Open your chat')}</Link>
+            canChat ? <Link className="btn" to={`${base}/chats/${id}`}><Icon name="chat" size={20} />{acting ? t('Open the chat') : t('Open your chat')}</Link> : <p className="hint">{t('{0} and {1} have matched.', [acting.name, person.display_name])}</p>
+          ) : !canLike ? (
+            <button type="button" className={suggested ? 'btn outline' : 'btn'} aria-pressed={suggested} onClick={suggest}><Icon name="star" size={20} />{suggested ? t('Suggested to {0}', [acting.name]) : t('Suggest to {0}', [acting.name])}</button>
           ) : (
             <div className="deck-actions">
               <button type="button" className="round" aria-label={t('Pass on {0}', [person.display_name])} onClick={() => act('pass')}><Icon name="x" size={28} /></button>
               <button type="button" className={person.my_kind === 'like' ? 'round like' : 'round'} aria-pressed={person.my_kind === 'like'} aria-label={t('Like {0}', [person.display_name])} onClick={() => act('like')}><Icon name="heart" size={28} /></button>
             </div>
           )}
-          {person.my_kind === 'like' && !matched ? <p className="hint">{t('You liked {0}. If they like you back, you can chat.', [person.display_name])}</p> : null}
+          {person.my_kind === 'like' && !matched && !acting ? <p className="hint">{t('You liked {0}. If they like you back, you can chat.', [person.display_name])}</p> : null}
           <section aria-labelledby="signs-title" className="why-fit">
             <h2 id="signs-title">{t('From their kundli')}</h2>
             <ul className="chip-list">{signs.map((x) => <li key={x}>{x}</li>)}</ul>
           </section>
-          <p><button type="button" className="link quiet" onClick={() => setReporting(true)}>{t('Report or block {0}', [person.display_name])}</button></p>
+          {acting ? null : <p><button type="button" className="link quiet" onClick={() => setReporting(true)}>{t('Report or block {0}', [person.display_name])}</button></p>}
         </div>
         <div className="why-fit">
-          <Why person={person} />
+          <Why person={person} forName={acting?.name ?? null} />
           <section aria-labelledby="tests-title" className="why-fit">
             <div className="deck-score"><Ring total={person.match.total} max={36} /><div><h2 id="tests-title">{t('The eight tests')}</h2><p className="hint">{t(person.match.manglik.summary)}</p></div></div>
             <dl className="facts-list tests">
