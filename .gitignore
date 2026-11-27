@@ -4,3 +4,5 @@ node_modules/
 .netlify/
 dist/
 api/data/places.generated.mjs
+web/dist-prototype/
+web/src/demo/generated.json

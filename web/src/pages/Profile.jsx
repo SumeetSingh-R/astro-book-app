@@ -10,6 +10,7 @@ import Icon from '../components/Icon.jsx';
 import { useAdminRole } from './Admin.jsx';
 import { deleteAccount } from '../lib/photos.js';
 import { disablePush } from '../lib/push.js';
+import { reloadAt } from '../lib/site.js';
 
 /** Asks once, plainly, then deletes the signed-in person's account and everything in it. */
 function DeleteAccount({ onCancel }) {
@@ -32,7 +33,7 @@ function DeleteAccount({ onCancel }) {
     }
     await supabase.auth.signOut({ scope: 'local' }); // the account is gone; this only clears this device
     // A full reload, so nothing of the deleted account is left in the page's memory.
-    window.location.replace('/?deleted=1');
+    reloadAt('/?deleted=1');
   }
   return (
     <div className="modal" role="dialog" aria-modal="true" aria-labelledby="delete-title">

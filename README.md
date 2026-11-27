@@ -131,6 +131,19 @@ How it is enforced: the database function `meet_acts_for(person, what)` answers 
 - *Files.* `web/public/sw.js` (shows the alert, opens the page when tapped; no caching), `web/public/manifest.webmanifest` and icons (needed for iPhone, where alerts work only from the Home Screen), `web/src/lib/push.js`, `api/lib/push.mjs`, `netlify/functions/push.mjs`, `20261127130000_push.sql`.
 - *A known trade-off.* The server function runs as the signed-in sender, like every other function here (no admin key). So a person who may alert someone could also read that someone's device addresses by calling the database directly. Those addresses are useless without the private key, which only the server has.
 
+## The clickable prototype
+
+`npm run build:prototype` builds the same app with a stand-in backend, so every screen can be clicked through with no server, no accounts and no deploy. It replaces the earlier design canvas, which showed screens as pictures.
+
+- *What it is.* The real pages and components, started from `web/src/demo/main.jsx` instead of `web/src/main.jsx`. Every request the app makes (sign-in, the database, the server functions) is answered in the browser by `web/src/demo/backend.js` from a made-up world: a member called Asha, eight people she can match with, her mum who helps through Family mode, her papa who has an invite waiting, plus chats, notifications, a report and admin rights. Nothing leaves the page.
+- *What works.* Liking and matching, chat (the sample people "type", read and answer), message limits, vibe checks, Family mode from both sides, photo upload and admin review, filters, saved charts, kundli match, notifications, account deletion, and Hinglish, English and Hindi. Changes are remembered in that browser until "Start over".
+- *What is a fixed sample.* The chart, the readings, today's reading, the kundli match result and the answers to questions (each answer says so). Vibe scores and the horoscope are real: `scripts/build-demo-data.mjs` works them out with the engine when the prototype is built. Other languages and alerts need the live site.
+- *The strip at the top* (`web/src/demo/DemoBar.jsx`) lists every screen and lets the viewer switch person. It is not part of the product and is not in the normal build.
+- *Rules it follows.* `backend.js` copies the database's rules where a screen depends on them (who sees what, what a helper may do, limits, notifications). It is a copy for showing the product, not a test of those rules; the migrations stay the source of truth.
+- *Small changes to the app for it.* `App` takes an optional `Router` and `overlay`; `web/src/lib/site.js` holds the three things that depend on where the app is served (address for copied links, reload after deletion, logo path).
+
+Output goes to `web/dist-prototype/` (`index.html` plus `assets/` and `brand/`), which can be opened from any static host or published as a page.
+
 ## Before the next deploy
 
 Everything from "ten languages" onward is saved here and in the database but not yet deployed. One deploy publishes all of it. A checklist for that day:
@@ -161,8 +174,9 @@ Without a key the app still works: readings fall back to fixed text built from t
 | `netlify/functions/` | Thin Netlify Function wrappers that expose the API |
 | `config/` | Public client configuration (Supabase URL and publishable key) |
 | `supabase/` | Database migrations |
-| `scripts/` | Build scripts (place dataset) |
+| `scripts/` | Build scripts (place dataset, i18n catalogue, prototype sample data) |
 | `web/` | Frontend app (React + Vite) |
+| `web/src/demo/` | The clickable prototype: sample world and stand-in backend |
 
 ## Engine
 

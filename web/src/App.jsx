@@ -6,6 +6,7 @@ import { AccountProvider, useAccount } from './lib/account.jsx';
 import { LanguageProvider, LanguageSwitch, useT, msg } from './lib/language.jsx';
 import { InboxProvider, useInbox, Badge } from './lib/inbox.jsx';
 import Icon from './components/Icon.jsx';
+import { asset } from './lib/site.js';
 import { DaySkeleton } from './components/Skeleton.jsx';
 import Home from './pages/Home.jsx';
 import Horoscope from './pages/Horoscope.jsx';
@@ -95,7 +96,7 @@ function NoProfile() {
 
 const TABS = [['/today', msg('Today\'s vibe'), 'sun'], ['/discover', msg('Vibe match'), 'heart'], ['/chats', msg('Chats'), 'chat'], ['/charts', msg('My charts'), 'chart'], ['/ask', msg('Ask'), 'planet']];
 
-function Shell({ children }) {
+function Shell({ children, overlay = null }) {
   const t = useT();
   const { session, authError } = useAuth();
   const { self } = useAccount();
@@ -105,10 +106,11 @@ function Shell({ children }) {
   const initial = (self?.name || session?.user?.email || 'A').trim().charAt(0).toUpperCase();
   return (
     <div className={`site${session ? ' signed-in' : ''}${bare ? ' bare' : ''}`}>
+      {overlay}
       <header className="top">
         <Link to={session ? '/today' : '/'} className="brand" aria-label={t('Astro Book, home')}>
-          <img className="owl" src="/brand/logo-symbol.svg" alt="" />
-          <img className="wordmark" src="/brand/logo-wordmark.svg" alt="Astro Book" />
+          <img className="owl" src={asset('brand/logo-symbol.svg')} alt="" />
+          <img className="wordmark" src={asset('brand/logo-wordmark.svg')} alt="Astro Book" />
         </Link>
         {session ? (
           <nav className="main-nav" aria-label={t('Main')}>
@@ -177,12 +179,16 @@ function NotFound() {
   return <><h1>{t('Page not found')}</h1><p><Link to="/">{t('Go to the home page')}</Link></p></>;
 }
 
-export default function App() {
+/**
+ * The whole app. `Router` and `overlay` are only passed by the clickable prototype (src/demo),
+ * which keeps its place in memory and adds a strip for jumping between screens.
+ */
+export default function App({ Router = BrowserRouter, overlay = null }) {
   return (
-    <BrowserRouter>
+    <Router>
       <AuthProvider>
         <Providers>
-          <Shell>
+          <Shell overlay={overlay}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/horoscope" element={<Horoscope />} />
@@ -219,6 +225,6 @@ export default function App() {
           </Shell>
         </Providers>
       </AuthProvider>
-    </BrowserRouter>
+    </Router>
   );
 }

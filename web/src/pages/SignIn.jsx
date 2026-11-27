@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../App.jsx';
 import Icon from '../components/Icon.jsx';
 import { useT, msg } from '../lib/language.jsx';
+import { asset, siteOrigin } from '../lib/site.js';
 
 const BENEFITS = [['sun', msg('A reading for each day, made from your own chart')], ['chat', msg('Answers to your questions, in plain words')], ['lock', msg('Your birth details saved once, private to you')]];
 
@@ -29,7 +30,7 @@ export default function SignIn() {
     setError(null);
     try {
       if (up) {
-        const { data, error: err } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
+        const { data, error: err } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: siteOrigin() } });
         if (err) throw err;
         if (!data.session) { setSent(true); return; }
       } else {
@@ -48,14 +49,14 @@ export default function SignIn() {
     setError(null);
     // Remember where to go after Google sends the visitor back to the site.
     try { sessionStorage.setItem('postAuthPath', from); } catch { /* storage unavailable */ }
-    const { error: err } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    const { error: err } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: siteOrigin() } });
     if (err) setError(t('Google sign-in could not start. Try again, or use email and password.'));
   }
 
   return (
     <div className="auth">
       <section className="auth-side" aria-hidden="true">
-        <img className="float" src="/brand/logo-symbol.svg" alt="" />
+        <img className="float" src={asset('brand/logo-symbol.svg')} alt="" />
         <p className="auth-headline">{t('Your chart and your matches, in one place')}</p>
         <ul>
           {BENEFITS.map(([icon, text]) => <li key={text}><Icon name={icon} size={20} />{t(text)}</li>)}

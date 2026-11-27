@@ -14,6 +14,7 @@ import { careSentence } from './Discover.jsx';
 import { KOOTA_ABOUT, Ring } from './Match.jsx';
 import Icon from '../components/Icon.jsx';
 import { ListSkeleton } from '../components/Skeleton.jsx';
+import { siteOrigin } from '../lib/site.js';
 
 const ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
 const newCode = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => ALPHABET[b % ALPHABET.length]).join('');
@@ -61,7 +62,7 @@ export default function Invite() {
   const [open, setOpen] = useState(null);
 
   const active = invites.data?.find((i) => i.active) ?? null;
-  const link = active ? `${window.location.origin}/m/${active.code}` : null;
+  const link = active ? `${siteOrigin()}/m/${active.code}` : null;
   const accepted = (invites.data ?? []).flatMap((i) => i.accepts).filter((p, n, all) => p.keys && all.findIndex((x) => x.user_id === p.user_id) === n);
 
   async function create() {

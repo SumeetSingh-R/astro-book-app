@@ -11,6 +11,7 @@ import { sendPush } from '../lib/push.js';
 import Icon from '../components/Icon.jsx';
 import Toggle from '../components/Toggle.jsx';
 import { ListSkeleton } from '../components/Skeleton.jsx';
+import { siteOrigin } from '../lib/site.js';
 
 const MOST_HELPERS = 4;
 const ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
@@ -79,7 +80,7 @@ export default function Family() {
     family.refresh();
   }
   async function copy(code) {
-    try { await navigator.clipboard.writeText(`${window.location.origin}/f/${code}`); setCopied(code); } catch { setError(t('Copying did not work. Select the link and copy it yourself.')); }
+    try { await navigator.clipboard.writeText(`${siteOrigin()}/f/${code}`); setCopied(code); } catch { setError(t('Copying did not work. Select the link and copy it yourself.')); }
   }
 
   return (
@@ -132,7 +133,7 @@ export default function Family() {
           {invites.map((i) => (
             <li key={i.code} className="card family-card">
               <p><strong>{t('Invite for {0}', [i.label])}</strong> <span className="hint">{t('Not accepted yet')}</span></p>
-              <p className="link-text">{`${window.location.origin}/f/${i.code}`}</p>
+              <p className="link-text">{`${siteOrigin()}/f/${i.code}`}</p>
               <Allowed link={i} t={t} />
               <button type="button" className="btn" onClick={() => copy(i.code)}>{copied === i.code ? t('Link copied') : t('Copy the link')}</button>
               <p className="hint" aria-live="polite">{t('The link works until {0}.', [formatDate(i.expires_at, { day: 'numeric', month: 'long' })])} {t('It works for one person.')}</p>

@@ -1,0 +1,28 @@
+/* The prototype strip. Deliberately plain and unlike the product, so it is never mistaken for part of it. */
+.proto { position: sticky; top: 0; z-index: 50; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.4; color: #f4f4f5; }
+.proto-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 8px 16px; background: #18181b; }
+.proto-bar p { margin: 0; }
+.proto-bar p span { color: #a1a1aa; }
+.proto-who { margin-left: auto !important; color: #d4d4d8; }
+.proto button { font: inherit; cursor: pointer; }
+.proto-bar button { min-height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid #52525b; background: #27272a; color: #fafafa; font-weight: 600; }
+.proto-bar button:hover, .proto-bar button:focus-visible { background: #3f3f46; }
+.proto-panel { position: absolute; left: 0; right: 0; max-height: calc(100dvh - 60px); overflow-y: auto; padding: 16px; background: #fafafa; color: #18181b; border-bottom: 1px solid #d4d4d8; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25); display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px 28px; }
+.proto-panel h2 { margin: 0 0 8px; font: 700 12px/1.3 system-ui, sans-serif; letter-spacing: 0.02em; color: #52525b; }
+.proto-panel p { margin: 0 0 10px; color: #3f3f46; }
+.proto-panel ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.proto-panel li button { width: 100%; min-height: 36px; padding: 6px 10px; border: 0; border-radius: 8px; background: none; color: #18181b; text-align: left; }
+.proto-panel li button:hover, .proto-panel li button:focus-visible { background: #e4e4e7; }
+.proto-panel li button.on { background: #18181b; color: #fafafa; }
+.proto-people { display: flex; flex-direction: column; gap: 6px; }
+.proto-people button { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid #d4d4d8; border-radius: 8px; background: #fff; color: #18181b; text-align: left; }
+.proto-people button span { color: #52525b; font-size: 13px; }
+.proto-people button.on { border-color: #18181b; box-shadow: inset 0 0 0 1px #18181b; }
+.proto-reset { min-height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid #a1a1aa; background: #fff; color: #18181b; font-weight: 600; }
+.proto button:disabled { opacity: 0.6; cursor: default; }
+@media (max-width: 760px) {
+  .proto-bar { flex-wrap: nowrap; gap: 10px; padding: 6px 12px; }
+  .proto-bar p span { display: none; }
+  .proto-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+  .proto-bar button { flex: none; min-height: 32px; padding: 0 12px; }
+}

@@ -9,6 +9,7 @@
     "build:places": "node scripts/build-places.mjs",
     "build:strings": "node scripts/extract-strings.mjs",
     "build": "npm run build:places && npm run build:strings && vite build --config web/vite.config.js",
+    "build:prototype": "node scripts/build-demo-data.mjs && npm run build:strings && vite build --config web/vite.prototype.config.js",
     "dev": "vite --config web/vite.config.js",
     "preview": "node scripts/local-server.mjs"
   },
