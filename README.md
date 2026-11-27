@@ -106,7 +106,21 @@ The plan is a profile other people can see, a swipe-and-browse Discover ranked b
 
 How it is enforced: the database function `meet_acts_for(person, what)` answers whether the signed-in person may act for someone, and the row level security policies on profiles, filters, match keys, likes and messages use it. Every like and message made by a helper is stamped by the database (`acted_by`, `sent_by`), messages show "Sent by family" to both sides, and a profile with an active helper says so to other people. A helper never sees birth details, and cannot edit the profile, photos or filters, block, report, or invite others (`20261127120000_family.sql`).
 
-**Next stages:** alerts when the app is closed (email or phone).
+**Alerts when the app is closed (built, switched off until set up).** Web push: a person turns alerts on for their device from the Notifications page, and gets one for a new message, a match, an accepted invite, a family update or a photo review. An alert never contains what a message says. No outside service or account is involved.
+
+- *How it is sent.* After the action, the app asks `POST /api/push { to, kind }`. The database function `push_targets` decides whether an alert is due: the caller must really have just caused it (their message or notification from the last two minutes), the same alert must not have just been sent, and the person must not be looking at the app. The server function then sends to that person's devices with the `web-push` library and forgets devices that no longer exist.
+- *Setup, once, by an owner.* Admin portal, Alerts tab: make a pair of keys (made in the browser, shown once), paste them into Netlify as `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`, deploy. Until then every part of this reports "not set up" and the app behaves as before.
+- *Files.* `web/public/sw.js` (shows the alert, opens the page when tapped; no caching), `web/public/manifest.webmanifest` and icons (needed for iPhone, where alerts work only from the Home Screen), `web/src/lib/push.js`, `api/lib/push.mjs`, `netlify/functions/push.mjs`, `20261127130000_push.sql`.
+- *A known trade-off.* The server function runs as the signed-in sender, like every other function here (no admin key). So a person who may alert someone could also read that someone's device addresses by calling the database directly. Those addresses are useless without the private key, which only the server has.
+
+## Before the next deploy
+
+Everything from "ten languages" onward is saved here and in the database but not yet deployed. One deploy publishes all of it. A checklist for that day:
+
+1. In Netlify, add `ANTHROPIC_API_KEY` (readings, answers, and languages other than English and Hindi) and, for alerts, `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`.
+2. Deploy once. Commit messages carry `[skip netlify]`, so a deploy has to be started by hand or by a commit without that tag.
+3. With two real accounts: save a meet profile, upload a photo, approve it as admin, like each other, send a message (it should arrive at once, with "typing" and "Seen"), open an invite link, invite a family helper and act as them, turn alerts on and close the tab, delete the test account.
+4. In Supabase, check Realtime is on for the project (Database, Publications: `meet_messages` and `meet_notifications` are in `supabase_realtime`).
 
 ### Switching the AI on
 

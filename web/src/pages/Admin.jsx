@@ -5,6 +5,8 @@ import { useAuth } from '../App.jsx';
 import { formatDate } from '../lib/format.js';
 import AdminPhotos from './AdminPhotos.jsx';
 import { deleteAccount } from '../lib/photos.js';
+import { api } from '../lib/api.js';
+import { makePushKeys } from '../lib/push.js';
 import { ListSkeleton } from '../components/Skeleton.jsx';
 
 // The admin portal is a staff tool, so its own text is in English only.
@@ -196,6 +198,44 @@ function Team({ userId }) {
   );
 }
 
+/** Owners only: whether phone and desktop alerts are switched on for the site, and the one-time setup. */
+function Alerts() {
+  const status = useRemembered('admin:push', () => api('/api/push'), { maxAge: 0 });
+  const [keys, setKeys] = useState(null);
+  const [error, setError] = useState(null);
+  async function make() {
+    setError(null);
+    try { setKeys(await makePushKeys()); } catch { setError('This browser could not make the keys. Try a recent version of Chrome, Edge, Firefox or Safari.'); }
+  }
+  return (
+    <>
+      {status.error ? <p className="error" role="alert">The alert service could not be reached. Alerts need the site to be deployed with its server functions.</p> : null}
+      {status.data ? <p className="notice" role="status">{status.data.configured ? 'Alerts are switched on. People can turn them on for their own device from the Notifications page.' : 'Alerts are switched off. The site has no push keys yet.'}</p> : null}
+      <div className="card admin-row">
+        <div>
+          <p><strong>Set up alerts (once)</strong></p>
+          <p className="hint">Alerts are signed with a pair of keys. The public one is handed to browsers. The private one must stay secret: it lets anyone who has it send alerts in Astro Book's name.</p>
+          <ol className="steps">
+            <li><strong>Make a pair of keys</strong><span className="hint">They are made on this device and shown once. Nothing is sent or saved.</span></li>
+            <li><strong>Paste both into Netlify</strong><span className="hint">Site configuration, then Environment variables. Add VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY with the values below.</span></li>
+            <li><strong>Deploy the site once</strong><span className="hint">This page then shows that alerts are switched on.</span></li>
+          </ol>
+          {keys ? (
+            <>
+              <div className="key-box"><span className="hint">VAPID_PUBLIC_KEY</span><code>{keys.publicKey}</code></div>
+              <div className="key-box"><span className="hint">VAPID_PRIVATE_KEY (keep secret; do not share it in chat or email)</span><code>{keys.privateKey}</code></div>
+              <p className="hint">Copy both now. If you leave this page they are gone, and you would make a new pair.</p>
+            </>
+          ) : null}
+          {error ? <p className="error" role="alert">{error}</p> : null}
+          {status.data?.configured ? <p className="hint">Making and installing a new pair turns alerts off on every device until each person turns them on again.</p> : null}
+        </div>
+        <button type="button" className="btn small" onClick={make}>{keys ? 'Make a different pair' : 'Make a pair of keys'}</button>
+      </div>
+    </>
+  );
+}
+
 /** The admin portal: overview, photo review, people, and the admin team. */
 export default function Admin() {
   const { session } = useAuth();
@@ -204,7 +244,7 @@ export default function Admin() {
   const [tab, setTab] = useState('overview');
   if (role === null) return <ListSkeleton label="Loading…" />;
   if (!role) return <div className="sheet"><h1>Page not found</h1></div>;
-  const tabs = [['overview', 'Overview'], ['photos', 'Photos'], ['reports', 'Reports'], ['people', 'People'], ...(role === 'owner' ? [['team', 'Team']] : [])];
+  const tabs = [['overview', 'Overview'], ['photos', 'Photos'], ['reports', 'Reports'], ['people', 'People'], ...(role === 'owner' ? [['team', 'Team'], ['alerts', 'Alerts']] : [])];
   return (
     <>
       <div className="title-row">
@@ -218,6 +258,7 @@ export default function Admin() {
       {tab === 'reports' ? <Reports /> : null}
       {tab === 'people' ? <People owner={role === 'owner'} /> : null}
       {tab === 'team' && role === 'owner' ? <Team userId={userId} /> : null}
+      {tab === 'alerts' && role === 'owner' ? <Alerts /> : null}
     </>
   );
 }

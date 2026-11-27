@@ -5,6 +5,7 @@ import { useAuth } from '../App.jsx';
 import { useT } from '../lib/language.jsx';
 import { photoLinks } from '../lib/photos.js';
 import { ListSkeleton } from '../components/Skeleton.jsx';
+import { sendPush } from '../lib/push.js';
 
 /** For photo reviewers only: approve or reject new photos before anyone else can see them. */
 export default function AdminPhotos({ embedded = false }) {
@@ -25,6 +26,7 @@ export default function AdminPhotos({ embedded = false }) {
     const { error: err } = await supabase.rpc('review_meet_photo', { p_id: photo.id, p_status: status });
     if (err) { setError(t('That could not be saved. Try again.')); return; }
     queue.set((q) => ({ ...q, photos: q.photos.filter((p) => p.id !== photo.id) }));
+    sendPush(`photo_${status}`, photo.path.split('/')[0]); // a photo is stored under its owner's id
   }
 
   if (queue.error) return <p className="error" role="alert">{t(queue.error)}</p>;

@@ -7,6 +7,7 @@ import { useAccount } from '../lib/account.jsx';
 import { useFamily } from '../lib/acting.jsx';
 import { useT, msg } from '../lib/language.jsx';
 import { formatDate } from '../lib/format.js';
+import { sendPush } from '../lib/push.js';
 import Icon from '../components/Icon.jsx';
 import Toggle from '../components/Toggle.jsx';
 import { ListSkeleton } from '../components/Skeleton.jsx';
@@ -195,6 +196,7 @@ export function FamilyLink() {
     const { data, error: err } = await supabase.rpc('accept_family_invite', { p_code: invite.data.code });
     if (err || data !== true) { setError(t('That did not work. Try again in a moment.')); setBusy(false); return; }
     forget(`family:${session.user.id}`);
+    sendPush('family_joined', invite.data.person);
     navigate('/family', { replace: true });
   }
 

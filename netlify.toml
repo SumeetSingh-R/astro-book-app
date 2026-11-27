@@ -10,5 +10,6 @@
   node_bundler = "esbuild"
   # Swiss Ephemeris loads its .wasm and .data files from disk next to its own code,
   # so it must stay an un-bundled module with those files shipped alongside.
-  external_node_modules = ["swisseph-wasm"]
+  # web-push is an older-style module that loads its parts at run time, so it is shipped as it is too.
+  external_node_modules = ["swisseph-wasm", "web-push"]
   included_files = ["node_modules/swisseph-wasm/wasm/**"]

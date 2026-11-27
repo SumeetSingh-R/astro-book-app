@@ -4,7 +4,8 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { handleChart, handleMatch, handleHoroscope, handlePlaces, handlePreview, handleReading, handleToday, handleAsk, handleI18n } from '../api/lib/handlers.mjs';
+import { handleChart, handleMatch, handleHoroscope, handlePlaces, handlePreview, handleReading, handleToday, handleAsk, handleI18n, handlePush } from '../api/lib/handlers.mjs';
+import { createPush } from '../api/lib/push.mjs';
 import { translator, loadCatalog } from '../api/lib/i18n.mjs';
 import { createAi } from '../api/lib/ai.mjs';
 import { createDb } from '../api/lib/db.mjs';
@@ -23,8 +24,9 @@ const routes = {
   '/api/reading': (req) => handleReading(req, { createDb, ai: createAi(), translator }),
   '/api/today': (req) => handleToday(req, { createDb, ai: createAi(), translator }),
   '/api/ask': (req) => handleAsk(req, { createDb, ai: createAi() }),
+  '/api/push': (req) => handlePush(req, { createDb, push: createPush() }),
 };
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png' };
 
 const port = Number(process.env.PORT ?? 8888);
 createServer(async (nodeReq, nodeRes) => {

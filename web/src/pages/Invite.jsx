@@ -8,6 +8,7 @@ import { useT } from '../lib/language.jsx';
 import { formatDate } from '../lib/format.js';
 import { scoreBetween, whyLines } from '../lib/meet.js';
 import { saveOwnKeys } from '../lib/meetData.js';
+import { sendPush } from '../lib/push.js';
 import { useMeetProfile } from './Me.jsx';
 import { careSentence } from './Discover.jsx';
 import { KOOTA_ABOUT, Ring } from './Match.jsx';
@@ -171,6 +172,7 @@ export function InviteLink() {
       const { data, error: err } = await supabase.rpc('accept_invite', { p_code: invite.data.code });
       if (err || data !== true) throw new Error('accept');
       invite.set((old) => ({ ...old, accepted: true }));
+      sendPush('invite_accepted', inviter.user_id);
     } catch { setError(t('That did not work. Try again in a moment.')); } finally { setBusy(false); }
   }
 

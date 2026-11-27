@@ -2,6 +2,7 @@
 import { supabase } from './supabase.js';
 import { api } from './api.js';
 import { remember, useRemembered, forget } from './cache.js';
+import { sendPush } from './push.js';
 import { keysFromChart, scoreBetween, fitsPreferences, blankPreferences } from './meet.js';
 
 /** Work out the signed-in person's match keys from their own chart and save them, once per visit.
@@ -51,7 +52,10 @@ export function useDiscover(userId, me, selfId, acting = false) {
 export async function decide(userId, person, kind) {
   const { error } = await supabase.from('meet_likes').upsert({ liker: userId, liked: person.user_id, kind }, { onConflict: 'liker,liked' });
   if (error) throw new Error('like');
-  return kind === 'like' && person.liked_me;
+  const matched = kind === 'like' && person.liked_me;
+  // Tell the other person, and (when a family helper did this) the person it was done for.
+  if (matched) { sendPush('match', person.user_id); sendPush('match', userId); }
+  return matched;
 }
 /** A helper suggests someone to the person they help, or takes the suggestion back. */
 export async function setSuggestion(helperId, personId, suggestedId, on) {
@@ -60,5 +64,6 @@ export async function setSuggestion(helperId, personId, suggestedId, on) {
     ? await table.upsert({ person: personId, suggested: suggestedId, helper: helperId }, { onConflict: 'person,suggested', ignoreDuplicates: true })
     : await table.delete().eq('person', personId).eq('suggested', suggestedId);
   if (error) throw new Error('suggest');
+  if (on) sendPush('family_suggested', personId);
 }
 export const forgetDiscover = (userId) => forget(`discover:${userId}`);

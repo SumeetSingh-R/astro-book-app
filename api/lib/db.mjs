@@ -96,6 +96,19 @@ export function createDb(token, env = process.env) {
       return (data ?? []).reverse();
     },
 
+    /** Who to alert and what to call the person who caused it, or null when no alert is due. The database decides. */
+    async pushTargets(to, kind) {
+      const { data, error } = await supabase.rpc('push_targets', { p_to: to, p_kind: kind });
+      if (error) fail(error, 'pushTargets');
+      return data;
+    },
+
+    /** Forget browser addresses the push service says no longer exist. */
+    async pushGone(endpoints) {
+      const { error } = await supabase.rpc('push_gone', { p_endpoints: endpoints });
+      if (error) console.error('Database error (pushGone):', error); // tidying up; never worth failing the request
+    },
+
     async saveMessages(rows) {
       const { error } = await supabase.from('chat_messages').insert(rows);
       if (error) fail(error, 'saveMessages');

@@ -8,6 +8,7 @@ import { ruleChartReading } from '../../engine/src/readingText.mjs';
 import { ApiError, json, errorResponse, requireMethod, bearerToken, readJson, requireUuid } from './http.mjs';
 import { searchPlaces } from './places.mjs';
 import { languageOf, LANGUAGE_CODES } from '../../config/languages.mjs';
+import { PUSH_KINDS, pushText } from './push.mjs';
 import { chartReadingPrompt, dailyReadingPrompt, askPrompt, parseChartReading, parseDailyReading, tidy } from './prompts.mjs';
 
 // Daily allowances per signed-in person. Readings are stored, so they are only counted when first written.
@@ -372,5 +373,32 @@ export async function handleAsk(req, deps) {
       { user_id: userId, birth_profile_id: id, role: 'assistant', content: answer.slice(0, 12000), language, created_at: new Date(nowMs + 1).toISOString() },
     ]);
     return json({ answer, remaining, limit: ASK_LIMIT, topic });
+  } catch (e) { return errorResponse(e); }
+}
+
+// GET  /api/push                 -> { configured, publicKey }   the key a browser needs to turn alerts on
+// POST /api/push { to, kind }    -> { configured, sent }        alert someone the caller just messaged, matched with, and so on
+// The database decides whether an alert is due (push_targets); this only sends what it allows.
+export async function handlePush(req, deps) {
+  try {
+    const push = deps.push;
+    if (req.method === 'GET') return json({ configured: Boolean(push?.configured), publicKey: push?.publicKey ?? null }, 200, { 'cache-control': 'public, max-age=300' });
+    requireMethod(req, 'POST');
+    const db = deps.createDb(bearerToken(req));
+    await db.getUserId();
+    const body = await readJson(req);
+    const to = requireUuid(body.to, 'to');
+    if (!PUSH_KINDS.includes(body.kind)) throw new ApiError(400, 'invalid_input', 'kind is not one this endpoint knows.');
+    if (!push?.configured) return json({ configured: false, sent: 0 });
+
+    const target = await db.pushTargets(to, body.kind);
+    if (!target?.subs?.length) return json({ configured: true, sent: 0 });
+    const payload = pushText(body.kind, target);
+    const results = await Promise.allSettled(target.subs.map((sub) => push.send(sub, payload)));
+    const gone = target.subs.filter((_, i) => results[i].status === 'rejected' && [404, 410].includes(results[i].reason?.statusCode)).map((sub) => sub.endpoint);
+    if (gone.length) await db.pushGone(gone);
+    const failed = results.filter((r) => r.status === 'rejected' && ![404, 410].includes(r.reason?.statusCode));
+    if (failed.length) console.error('Push send failed:', failed[0].reason?.statusCode ?? failed[0].reason?.message);
+    return json({ configured: true, sent: results.filter((r) => r.status === 'fulfilled').length });
   } catch (e) { return errorResponse(e); }
 }

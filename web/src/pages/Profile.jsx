@@ -9,6 +9,7 @@ import BirthForm from '../components/BirthForm.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAdminRole } from './Admin.jsx';
 import { deleteAccount } from '../lib/photos.js';
+import { disablePush } from '../lib/push.js';
 
 /** Asks once, plainly, then deletes the signed-in person's account and everything in it. */
 function DeleteAccount({ onCancel }) {
@@ -73,6 +74,7 @@ export default function Profile() {
   }
 
   async function signOut() {
+    await disablePush(); // the next person on this device should not get these alerts
     await supabase.auth.signOut();
     navigate('/', { replace: true });
   }

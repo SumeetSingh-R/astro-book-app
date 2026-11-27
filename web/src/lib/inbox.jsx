@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from './supabase.js';
+import { syncPush } from './push.js';
 
 const EMPTY = { unread_messages: 0, notifications: [], review: null, online: [] };
 const InboxContext = createContext({ unread: 0, fresh: 0, notifications: [], review: null, online: new Set(), live: false, refresh() {}, markRead() {}, listen() { return () => {}; } });
@@ -33,6 +34,7 @@ export function InboxProvider({ userId, children }) {
     last.current = 0;
     if (!userId) return undefined;
     refresh(true);
+    syncPush();
     const timer = setInterval(() => refresh(true), EVERY);
     const wake = () => { if (!document.hidden) refresh(); };
     document.addEventListener('visibilitychange', wake);

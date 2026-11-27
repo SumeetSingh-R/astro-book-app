@@ -9,6 +9,7 @@ import { useDiscover, saveOwnKeys, forgetDiscover } from '../lib/meetData.js';
 import { FIRST_MESSAGES, limitText, waitingForReply } from '../lib/meet.js';
 import { useInbox } from '../lib/inbox.jsx';
 import { useActor } from '../lib/acting.jsx';
+import { sendPush } from '../lib/push.js';
 import { useMeetProfile } from './Me.jsx';
 import { Face, summaryLines } from './Discover.jsx';
 import Icon from '../components/Icon.jsx';
@@ -210,6 +211,7 @@ export function Chat() {
     }
     thread.set((list) => list.map((m) => (m.id === pending.id ? data : m)));
     forget(`inbox:${userId}`);
+    sendPush('message', id);
   }
   const waiting = waitingForReply(thread.data, userId);
   const lastMine = (thread.data ?? []).findLast((m) => m.sender === userId) ?? null;
