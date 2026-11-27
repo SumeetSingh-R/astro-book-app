@@ -17,6 +17,8 @@ import Today from './pages/Today.jsx';
 import Ask from './pages/Ask.jsx';
 import Welcome from './pages/Welcome.jsx';
 import Profile from './pages/Profile.jsx';
+import Me from './pages/Me.jsx';
+import MeetPreferences from './pages/MeetPreferences.jsx';
 import About from './pages/About.jsx';
 
 const AuthContext = createContext({ session: null, loading: true });
@@ -159,6 +161,8 @@ export default function App() {
               <Route path="/today" element={<Private><NeedsProfile><Today /></NeedsProfile></Private>} />
               <Route path="/ask" element={<Private><NeedsProfile><Ask /></NeedsProfile></Private>} />
               <Route path="/profile" element={<Private><NeedsProfile><Profile /></NeedsProfile></Private>} />
+              <Route path="/me" element={<Private><NeedsProfile><Me /></NeedsProfile></Private>} />
+              <Route path="/me/preferences" element={<Private><NeedsProfile><MeetPreferences /></NeedsProfile></Private>} />
               <Route path="/charts" element={<Private><Profiles /></Private>} />
               <Route path="/charts/new" element={<Private><NewProfile /></Private>} />
               <Route path="/charts/:id" element={<Private><ChartPage /></Private>} />

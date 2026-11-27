@@ -48,6 +48,19 @@ The rule throughout: **the engine calculates, the model only explains.** The mod
 
 There is no Redis: readings and charts are already stored in Supabase, translations in Netlify Blobs, and the waiting people noticed was the browser asking again for things it already had.
 
+## Fifth version, in stages: meet and match
+
+The plan is a profile other people can see, a swipe-and-browse Discover ranked by kundli match and preferences, likes, and chat after a mutual like. The clickable prototype has every screen. It is being built in stages.
+
+**Stage 1 (built): a person's own profile, photos and preferences.** Nothing is visible to other people yet.
+
+- `/me`: photos (up to 6, shrunk in the browser to 1600px JPEG), "I am / show me / looking for", a prompt, the basics, background and family (religion, community, mother tongue, gotra, income as a range, family), each of religion, community and income with its own "show" switch, and the signs from the person's kundli. A completeness bar names the next thing to add (`web/src/lib/meet.js`).
+- `/me/preferences`: who to show, age, height, income, looking-for, marital status, religion, community and mother tongue (empty means open to all), the lowest kundli score to show, a Manglik preference, the two visibility switches, and deleting the profile.
+- Tables `meet_profiles`, `meet_preferences`, `meet_photos`, and the private storage bucket `meet-photos`; every row and file is readable and writable by its owner only (`supabase/migrations/20261127010000_meet_profile.sql`). Profiles can only be made by adults (18+), checked by the database policy.
+- Birth date, time and place are never part of this profile. Only the year of birth (for age) and, later, the signs needed for matching are shared.
+
+**Next stages:** Discover (a filtered, read-only view of other profiles, and match keys so scores are computed without exposing birth details), likes and mutual matches, chat with report and block, photo checks before a photo is shown to others.
+
 ### Switching the AI on
 
 Set these in the Netlify site's environment variables (never in the code):

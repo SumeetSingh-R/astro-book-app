@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
 import { forget } from '../lib/cache.js';
 import { useAuth } from '../App.jsx';
@@ -41,6 +41,10 @@ export default function Profile() {
         </div>
       </div>
       <p className="banner"><Icon name="check" size={20} />{t('Saved once, used everywhere: your chart, your daily reading, matching and your questions all read from this profile.')}</p>
+      <Link className="card cta" to="/me">
+        <span className="cta-text"><Icon name="heart" size={26} /><span><strong>{t('Meet and match')}</strong><span>{t('Add photos and details to the profile other people will see')}</span></span></span>
+        <Icon name="go" size={20} />
+      </Link>
       <h2>{t('Your birth details')}</h2>
       <BirthForm key={self.id} kind="self" initial={toFormValues(self)} submitLabel={t('Save changes')} busyLabel={t('Saving…')} onSubmit={save}
         done={saved ? t('Saved. Your chart and readings are up to date.') : null}>
