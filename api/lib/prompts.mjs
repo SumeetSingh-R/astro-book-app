@@ -1,10 +1,15 @@
 // Instructions for the AI model. The model explains; it never calculates.
 // Everything it may say about a chart is handed to it as facts from the engine.
 
-const LANGUAGE = {
-  en: 'Write in English.',
-  hi: 'Write in Hindi, in Devanagari script, in simple everyday Hindi that anyone can follow. Use the common Hindi names for grahas and rashis (शुक्र, गुरु, शनि, मेष, तुला and so on). Keep month names and years readable, for example "मार्च 2027".',
-};
+import { languageInfo } from '../../config/languages.mjs';
+
+/** How the model is told to write in each language. */
+function languageRule(code) {
+  if (code === 'en') return 'Write in English.';
+  const { name, script } = languageInfo(code);
+  const example = code === 'hi' ? ' (शुक्र, गुरु, शनि, मेष, तुला and so on)' : '';
+  return `Write in ${name}, in ${script} script, in simple everyday ${name} that anyone can follow, the way young people speak it today, not bookish. Use the common ${name} names for grahas and rashis${example}. Write month names in ${name} and keep years as digits, so dates stay easy to read.`;
+}
 
 const GROUND_RULES = `You write for Astro Book, a Vedic astrology (Jyotish) app. Your reader is an ordinary person who does not know astrology.
 
@@ -20,11 +25,11 @@ Ground rules
 
 export function chartReadingPrompt({ language, factsText }) {
   const system = `${GROUND_RULES}
-- ${LANGUAGE[language]}
+- ${languageRule(language)}
 
 Your task: write a reading of this person's birth chart that they can understand without knowing any astrology.
 
-Use exactly this layout. Keep the bracketed labels and the word "Why:" exactly as shown, in English, even when the reading itself is in Hindi. Write nothing before [summary] and nothing after the last section.
+Use exactly this layout. Keep the bracketed labels and the word "Why:" exactly as shown, in English, even when the reading itself is in another language. Write nothing before [summary] and nothing after the last section.
 
 [summary]
 Three or four sentences: who this person is at heart according to the chart (rising sign, Moon sign, birth star) and what period of life they are in now.
@@ -61,11 +66,11 @@ Why: one sentence.`;
 
 export function dailyReadingPrompt({ language, factsText, dayText }) {
   const system = `${GROUND_RULES}
-- ${LANGUAGE[language]}
+- ${languageRule(language)}
 
 Your task: write today's personal reading for this person. It is based on where the Moon and planets are today compared with their own birth chart, not on their sign alone.
 
-Use exactly this layout. Keep the bracketed labels exactly as shown, in English, even when writing in Hindi. Write nothing else.
+Use exactly this layout. Keep the bracketed labels exactly as shown, in English, even when writing in another language. Write nothing else.
 
 [title]
 Up to six words that sum up the day.
@@ -87,7 +92,7 @@ One short line: one thing to go gently with today.`;
 
 export function askPrompt({ language, factsText, timingText, question, history, today }) {
   const system = `${GROUND_RULES}
-- ${LANGUAGE[language]} Answer in that language even if the question is written in another language or in Roman-script Hindi.
+- ${languageRule(language)} Answer in that language even if the question is written in another language or in Roman script.
 
 Your task: the person asks questions about their own birth chart. Answer the question they asked, from their chart.
 

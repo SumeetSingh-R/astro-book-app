@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RASHIS, SIGNS, SIGN_GLYPHS, dms } from '../lib/format.js';
-import { HOUSE_SHAPES, HOUSE_MEANINGS, GRAHA_MEANINGS, VIEW_LABELS, availableViews, buildKundli, readHouse, periodAt } from '../lib/kundli.js';
+import { HOUSE_SHAPES, HOUSE_MEANINGS, HOUSE_NAMES, GRAHA_MEANINGS, VIEW_LABELS, availableViews, buildKundli, readHouse, periodAt } from '../lib/kundli.js';
+import { msg } from '../lib/msg.js';
+import { useT } from '../lib/language.jsx';
 
-const ordinal = (n) => `${n}${['th', 'st', 'nd', 'rd'][n % 100 > 10 && n % 100 < 14 ? 0 : Math.min(n % 10, 4) % 4]}`;
 const VIEW_NOTES = {
-  moon: 'The Moon chart counts the houses from the Moon sign. Astrologers read it beside the birth chart, especially for the mind, feelings and daily life.',
-  navamsa: 'The Navamsa divides each sign into nine parts. It is read for marriage and for how strong each graha really is.',
+  moon: msg('The Moon chart counts the houses from the Moon sign. Astrologers read it beside the birth chart, especially for the mind, feelings and daily life.'),
+  navamsa: msg('The Navamsa divides each sign into nine parts. It is read for marriage and for how strong each graha really is.'),
 };
 
 /**
@@ -21,6 +22,7 @@ const VIEW_NOTES = {
  *  - onSelect({house, sign, planets:[names]}), focusPlanet {name, t}
  */
 export default function Kundli({ vedic, views = false, reader = true, whose = null, animate = false, label = 'Kundli', onSelect, focusPlanet }) {
+  const t = useT();
   const options = availableViews(vedic);
   const [view, setView] = useState(options[0]);
   const [selected, setSelected] = useState(1);
@@ -31,7 +33,7 @@ export default function Kundli({ vedic, views = false, reader = true, whose = nu
   const houses = useMemo(() => buildKundli(vedic, view), [vedic, view]);
   const current = houses[selected - 1];
   const period = useMemo(() => (whose && view !== 'navamsa' ? periodAt(vedic.dasha) : null), [whose, view, vedic]);
-  const reading = useMemo(() => readHouse(houses, selected, period, whose ?? 'your'), [houses, selected, period, whose]);
+  const reading = useMemo(() => readHouse(houses, selected, period, whose ?? 'your', t), [houses, selected, period, whose, t]);
 
   useEffect(() => {
     onSelectRef.current?.({ house: current.house, sign: current.sign, planets: current.planets.map((p) => p.name) });
@@ -53,22 +55,22 @@ export default function Kundli({ vedic, views = false, reader = true, whose = nu
   }
 
   const meaning = HOUSE_MEANINGS[current.house - 1];
-  const caption = view === 'lagna' ? 'House 1 is the top-centre diamond, and the houses run anticlockwise from it. The symbol in each house is its sign.'
-    : view === 'moon' ? (vedic.lagna ? 'Drawn from the Moon sign: the Moon\'s sign is house 1.' : 'The birth time is not known, so the chart is drawn from the Moon sign.')
-      : 'The ninth-division chart.';
+  const caption = view === 'lagna' ? t('House 1 is the top-centre diamond, and the houses run anticlockwise from it. The symbol in each house is its sign.')
+    : view === 'moon' ? (vedic.lagna ? t('Drawn from the Moon sign: the Moon\'s sign is house 1.') : t('The birth time is not known, so the chart is drawn from the Moon sign.'))
+      : t('The ninth-division chart.');
 
   return (
     <div className={reader === 'side' ? 'kundli side' : 'kundli'}>
       {views && options.length > 1 ? (
-        <div className="pills views" role="group" aria-label="Chart view">
+        <div className="pills views" role="group" aria-label={t('Chart view')}>
           {options.map((key) => (
-            <button key={key} type="button" aria-pressed={view === key} className={view === key ? 'pill on' : 'pill'} onClick={() => setView(key)}>{VIEW_LABELS[key]}</button>
+            <button key={key} type="button" aria-pressed={view === key} className={view === key ? 'pill on' : 'pill'} onClick={() => setView(key)}>{t(VIEW_LABELS[key])}</button>
           ))}
         </div>
       ) : null}
 
       <figure className="kundli-figure">
-        <svg viewBox="0 0 400 400" role="group" aria-label={`${label}. Choose a house to read about it.`} className={animate ? 'kundli-svg draw' : 'kundli-svg'}>
+        <svg viewBox="0 0 400 400" role="group" aria-label={t('{0}. Choose a house to read about it.', [label])} className={animate ? 'kundli-svg draw' : 'kundli-svg'}>
           <rect x="0" y="0" width="400" height="400" className="kundli-paper" />
           {houses.map((h, i) => (
             <path
@@ -79,7 +81,7 @@ export default function Kundli({ vedic, views = false, reader = true, whose = nu
               role="button"
               tabIndex={h.house === selected ? 0 : -1}
               aria-pressed={h.house === selected}
-              aria-label={`House ${h.house}, ${RASHIS[h.sign - 1]}: ${h.planets.length ? h.planets.map((p) => p.name).join(', ') : 'empty'}`}
+              aria-label={t('House {0}, {1}: {2}', [h.house, t(RASHIS[h.sign - 1]), h.planets.length ? h.planets.map((p) => t(p.name)).join(', ') : t('empty')])}
               onClick={() => setSelected(h.house)}
               onKeyDown={(e) => onKey(e, h.house)}
             />
@@ -133,47 +135,47 @@ export default function Kundli({ vedic, views = false, reader = true, whose = nu
       {reader ? (
         <div className="house-reader">
           <div>
-            <p className="reader-lead">Tap any house in the chart, or pick its number</p>
-            <p className="hint">Each house is one area of life.</p>
+            <p className="reader-lead">{t('Tap any house in the chart, or pick its number')}</p>
+            <p className="hint">{t('Each house is one area of life.')}</p>
           </div>
-          <div className="house-pills" role="group" aria-label="Houses">
+          <div className="house-pills" role="group" aria-label={t('Houses')}>
             {houses.map((h) => (
               <button key={h.house} type="button" aria-pressed={h.house === selected} className={h.house === selected ? 'on' : undefined} onClick={() => setSelected(h.house)}>{h.house}</button>
             ))}
           </div>
           <div className="house-panel" aria-live="polite">
             <div className="house-head">
-              <h3>{ordinal(current.house)} house</h3>
-              <span className={reading.status === 'In focus now' ? 'tag focus' : 'tag plain'}>{reading.status}</span>
+              <h3>{t(HOUSE_NAMES[current.house - 1])}</h3>
+              <span className={reading.status === 'In focus now' ? 'tag focus' : 'tag plain'}>{t(reading.status)}</span>
             </div>
-            <p className="house-sign">{RASHIS[current.sign - 1]} ({SIGNS[current.sign - 1]})</p>
+            <p className="house-sign">{t(RASHIS[current.sign - 1])} ({t(SIGNS[current.sign - 1])})</p>
             <div className="note">
-              <p className="note-label">What this house is about</p>
-              <p><strong>{meaning.about}</strong></p>
+              <p className="note-label">{t('What this house is about')}</p>
+              <p><strong>{t(meaning.about)}</strong></p>
             </div>
             <div className="note">
-              <p className="note-label">{whose === 'your' ? 'In your chart' : 'In this chart'}</p>
+              <p className="note-label">{whose === 'your' ? t('In your chart') : t('In this chart')}</p>
               {current.planets.length ? (
                 <ul>
                   {current.planets.map((p) => (
                     <li key={p.name}>
-                      <strong>{p.name}</strong>{p.retro ? <span className="retro"> retrograde</span> : null}
-                      {view === 'navamsa' ? '' : `, ${dms(p.degreeInRashi)} in ${p.nakshatra}`}
-                      <span className="muted">: {GRAHA_MEANINGS[p.name]}</span>
+                      <strong>{t(p.name)}</strong>{p.retro ? <span className="retro"> {t('retrograde')}</span> : null}
+                      {view === 'navamsa' ? '' : `, ${t('{0} in {1}', [dms(p.degreeInRashi), t(p.nakshatra)])}`}
+                      <span className="muted">: {t(GRAHA_MEANINGS[p.name])}</span>
                     </li>
                   ))}
                 </ul>
-              ) : <p>No grahas sit here, so this house is read through its lord.</p>}
+              ) : <p>{t('No grahas sit here, so this house is read through its lord.')}</p>}
               {reading.lordLine ? <p>{reading.lordLine}</p> : null}
               {reading.aspectLine ? <p>{reading.aspectLine}</p> : null}
             </div>
             {reading.nowLine ? (
               <div className="note">
-                <p className="note-label">{whose === 'your' ? 'Right now for you' : 'Right now for them'}</p>
+                <p className="note-label">{whose === 'your' ? t('Right now for you') : t('Right now for them')}</p>
                 <p>{reading.nowLine}</p>
               </div>
             ) : null}
-            {view !== 'lagna' && VIEW_NOTES[view] ? <p className="hint">{VIEW_NOTES[view]}</p> : null}
+            {view !== 'lagna' && VIEW_NOTES[view] ? <p className="hint">{t(VIEW_NOTES[view])}</p> : null}
           </div>
         </div>
       ) : null}

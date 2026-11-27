@@ -11,6 +11,7 @@ const PATHS = {
   clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
   lock: <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.800 3 2.800 15 0 18M12 3c-2.800 3-2.800 15 0 18" /></>,
   planet: <><circle cx="12" cy="12" r="5" /><path d="M3.5 15.5c-1.500 2.500 4 1.500 9-1.500s8.500-7.500 7-10" /></>,
 };
 

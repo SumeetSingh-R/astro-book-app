@@ -33,6 +33,21 @@ The rule throughout: **the engine calculates, the model only explains.** The mod
 - **Phones:** a bottom tab bar (Today, My charts, Ask, Matching).
 - **About page:** credits, privacy and the link to this source code live at `/about`, linked from every footer.
 
+## Fourth version: ten languages and remembered data
+
+**Languages.** The whole app (interface, engine-written sentences, AI readings and answers) can be read in English, Hindi, Gujarati, Marathi, Bengali, Tamil, Telugu, Kannada, Malayalam and Punjabi. The list is `config/languages.mjs`.
+
+- English text is the key: components call `t('Save')` (`useT()` in `web/src/lib/language.jsx`). Text kept in tables outside components is marked with `msg('…')`.
+- `npm run build:strings` (part of `npm run build`) reads the source and writes the catalogue of every string, `i18n/catalog.mjs`, plus `i18n/version.mjs`. Proper names (rashis, grahas, nakshatras, matching terms) come from the engine through `i18n/names.mjs`.
+- `GET /api/i18n?lang=gu` returns the catalogue in one language. Hindi is bundled and hand-written (`i18n/seed/hi.mjs`), so it needs no AI. Every other language is translated once by the AI model, in small batches, and kept in the site's Netlify Blobs store (`api/lib/store.mjs`, `api/lib/translate.mjs`); later visitors get it from there and from the CDN. Only text the app itself wrote is ever translated, never text typed by a visitor.
+- Engine-written sentences in API answers (horoscope, match notes, the day's theme) are translated the same way on the server. AI readings and answers are written directly in the chosen language.
+- Without `ANTHROPIC_API_KEY`, Hindi still works in full; the other languages stay in English until the key is set.
+- Fonts for each script are loaded from Google Fonts only when that language is chosen.
+
+**Remembered data.** `web/src/lib/cache.js` keeps what the app has loaded (profile, charts list, each chart, readings, today, horoscope, conversation, match results) in memory and in the browser's storage, per signed-in person. Pages show the remembered answer at once and refresh it quietly when it has aged; edits forget what they make stale; signing out wipes everything. The server also runs its independent database lookups together instead of one after another.
+
+There is no Redis: readings and charts are already stored in Supabase, translations in Netlify Blobs, and the waiting people noticed was the browser asking again for things it already had.
+
 ### Switching the AI on
 
 Set these in the Netlify site's environment variables (never in the code):

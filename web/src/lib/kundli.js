@@ -1,5 +1,6 @@
 // Geometry and reference text for the interactive North Indian kundli.
-import { GRAHA_ABBR } from './format.js';
+import { GRAHA_ABBR, currentLocale } from './format.js';
+import { msg } from './msg.js';
 
 // The 12 houses of the diamond chart in a 400 x 400 box, anticlockwise from the top-centre diamond.
 // `d` is the house outline; `p` is where grahas are written; `s` is where the sign symbol sits.
@@ -19,35 +20,35 @@ export const HOUSE_SHAPES = [
 ];
 
 export const HOUSE_MEANINGS = [
-  { name: 'Tanu', about: 'You: body, temperament and how you meet the world.' },
-  { name: 'Dhana', about: 'Money, food, speech and the family you grew up in.' },
-  { name: 'Sahaja', about: 'Courage, effort, siblings, short journeys and skills of the hands.' },
-  { name: 'Sukha', about: 'Home, mother, comfort, property and peace of mind.' },
-  { name: 'Putra', about: 'Children, creativity, learning, romance and good judgement.' },
-  { name: 'Ari', about: 'Daily work, health, debts, rivals and the obstacles you overcome.' },
-  { name: 'Kalatra', about: 'Marriage, partnerships and the people you deal with one to one.' },
-  { name: 'Ayu', about: 'Longevity, sudden change, shared money and things kept hidden.' },
-  { name: 'Dharma', about: 'Fortune, faith, teachers, father and long journeys.' },
-  { name: 'Karma', about: 'Career, reputation, responsibility and your place in public life.' },
-  { name: 'Labha', about: 'Gains, income, friends, networks and hopes fulfilled.' },
-  { name: 'Vyaya', about: 'Expenses, rest, solitude, foreign places and letting go.' },
+  { name: 'Tanu', about: msg('You: body, temperament and how you meet the world.') },
+  { name: 'Dhana', about: msg('Money, food, speech and the family you grew up in.') },
+  { name: 'Sahaja', about: msg('Courage, effort, siblings, short journeys and skills of the hands.') },
+  { name: 'Sukha', about: msg('Home, mother, comfort, property and peace of mind.') },
+  { name: 'Putra', about: msg('Children, creativity, learning, romance and good judgement.') },
+  { name: 'Ari', about: msg('Daily work, health, debts, rivals and the obstacles you overcome.') },
+  { name: 'Kalatra', about: msg('Marriage, partnerships and the people you deal with one to one.') },
+  { name: 'Ayu', about: msg('Longevity, sudden change, shared money and things kept hidden.') },
+  { name: 'Dharma', about: msg('Fortune, faith, teachers, father and long journeys.') },
+  { name: 'Karma', about: msg('Career, reputation, responsibility and your place in public life.') },
+  { name: 'Labha', about: msg('Gains, income, friends, networks and hopes fulfilled.') },
+  { name: 'Vyaya', about: msg('Expenses, rest, solitude, foreign places and letting go.') },
 ];
 
 export const GRAHA_MEANINGS = {
-  Sun: 'self, vitality and authority',
-  Moon: 'mind, feelings and care',
-  Mars: 'energy, courage and drive',
-  Mercury: 'intellect, speech and trade',
-  Jupiter: 'wisdom, growth and guidance',
-  Venus: 'love, comfort and the arts',
-  Saturn: 'discipline, duty and patience',
-  Rahu: 'ambition, appetite and the unfamiliar',
-  Ketu: 'detachment, insight and what is left behind',
+  Sun: msg('self, vitality and authority'),
+  Moon: msg('mind, feelings and care'),
+  Mars: msg('energy, courage and drive'),
+  Mercury: msg('intellect, speech and trade'),
+  Jupiter: msg('wisdom, growth and guidance'),
+  Venus: msg('love, comfort and the arts'),
+  Saturn: msg('discipline, duty and patience'),
+  Rahu: msg('ambition, appetite and the unfamiliar'),
+  Ketu: msg('detachment, insight and what is left behind'),
 };
 
 export const RASHI_LORDS = ['Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter'];
 
-export const VIEW_LABELS = { lagna: 'Birth chart', moon: 'Moon chart', navamsa: 'Navamsa (D9)' };
+export const VIEW_LABELS = { lagna: msg('Birth chart'), moon: msg('Moon chart'), navamsa: msg('Navamsa (D9)') };
 
 const navamsaSign = (longitude) => (Math.floor(longitude / (10 / 3)) % 12) + 1;
 
@@ -82,14 +83,37 @@ export function buildKundli(vedic, view) {
 
 // ---------- Reading one house in plain words ----------
 export const HOUSE_TOPICS = [
-  'self, body and temperament', 'money, speech and family', 'courage, effort and siblings', 'home, mother, property and peace of mind',
-  'children, creativity and learning', 'daily work, health, debts and rivals', 'marriage and partnerships', 'longevity, sudden change and shared money',
-  'fortune, faith, father and long journeys', 'career and reputation', 'gains, income and friends', 'expenses, rest, solitude and foreign places',
+  msg('self, body and temperament'), msg('money, speech and family'), msg('courage, effort and siblings'), msg('home, mother, property and peace of mind'),
+  msg('children, creativity and learning'), msg('daily work, health, debts and rivals'), msg('marriage and partnerships'), msg('longevity, sudden change and shared money'),
+  msg('fortune, faith, father and long journeys'), msg('career and reputation'), msg('gains, income and friends'), msg('expenses, rest, solitude and foreign places'),
 ];
 const EXALTED_IN = { Sun: 1, Moon: 2, Mars: 10, Mercury: 6, Jupiter: 4, Venus: 12, Saturn: 7 };
 const EXTRA_ASPECTS = { Mars: [4, 8], Jupiter: [5, 9], Saturn: [3, 10] };
-const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'];
-const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+export const HOUSE_NAMES = [msg('1st house'), msg('2nd house'), msg('3rd house'), msg('4th house'), msg('5th house'), msg('6th house'), msg('7th house'), msg('8th house'), msg('9th house'), msg('10th house'), msg('11th house'), msg('12th house')];
+export const HOUSE_STATUS = [msg('In focus now'), msg('Active'), msg('Quiet')];
+// "A, B and C" the way the chosen language writes a list.
+const list = (xs) => { try { return new Intl.ListFormat(currentLocale(), { style: 'long', type: 'conjunction' }).format(xs); } catch { return xs.join(', '); } };
+
+// Every sentence the house reader can say, whole, so each can be translated as one thought.
+const LORD_LINES = {
+  here: msg('Its lord, {0}, sits right here in its own sign, a strong support for this house.'),
+  plain: msg('Its lord, {0}, sits in the {1} ({2}).'),
+  exalted: msg('Its lord, {0}, sits in the {1} ({2}), where it is exalted: a strong support for this house.'),
+  own: msg('Its lord, {0}, sits in the {1} ({2}), in its own sign: a strong support for this house.'),
+  debilitated: msg('Its lord, {0}, sits in the {1} ({2}), where it is weak, so this area asks for more patience.'),
+};
+const FOCUS_LINES = {
+  your: {
+    main: { rules: msg('{0}, the lord of your main period, rules this house'), sits: msg('{0}, the lord of your main period, sits here') },
+    sub: { rules: msg('{0}, the lord of your sub-period, rules this house'), sits: msg('{0}, the lord of your sub-period, sits here') },
+    none: msg('Neither of your current period lords is tied to this house, so it stays in the background for now.'),
+  },
+  their: {
+    main: { rules: msg('{0}, the lord of their main period, rules this house'), sits: msg('{0}, the lord of their main period, sits here') },
+    sub: { rules: msg('{0}, the lord of their sub-period, rules this house'), sits: msg('{0}, the lord of their sub-period, sits here') },
+    none: msg('Neither of their current period lords is tied to this house, so it stays in the background for now.'),
+  },
+};
 
 function dignity(name, sign) {
   const ex = EXALTED_IN[name];
@@ -112,8 +136,10 @@ export function periodAt(dasha, at = Date.now()) {
  * whether the period they are in now brings it into focus.
  * @param houses  the output of buildKundli()
  * @param period  periodAt(...) for a personal chart, or null (the sky right now, a navamsa)
+ * @param t       the translate function, so every line comes out in the chosen language
+ * @returns status is one of HOUSE_STATUS, in English: translate it when showing it
  */
-export function readHouse(houses, number, period, whose = 'your') {
+export function readHouse(houses, number, period, whose = 'your', t = (text, vars) => (vars ? text.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m) : text)) {
   const house = houses[number - 1];
   const names = house.planets.map((p) => p.name);
   const lord = RASHI_LORDS[house.sign - 1];
@@ -122,14 +148,8 @@ export function readHouse(houses, number, period, whose = 'your') {
   let lordLine = null;
   if (lordHouse) {
     const strength = dignity(lord, lordHouse.sign);
-    if (lordHouse.house === house.house) {
-      lordLine = `Its lord, ${lord}, sits right here in its own sign, a strong support for this house.`;
-    } else {
-      lordLine = `Its lord, ${lord}, sits in the ${ORDINALS[lordHouse.house - 1]} house (${HOUSE_TOPICS[lordHouse.house - 1]})`
-        + (strength === 'exalted' ? ', where it is exalted: a strong support for this house.'
-          : strength === 'own' ? ', in its own sign: a strong support for this house.'
-            : strength === 'debilitated' ? ', where it is weak, so this area asks for more patience.' : '.');
-    }
+    const key = lordHouse.house === house.house ? 'here' : strength ?? 'plain';
+    lordLine = t(LORD_LINES[key], [t(lord), t(HOUSE_NAMES[lordHouse.house - 1]), t(HOUSE_TOPICS[lordHouse.house - 1])]);
   }
 
   const lookers = [];
@@ -140,26 +160,29 @@ export function readHouse(houses, number, period, whose = 'your') {
       if (distance === 7 || (EXTRA_ASPECTS[p.name] ?? []).includes(distance)) lookers.push(p.name);
     }
   }
-  const aspectLine = lookers.length ? `${list(lookers)} ${lookers.length > 1 ? 'look' : 'looks'} at this house from across the chart.` : null;
+  const aspectLine = !lookers.length ? null
+    : lookers.length > 1 ? t('{0} look at this house from across the chart.', [list(lookers.map((n) => t(n)))])
+      : t('{0} looks at this house from across the chart.', [t(lookers[0])]);
 
   let status = names.length ? 'Active' : 'Quiet';
   let nowLine = null;
   if (period) {
+    const lines = FOCUS_LINES[whose === 'their' ? 'their' : 'your'];
     const focus = [];
     let until = period.mahaEnd;
-    for (const [graha, label] of [[period.maha, 'main period'], [period.antar, 'sub-period']]) {
+    for (const [graha, which] of [[period.maha, 'main'], [period.antar, 'sub']]) {
       let hit = false;
-      if (lord === graha) { focus.push(`${graha}, the lord of ${whose} ${label}, rules this house`); hit = true; }
-      if (names.includes(graha)) { focus.push(`${graha}, the lord of ${whose} ${label}, sits here`); hit = true; }
-      if (hit && label === 'sub-period') until = period.antarEnd;
+      if (lord === graha) { focus.push(t(lines[which].rules, [t(graha)])); hit = true; }
+      if (names.includes(graha)) { focus.push(t(lines[which].sits, [t(graha)])); hit = true; }
+      if (hit && which === 'sub') until = period.antarEnd;
     }
     if (focus.length) {
       status = 'In focus now';
-      const when = new Date(until).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+      const when = new Date(until).toLocaleDateString(currentLocale(), { month: 'long', year: 'numeric' });
       const text = list(focus);
-      nowLine = `${text[0].toUpperCase()}${text.slice(1)}, so these themes are in focus until ${when}.`;
+      nowLine = t('{0}, so these themes are in focus until {1}.', [`${text[0].toUpperCase()}${text.slice(1)}`, when]);
     } else {
-      nowLine = `Neither of ${whose} current period lords is tied to this house, so it stays in the background for now.`;
+      nowLine = t(lines.none);
     }
   }
   return { status, lord, lordLine, aspectLine, nowLine };

@@ -1,93 +1,121 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from './supabase.js';
+import { LANGUAGES, languageInfo, languageOf } from '../../../config/languages.mjs';
+import { CATALOG_VERSION } from '../../../i18n/version.mjs';
+import { setLocale } from './format.js';
+import Icon from '../components/Icon.jsx';
 
-// The language readings and answers are written in. Page furniture stays in English for now;
-// the labels directly around a reading follow this choice.
-const LanguageContext = createContext(['en', () => {}]);
-export const useLanguage = () => useContext(LanguageContext);
+// The language the whole app is read in: the interface, the readings and the answers.
+// English text is the key. `t('Save')` gives the same words in the chosen language, or English
+// while a translation is still on its way.
+const fill = (text, vars) => (vars ? text.replace(/\{(\w+)\}/g, (m, k) => (vars[k] ?? m)) : text);
+const LanguageContext = createContext({ language: 'en', setLanguage: () => {}, t: fill, ready: true });
+
+/** [language, setLanguage] */
+export const useLanguage = () => { const c = useContext(LanguageContext); return [c.language, c.setLanguage]; };
+/** t(text, vars): the text in the chosen language. `vars` fills {name} or {0} placeholders. */
+export const useT = () => useContext(LanguageContext).t;
+export { msg } from './msg.js';
 
 function stored() {
-  try { return localStorage.getItem('reading.language') === 'hi' ? 'hi' : 'en'; } catch { return 'en'; }
+  try { return languageOf(localStorage.getItem('reading.language')); } catch { return 'en'; }
+}
+const dictKey = (language) => `ab.i18n.${language}`;
+function storedDict(language) {
+  try {
+    const d = JSON.parse(localStorage.getItem(dictKey(language)));
+    return d?.v === CATALOG_VERSION ? d : null;
+  } catch { return null; }
+}
+
+/** Load the font that carries a language's script, once. */
+function useScriptFont(language) {
+  useEffect(() => {
+    const { font } = languageInfo(language);
+    document.documentElement.lang = language;
+    document.documentElement.style.setProperty('--font-script', font ? `'${font}'` : "'Mukta'");
+    if (!font) return;
+    const id = `font-${font.replace(/\s+/g, '-')}`;
+    if (document.getElementById(id)) return;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/\s+/g, '+')}:wght@400;500;700&display=swap`;
+    document.head.appendChild(link);
+  }, [language]);
 }
 
 export function LanguageProvider({ userId, children }) {
   const [language, setState] = useState(stored);
+  const [dict, setDict] = useState(() => (language === 'en' ? null : storedDict(language)));
+  const tries = useRef(0);
+  useScriptFont(language);
+  setLocale(languageInfo(language).locale);
+
   // Signed in, the choice lives with the account so it is the same on every device.
   useEffect(() => {
     if (!userId) return;
     let live = true;
     supabase.from('profiles').select('language').eq('id', userId).maybeSingle().then(({ data }) => {
-      if (live && data?.language) { setState(data.language); try { localStorage.setItem('reading.language', data.language); } catch { /* storage unavailable */ } }
+      if (live && data?.language) { setState(languageOf(data.language)); try { localStorage.setItem('reading.language', data.language); } catch { /* storage unavailable */ } }
     });
     return () => { live = false; };
   }, [userId]);
-  const setLanguage = (value) => {
-    setState(value);
-    try { localStorage.setItem('reading.language', value); } catch { /* storage unavailable */ }
-    if (userId) supabase.from('profiles').update({ language: value }).eq('id', userId).then(() => {});
-  };
-  return <LanguageContext.Provider value={[language, setLanguage]}>{children}</LanguageContext.Provider>;
+
+  // The words for the chosen language: from this device if it has them, otherwise from the server.
+  useEffect(() => {
+    if (language === 'en') { setDict(null); return undefined; }
+    const have = storedDict(language);
+    setDict(have);
+    if (have?.complete) return undefined;
+    let live = true;
+    let timer;
+    tries.current = 0;
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/i18n?lang=${language}&v=${CATALOG_VERSION}`);
+        if (!res.ok) throw new Error(String(res.status));
+        const data = await res.json();
+        if (!live) return;
+        const next = { v: CATALOG_VERSION, complete: data.complete, strings: data.strings };
+        setDict(next);
+        try { localStorage.setItem(dictKey(language), JSON.stringify(next)); } catch { /* storage unavailable */ }
+        if (data.complete) return;
+      } catch { /* try again below */ }
+      // A language being translated for the first time arrives in parts: ask again for the rest.
+      tries.current += 1;
+      if (live && tries.current < 8) timer = setTimeout(load, 12000);
+    };
+    load();
+    return () => { live = false; clearTimeout(timer); };
+  }, [language]);
+
+  const setLanguage = useCallback((value) => {
+    const next = languageOf(value);
+    setState(next);
+    try { localStorage.setItem('reading.language', next); } catch { /* storage unavailable */ }
+    if (userId) supabase.from('profiles').update({ language: next }).eq('id', userId).then(() => {});
+  }, [userId]);
+
+  const value = useMemo(() => {
+    const strings = language === 'en' ? null : dict?.strings ?? null;
+    const t = (text, vars) => (typeof text === 'string' ? fill(strings?.[text] ?? text, vars) : text);
+    return { language, setLanguage, t, ready: language === 'en' || Boolean(dict) };
+  }, [language, dict, setLanguage]);
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
-export function LanguageSwitch() {
+/** The language picker: each language under its own name. */
+export function LanguageSwitch({ compact = false }) {
   const [language, setLanguage] = useLanguage();
+  const t = useT();
   return (
-    <div className="pills language" role="group" aria-label="Language for readings and answers">
-      {[['en', 'English'], ['hi', 'हिन्दी']].map(([key, name]) => (
-        <button key={key} type="button" lang={key} aria-pressed={language === key} className={language === key ? 'pill on' : 'pill'} onClick={() => setLanguage(key)}>{name}</button>
-      ))}
-    </div>
+    <label className={compact ? 'lang-select compact' : 'lang-select'}>
+      <Icon name="globe" size={18} />
+      <span className="visually-hidden">{t('Language')}</span>
+      <select value={language} onChange={(e) => setLanguage(e.target.value)} aria-label={t('Language')}>
+        {LANGUAGES.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
+      </select>
+    </label>
   );
 }
-
-const WORDS = {
-  en: {
-    plainWords: 'In plain words',
-    why: 'Why we say this',
-    nature: 'Nature', career: 'Work', money: 'Money', relationships: 'Marriage',
-    family: 'Family', wellbeing: 'Wellbeing', now: 'Right now',
-    hideWhy: 'Hide the reason', areas: 'Area of life',
-    writing: 'Writing the reading for this chart…',
-    shortReading: 'A shorter reading is shown because the full one could not be written just now.',
-    hindiUnavailable: 'The Hindi reading is not available just now, so this one is in English.',
-    askTitle: 'Ask about this chart',
-    askIntro: 'Ask in your own words. The answer is written from this chart, not from a sign.',
-    askPlaceholder: 'When is a good period for…',
-    ask: 'Ask', asking: 'Reading the chart…',
-    basedOn: 'Based on',
-    left: (n, limit) => `${n} of ${limit} questions left today.`,
-    privacy: 'Your question, your age and this chart\'s planet positions go to an AI model (Claude) to write the answer. Your name, email, birth date and birth place are not sent. Answers are for reflection, not certainties.',
-    clear: 'Clear this conversation', clearConfirm: 'Delete every question and answer here?', clearYes: 'Delete them', clearNo: 'Keep them',
-    suggestions: ['When is a good period for marriage?', 'What kind of work suits me?', 'How do the next two years look for money?', 'What is my current period about?'],
-    goodFor: 'Good for', takeCare: 'Go gently with',
-    whyToday: 'Why today reads this way',
-    tone: { supportive: 'A supportive day', steady: 'A steady day', demanding: 'A demanding day' },
-    askToday: 'Ask about your day or your chart',
-  },
-  hi: {
-    plainWords: 'सरल शब्दों में',
-    why: 'ऐसा क्यों',
-    nature: 'स्वभाव', career: 'काम', money: 'धन', relationships: 'विवाह',
-    family: 'परिवार', wellbeing: 'सेहत', now: 'अभी',
-    hideWhy: 'कारण छिपाएँ', areas: 'जीवन का क्षेत्र',
-    writing: 'इस कुंडली का फल लिखा जा रहा है…',
-    shortReading: 'पूरा फल अभी नहीं लिखा जा सका, इसलिए छोटा फल दिखाया गया है।',
-    hindiUnavailable: 'हिन्दी में फल अभी उपलब्ध नहीं है, इसलिए यह अंग्रेज़ी में है।',
-    askTitle: 'इस कुंडली से पूछें',
-    askIntro: 'अपने शब्दों में पूछें। उत्तर इसी कुंडली से लिखा जाता है, केवल राशि से नहीं।',
-    askPlaceholder: 'मेरे लिए अच्छा समय कब है…',
-    ask: 'पूछें', asking: 'कुंडली पढ़ी जा रही है…',
-    basedOn: 'आधार',
-    left: (n, limit) => `आज के ${limit} में से ${n} प्रश्न बाक़ी हैं।`,
-    privacy: 'उत्तर लिखने के लिए आपका प्रश्न, आपकी आयु और इस कुंडली की ग्रह-स्थिति एक AI मॉडल (Claude) को भेजी जाती है। आपका नाम, ईमेल, जन्म तिथि और जन्म स्थान नहीं भेजे जाते। उत्तर मार्गदर्शन के लिए हैं, निश्चित भविष्यवाणी नहीं।',
-    clear: 'यह बातचीत मिटाएँ', clearConfirm: 'यहाँ के सभी प्रश्न और उत्तर मिटा दें?', clearYes: 'मिटा दें', clearNo: 'रहने दें',
-    suggestions: ['विवाह के लिए अच्छा समय कब है?', 'मेरे लिए कौन सा काम ठीक रहेगा?', 'अगले दो साल धन के लिए कैसे हैं?', 'मेरी वर्तमान दशा क्या कहती है?'],
-    goodFor: 'आज के लिए अच्छा', takeCare: 'इसमें संभलकर',
-    whyToday: 'आज का फल ऐसा क्यों है',
-    tone: { supportive: 'सहायक दिन', steady: 'सामान्य दिन', demanding: 'मेहनत वाला दिन' },
-    askToday: 'अपने दिन या कुंडली के बारे में पूछें',
-  },
-};
-
-/** Words for the labels around a reading, in the reading's language. */
-export const wordsFor = (language) => WORDS[language] ?? WORDS.en;

@@ -2,9 +2,11 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { api } from '../lib/api.js';
 import TimePicker from './TimePicker.jsx';
 import Icon from './Icon.jsx';
+import { useT } from '../lib/language.jsx';
 
 /** Birth-place picker: searches towns and cities, with manual coordinates as a fallback. */
 function PlaceField({ value, onChange }) {
+  const t = useT();
   const id = useId();
   const [query, setQuery] = useState(value?.label ?? '');
   const [results, setResults] = useState([]);
@@ -46,28 +48,28 @@ function PlaceField({ value, onChange }) {
     const set = (patch) => onChange({ ...v, ...patch, manual: true });
     return (
       <fieldset className="manual-place">
-        <legend>Place of birth</legend>
-        <label>Place name<input value={v.label} onChange={(e) => set({ label: e.target.value })} required placeholder="Village or town, district" /></label>
+        <legend>{t('Place of birth')}</legend>
+        <label>{t('Place name')}<input value={v.label} onChange={(e) => set({ label: e.target.value })} required placeholder={t('Village or town, district')} /></label>
         <div className="row">
-          <label>Latitude<input type="number" step="any" min="-90" max="90" value={v.latitude} onChange={(e) => set({ latitude: e.target.value })} required placeholder="26.47" /></label>
-          <label>Longitude<input type="number" step="any" min="-180" max="180" value={v.longitude} onChange={(e) => set({ longitude: e.target.value })} required placeholder="84.44" /></label>
+          <label>{t('Latitude')}<input type="number" step="any" min="-90" max="90" value={v.latitude} onChange={(e) => set({ latitude: e.target.value })} required placeholder="26.47" /></label>
+          <label>{t('Longitude')}<input type="number" step="any" min="-180" max="180" value={v.longitude} onChange={(e) => set({ longitude: e.target.value })} required placeholder="84.44" /></label>
         </div>
-        <label>Timezone<input value={v.timezone} onChange={(e) => set({ timezone: e.target.value })} required placeholder="Asia/Kolkata" /></label>
-        <p className="hint">North and east are positive. All of India uses Asia/Kolkata.</p>
-        <button type="button" className="link" onClick={() => { setManual(false); onChange(null); setQuery(''); }}>Search for a town instead</button>
+        <label>{t('Timezone')}<input value={v.timezone} onChange={(e) => set({ timezone: e.target.value })} required placeholder="Asia/Kolkata" /></label>
+        <p className="hint">{t('North and east are positive. All of India uses Asia/Kolkata.')}</p>
+        <button type="button" className="link" onClick={() => { setManual(false); onChange(null); setQuery(''); }}>{t('Search for a town instead')}</button>
       </fieldset>
     );
   }
 
   return (
     <div className="place-field">
-      <label htmlFor={id}>Place of birth</label>
+      <label htmlFor={id}>{t('Place of birth')}</label>
       <input
         id={id} value={query} onChange={(e) => search(e.target.value)} autoComplete="off" required
-        placeholder="Start typing a town or city" role="combobox" aria-expanded={results.length > 0} aria-controls={`${id}-list`}
+        placeholder={t('Start typing a town or city')} role="combobox" aria-expanded={results.length > 0} aria-controls={`${id}-list`}
       />
-      {status === 'loading' ? <p className="hint">Searching…</p> : null}
-      {status === 'error' ? <p className="hint error">Place search isn't responding. Try again, or enter coordinates.</p> : null}
+      {status === 'loading' ? <p className="hint">{t('Searching…')}</p> : null}
+      {status === 'error' ? <p className="hint error">{t('Place search isn\'t responding. Try again, or enter coordinates.')}</p> : null}
       {results.length > 0 ? (
         <ul className="place-results" id={`${id}-list`} role="listbox">
           {results.map((p) => (
@@ -77,8 +79,8 @@ function PlaceField({ value, onChange }) {
           ))}
         </ul>
       ) : null}
-      {status === 'done' && results.length === 0 ? <p className="hint">No town found with that name. Try the nearest larger town.</p> : null}
-      <button type="button" className="link" onClick={() => { setManual(true); onChange(null); }}>Small village? Enter coordinates yourself</button>
+      {status === 'done' && results.length === 0 ? <p className="hint">{t('No town found with that name. Try the nearest larger town.')}</p> : null}
+      <button type="button" className="link" onClick={() => { setManual(true); onChange(null); }}>{t('Small village? Enter coordinates yourself')}</button>
     </div>
   );
 }
@@ -90,6 +92,7 @@ function PlaceField({ value, onChange }) {
  * `onSubmit` receives { name, relation, date, time, timeUnknown, place }.
  */
 export default function BirthForm({ kind = 'quick', initial, submitLabel, busyLabel, onSubmit, children, done }) {
+  const t = useT();
   const [name, setName] = useState(initial?.name ?? '');
   const [relation, setRelation] = useState(initial?.relation ?? '');
   const [date, setDate] = useState(initial?.date ?? '');
@@ -104,11 +107,11 @@ export default function BirthForm({ kind = 'quick', initial, submitLabel, busyLa
     e.preventDefault();
     setError(null);
     if (!place || place.latitude === '' || place.longitude === '' || !place.timezone) {
-      setError('Choose a birth place from the list, or enter its coordinates.');
+      setError(t('Choose a birth place from the list, or enter its coordinates.'));
       return;
     }
     if (!timeUnknown && !time) {
-      setError(`Choose the hour and minute of birth, or tick "I don't know ${whose} birth time".`);
+      setError(kind === 'person' ? t('Choose the hour and minute of birth, or tick "I don\'t know their birth time".') : t('Choose the hour and minute of birth, or tick "I don\'t know my birth time".'));
       return;
     }
     setBusy(true);
@@ -128,23 +131,23 @@ export default function BirthForm({ kind = 'quick', initial, submitLabel, busyLa
     <form className="birth-form" onSubmit={submit}>
       <div className="fields">
         {kind === 'self' ? (
-          <label>Your name<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} autoComplete="name" placeholder="What should we call you?" /></label>
+          <label>{t('Your name')}<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} autoComplete="name" placeholder={t('What should we call you?')} /></label>
         ) : null}
         {kind === 'person' ? (
           <>
-            <label>Their name<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} placeholder="Whose chart is this?" /></label>
-            <label>How you know them (optional)<input value={relation} onChange={(e) => setRelation(e.target.value)} maxLength={40} placeholder="Husband, mother, friend…" /></label>
+            <label>{t('Their name')}<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} placeholder={t('Whose chart is this?')} /></label>
+            <label>{t('How you know them (optional)')}<input value={relation} onChange={(e) => setRelation(e.target.value)} maxLength={40} placeholder={t('Husband, mother, friend…')} /></label>
           </>
         ) : null}
-        <label>Date of birth<input type="date" value={date} onChange={(e) => setDate(e.target.value)} required min="1800-01-01" max="2200-12-31" /></label>
+        <label>{t('Date of birth')}<input type="date" value={date} onChange={(e) => setDate(e.target.value)} required min="1800-01-01" max="2200-12-31" /></label>
         <div>
           <TimePicker value={time} onChange={setTime} disabled={timeUnknown} whose={whose} />
-          <label className="check"><input type="checkbox" checked={timeUnknown} onChange={(e) => setTimeUnknown(e.target.checked)} /> I don't know {whose} birth time</label>
+          <label className="check"><input type="checkbox" checked={timeUnknown} onChange={(e) => setTimeUnknown(e.target.checked)} />{' '}{kind === 'person' ? t('I don\'t know their birth time') : t('I don\'t know my birth time')}</label>
         </div>
         <PlaceField value={place} onChange={setPlace} />
       </div>
       {children}
-      {error ? <p className="error" role="alert">{error}</p> : null}
+      {error ? <p className="error" role="alert">{t(error)}</p> : null}
       {done ? <p className="saved msg" role="status"><Icon name="check" size={20} /> {done}</p> : null}
       <button type="submit" className="btn" disabled={busy}>{busy ? busyLabel : submitLabel}</button>
     </form>

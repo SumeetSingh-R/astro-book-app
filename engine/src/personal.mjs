@@ -42,7 +42,7 @@ export function taraBala(birthNakshatraIndex, dayNakshatraIndex) {
   return { count, ...tara };
 }
 
-function saturnNote(houseFromMoon) {
+export function saturnNote(houseFromMoon) {
   if (houseFromMoon === 12) return { phase: 'Sade Sati, first phase', note: 'Saturn is in the sign before your Moon sign: the first third of Sade Sati, the seven-and-a-half-year Saturn passage.' };
   if (houseFromMoon === 1) return { phase: 'Sade Sati, middle phase', note: 'Saturn is crossing your Moon sign: the middle of Sade Sati, a period that asks for patience and steady effort.' };
   if (houseFromMoon === 2) return { phase: 'Sade Sati, last phase', note: 'Saturn is in the sign after your Moon sign: the closing third of Sade Sati.' };

@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
+import { forget } from '../lib/cache.js';
 import { useAuth } from '../App.jsx';
 import { useAccount, toFormValues, toRow } from '../lib/account.jsx';
-import { LanguageSwitch } from '../lib/language.jsx';
+import { LanguageSwitch, useT } from '../lib/language.jsx';
 import BirthForm from '../components/BirthForm.jsx';
 import Icon from '../components/Icon.jsx';
 
 /** The person's own details. Saved once here, they feed Today, the chart, matching and questions. */
 export default function Profile() {
+  const t = useT();
   const { session } = useAuth();
   const { self, reload } = useAccount();
   const navigate = useNavigate();
@@ -17,7 +19,9 @@ export default function Profile() {
   async function save(values) {
     setSaved(false);
     const { error } = await supabase.from('birth_profiles').update(toRow(values)).eq('id', self.id);
-    if (error) throw new Error('Your changes could not be saved. Check the details and try again.');
+    if (error) throw new Error(t('Your changes could not be saved. Check the details and try again.'));
+    // New birth details mean a new chart, so everything worked out from the old one is forgotten.
+    forget('profiles', 'chartFacts', `chart:${self.id}`, `reading:${self.id}`, `today:${self.id}`, 'match:');
     await reload();
     setSaved(true);
   }
@@ -36,17 +40,17 @@ export default function Profile() {
           <p className="muted">{session.user.email}</p>
         </div>
       </div>
-      <p className="banner"><Icon name="check" size={20} />Saved once, used everywhere: your chart, your daily reading, matching and your questions all read from this profile.</p>
-      <h2>Your birth details</h2>
-      <BirthForm key={self.id} kind="self" initial={toFormValues(self)} submitLabel="Save changes" busyLabel="Saving…" onSubmit={save}
-        done={saved ? 'Saved. Your chart and readings are up to date.' : null}>
+      <p className="banner"><Icon name="check" size={20} />{t('Saved once, used everywhere: your chart, your daily reading, matching and your questions all read from this profile.')}</p>
+      <h2>{t('Your birth details')}</h2>
+      <BirthForm key={self.id} kind="self" initial={toFormValues(self)} submitLabel={t('Save changes')} busyLabel={t('Saving…')} onSubmit={save}
+        done={saved ? t('Saved. Your chart and readings are up to date.') : null}>
         <fieldset className="plain-fieldset">
-          <legend>Language for readings and answers</legend>
+          <legend>{t('Language for readings and answers')}</legend>
           <LanguageSwitch />
         </fieldset>
-        <p className="private"><Icon name="lock" size={18} />Your birth details are private to your account and are used only to draw your chart.</p>
+        <p className="private"><Icon name="lock" size={18} />{t('Your birth details are private to your account and are used only to draw your chart.')}</p>
       </BirthForm>
-      <button type="button" className="btn outline" onClick={signOut}>Sign out</button>
+      <button type="button" className="btn outline" onClick={signOut}>{t('Sign out')}</button>
     </div>
   );
 }

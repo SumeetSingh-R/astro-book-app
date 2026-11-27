@@ -16,13 +16,19 @@ export function dms(deg) {
   return `${d}°${String(m).padStart(2, '0')}′`;
 }
 
+// Dates are written the way the chosen language writes them. The language provider sets this.
+let LOCALE = 'en-IN';
+export function setLocale(locale) { LOCALE = locale; }
+export const currentLocale = () => LOCALE;
+
 export function formatDate(iso, opts = { day: 'numeric', month: 'short', year: 'numeric' }) {
-  return new Date(iso).toLocaleDateString('en-IN', opts);
+  return new Date(iso).toLocaleDateString(LOCALE, opts);
 }
 
-export function formatBirth(profile) {
-  const date = new Date(`${profile.birth_date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-  let time = 'time not known';
+/** "12 March 1994, 8:20 AM". Pass `t` so "time not known" follows the chosen language. */
+export function formatBirth(profile, t = (x) => x) {
+  const date = new Date(`${profile.birth_date}T00:00:00`).toLocaleDateString(LOCALE, { day: 'numeric', month: 'long', year: 'numeric' });
+  let time = t('time not known');
   if (!profile.time_unknown && profile.birth_time) {
     const [h, m] = String(profile.birth_time).split(':');
     time = `${Number(h) % 12 === 0 ? 12 : Number(h) % 12}:${m} ${Number(h) >= 12 ? 'PM' : 'AM'}`;

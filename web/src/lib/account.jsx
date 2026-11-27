@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from './supabase.js';
+import { peek, store } from './cache.js';
 
 // The signed-in person's own birth details: the one saved chart marked as theirs.
 // Today, Ask and the profile page all read from it, so it is entered once.
@@ -14,12 +15,17 @@ export function AccountProvider({ userId, children }) {
   const reload = useCallback(async () => {
     if (!userId) { setState({ self: null, forUser: null }); return null; }
     const { data } = await supabase.from('birth_profiles').select(COLUMNS).eq('is_self', true).maybeSingle();
+    store('self', { row: data ?? null });
     setState({ self: data ?? null, forUser: userId });
     return data ?? null;
   }, [userId]);
   useEffect(() => { reload(); }, [reload]);
-  const loading = Boolean(userId) && state.forUser !== userId;
-  return <AccountContext.Provider value={{ self: loading ? null : state.self, loading, reload }}>{children}</AccountContext.Provider>;
+  // What was remembered from the last visit is used until the fresh answer arrives, so pages open at once.
+  const remembered = useMemo(() => (userId ? peek('self')?.value ?? null : null), [userId]);
+  const loaded = state.forUser === userId;
+  const loading = Boolean(userId) && !loaded && !remembered;
+  const self = loaded ? state.self : remembered?.row ?? null;
+  return <AccountContext.Provider value={{ self: loading ? null : self, loading, reload }}>{children}</AccountContext.Provider>;
 }
 
 /** Turn a saved row into the values the birth form edits. */

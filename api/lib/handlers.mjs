@@ -7,6 +7,7 @@ import {
 import { ruleChartReading } from '../../engine/src/readingText.mjs';
 import { ApiError, json, errorResponse, requireMethod, bearerToken, readJson, requireUuid } from './http.mjs';
 import { searchPlaces } from './places.mjs';
+import { languageOf, LANGUAGE_CODES } from '../../config/languages.mjs';
 import { chartReadingPrompt, dailyReadingPrompt, askPrompt, parseChartReading, parseDailyReading, tidy } from './prompts.mjs';
 
 // Daily allowances per signed-in person. Readings are stored, so they are only counted when first written.
@@ -41,9 +42,10 @@ function fromRows(rows) {
 
 /** Load a profile's chart from cache, or compute and store it. */
 async function chartFor(db, profileId, label) {
-  const profile = await db.getBirthProfile(profileId);
+  // Independent lookups run together: each one is a round trip to the database.
+  const [profile, rows] = await Promise.all([db.getBirthProfile(profileId), db.getCharts(profileId, ENGINE_VERSION)]);
   if (!profile) throw new ApiError(404, 'profile_not_found', `${label} was not found.`);
-  const cached = fromRows(await db.getCharts(profileId, ENGINE_VERSION));
+  const cached = fromRows(rows);
   if (cached) return { profile, chart: cached, cached: true };
   let chart;
   try {
@@ -119,10 +121,16 @@ export async function handleMatch(req, deps) {
     const saved = await db.saveMatch({
       user_id: userId, profile_a: idA, profile_b: idB, system, engine_version: ENGINE_VERSION, data: result,
     });
+    const language = languageOf(body.language);
+    let shown = result;
+    if (language !== 'en') {
+      const translator = await translatorOf(deps);
+      if (translator) { shown = structuredClone(result); await translator.localize(language, shown, ['reason', 'cancellations', 'notes', 'summary']); }
+    }
     return json({
       id: saved.id, createdAt: saved.created_at,
       a: { id: a.profile.id, name: a.profile.name }, b: { id: b.profile.id, name: b.profile.name },
-      result,
+      result: shown,
     });
   } catch (e) { return errorResponse(e); }
 }
@@ -136,7 +144,7 @@ function todayIn(timeZone) {
 }
 
 // GET /api/horoscope?system=vedic|western&sign=1..12&date=YYYY-MM-DD   (sign optional: all 12)
-export async function handleHoroscope(req) {
+export async function handleHoroscope(req, deps = {}) {
   try {
     requireMethod(req, 'GET');
     const url = new URL(req.url);
@@ -150,20 +158,28 @@ export async function handleHoroscope(req) {
       throw new ApiError(400, 'invalid_input', 'date must be YYYY-MM-DD between 1900 and 2100.');
     }
     const signParam = url.searchParams.get('sign');
-    // A given date never changes, so it can be cached by the CDN. "Today" must stay fresh.
-    const cache = url.searchParams.has('date')
-      ? { 'cache-control': 'public, max-age=3600, s-maxage=86400' }
-      : { 'cache-control': 'public, max-age=300' };
-
+    const lang = languageOf(url.searchParams.get('lang'));
+    let readings;
     if (signParam == null) {
-      const all = await dailyHoroscopesAll(date);
-      return json({ date, system, readings: all.filter((r) => r.system === system) }, 200, cache);
+      readings = (await dailyHoroscopesAll(date)).filter((r) => r.system === system);
+    } else {
+      const sign = Number(signParam);
+      if (!Number.isInteger(sign) || sign < 1 || sign > 12) {
+        throw new ApiError(400, 'invalid_input', 'sign must be a whole number from 1 to 12.');
+      }
+      readings = [await dailyHoroscope(date, system, sign)];
     }
-    const sign = Number(signParam);
-    if (!Number.isInteger(sign) || sign < 1 || sign > 12) {
-      throw new ApiError(400, 'invalid_input', 'sign must be a whole number from 1 to 12.');
+    let translated = true;
+    if (lang !== 'en') {
+      const translator = await translatorOf(deps);
+      translated = translator ? await translator.localize(lang, readings, ['title', 'text', 'focus', 'highlights']) : false;
     }
-    return json({ date, system, readings: [await dailyHoroscope(date, system, sign)] }, 200, cache);
+    // A given date never changes, so it can be cached by the CDN. "Today" must stay fresh,
+    // and a reading still waiting for its translation must be asked for again.
+    const cache = !translated ? { 'cache-control': 'no-store' }
+      : url.searchParams.has('date') ? { 'cache-control': 'public, max-age=3600, s-maxage=86400' }
+        : { 'cache-control': 'public, max-age=300' };
+    return json({ date, system, language: translated ? lang : 'en', readings }, 200, cache);
   } catch (e) { return errorResponse(e); }
 }
 
@@ -182,7 +198,34 @@ export async function handlePlaces(req, deps) {
   } catch (e) { return errorResponse(e); }
 }
 
-const languageOf = (value) => (value === 'hi' ? 'hi' : 'en');
+/** The translator, when the function was given one. Without it everything simply stays in English. */
+async function translatorOf(deps) {
+  try { return (await deps.translator?.()) ?? null; } catch (e) { console.error('Translator unavailable:', e?.message ?? e); return null; }
+}
+
+// GET /api/i18n?lang=gu   (public)
+// Every piece of interface text in one language. Bundled translations come first; anything missing is
+// translated once by the AI model and kept, so the next visitor gets it from storage.
+export async function handleI18n(req, deps) {
+  try {
+    requireMethod(req, 'GET');
+    const lang = new URL(req.url).searchParams.get('lang');
+    if (!LANGUAGE_CODES.includes(lang) || lang === 'en') throw new ApiError(400, 'invalid_input', 'lang must be one of the supported languages.');
+    const { catalog, seed } = await deps.loadCatalog(lang);
+    const translator = await translatorOf(deps);
+    let strings = {};
+    let complete = false;
+    if (translator) {
+      ({ strings, complete } = await translator.translate(lang, catalog, { space: 'ui', known: seed, budgetMs: deps.budgetMs ?? 20000 }));
+    } else {
+      for (const s of catalog) if (seed[s]) strings[s] = seed[s];
+      complete = catalog.every((s) => seed[s] || !/\p{L}/u.test(s));
+    }
+    // A finished language can sit in the CDN and the browser; an unfinished one is asked for again.
+    const cache = complete ? { 'cache-control': 'public, max-age=3600, s-maxage=86400' } : { 'cache-control': 'no-store' };
+    return json({ lang, complete, strings }, 200, cache);
+  } catch (e) { return errorResponse(e); }
+}
 
 function shiftDate(date, days) {
   const [y, m, d] = date.split('-').map(Number);
@@ -214,14 +257,11 @@ export async function handleReading(req, deps) {
   try {
     requireMethod(req, 'POST');
     const db = deps.createDb(bearerToken(req));
-    await db.getUserId();
     const body = await readJson(req);
     const id = requireUuid(body.birthProfileId, 'birthProfileId');
     const language = languageOf(body.language);
-    const { chart } = await chartFor(db, id, 'Birth profile');
     const key = { birthProfileId: id, kind: 'chart', language, forDate: null, engineVersion: ENGINE_VERSION };
-
-    const stored = await db.getReading(key);
+    const [, { chart }, stored] = await Promise.all([db.getUserId(), chartFor(db, id, 'Birth profile'), db.getReading(key)]);
     if (stored) return json({ reading: { ...stored.content, source: 'ai', language } });
 
     const nowMs = deps.now?.() ?? Date.now();
@@ -231,7 +271,10 @@ export async function handleReading(req, deps) {
       await db.saveReading({ birth_profile_id: id, kind: 'chart', language, for_date: null, engine_version: ENGINE_VERSION, model: written.model, content: written.parsed });
       return json({ reading: { ...written.parsed, source: 'ai', language } });
     }
-    return json({ reading: { ...ruleChartReading(facts), source: 'rules', language: 'en' } });
+    const fallback = ruleChartReading(facts);
+    const translator = language === 'en' ? null : await translatorOf(deps);
+    const done = translator ? await translator.localize(language, fallback, ['summary', 'text', 'why'], { budgetMs: 12000 }) : false;
+    return json({ reading: { ...fallback, source: 'rules', language: done ? language : 'en' } });
   } catch (e) { return errorResponse(e); }
 }
 
@@ -241,7 +284,6 @@ export async function handleToday(req, deps) {
   try {
     requireMethod(req, 'POST');
     const db = deps.createDb(bearerToken(req));
-    await db.getUserId();
     const body = await readJson(req);
     const id = requireUuid(body.birthProfileId, 'birthProfileId');
     const language = languageOf(body.language);
@@ -258,22 +300,27 @@ export async function handleToday(req, deps) {
       try { new Intl.DateTimeFormat('en', { timeZone: body.timezone }); timezone = body.timezone; } catch { /* keep the default */ }
     }
 
-    const { profile, chart } = await chartFor(db, id, 'Birth profile');
-    const { ruleReading, ...day } = await personalDay(chart, date, { timezone });
-    const head = { date, profile: { id: profile.id, name: profile.name }, day };
     const key = { birthProfileId: id, kind: 'daily', language, forDate: date, engineVersion: ENGINE_VERSION };
+    const [, { profile, chart }, stored] = await Promise.all([db.getUserId(), chartFor(db, id, 'Birth profile'), db.getReading(key)]);
+    const { ruleReading, ...day } = await personalDay(chart, date, { timezone });
+    // The model is always given the day in English; the person sees it in their own language.
+    const dayText = dayToText(day);
+    const translator = language === 'en' ? null : await translatorOf(deps);
+    const shownDay = translator ? structuredClone(day) : day;
+    if (translator) await translator.localize(language, shownDay, ['topics', 'title', 'focus', 'meaning', 'note', 'phase'], { budgetMs: 6000 });
+    const head = { date, profile: { id: profile.id, name: profile.name }, day: shownDay };
 
-    const stored = await db.getReading(key);
     if (stored) return json({ ...head, reading: { ...stored.content, source: 'ai', language } });
 
-    const prompt = dailyReadingPrompt({ language, factsText: factsToText(chartFacts(chart, nowMs)), dayText: dayToText(day) });
+    const prompt = dailyReadingPrompt({ language, factsText: factsToText(chartFacts(chart, nowMs)), dayText });
     const written = await writeReading(db, deps.ai, prompt, parseDailyReading);
     if (written) {
       const content = { ...written.parsed, title: written.parsed.title ?? ruleReading.title };
       await db.saveReading({ birth_profile_id: id, kind: 'daily', language, for_date: date, engine_version: ENGINE_VERSION, model: written.model, content });
       return json({ ...head, reading: { ...content, source: 'ai', language } });
     }
-    return json({ ...head, reading: { ...ruleReading, source: 'rules', language: 'en' } });
+    const done = translator ? await translator.localize(language, ruleReading, ['title', 'text', 'goodFor', 'takeCare'], { budgetMs: 8000 }) : false;
+    return json({ ...head, reading: { ...ruleReading, source: 'rules', language: done ? language : 'en' } });
   } catch (e) { return errorResponse(e); }
 }
 

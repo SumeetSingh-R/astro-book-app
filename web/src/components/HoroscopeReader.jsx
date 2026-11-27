@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { api } from '../lib/api.js';
+import { useRemembered } from '../lib/cache.js';
 import { SIGNS, RASHIS, SIGN_GLYPHS, todayISO } from '../lib/format.js';
 import { ReadingCardSkeleton } from './Skeleton.jsx';
+import { useT, useLanguage, msg } from '../lib/language.jsx';
 
-const TONE_LABELS = { supportive: 'A supportive day', demanding: 'A demanding day', steady: 'A steady day' };
+const TONE_LABELS = { supportive: msg('A supportive day'), demanding: msg('A demanding day'), steady: msg('A steady day') };
 
 function remembered(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -14,55 +16,50 @@ function remember(key, value) {
 
 /** The general reading for a sign: system switch, the twelve signs, and today's reading. */
 export default function HoroscopeReader() {
+  const t = useT();
+  const [language] = useLanguage();
   const [system, setSystem] = useState(() => remembered('horoscope.system', 'vedic'));
   const [sign, setSign] = useState(() => remembered('horoscope.sign', 1));
-  const [readings, setReadings] = useState(null);
-  const [error, setError] = useState(null);
   const date = todayISO();
-
-  useEffect(() => {
-    let live = true;
-    setReadings(null);
-    setError(null);
-    api(`/api/horoscope?system=${system}&date=${date}`)
-      .then((d) => { if (live) setReadings(d.readings); })
-      .catch((e) => { if (live) setError(e.message); });
-    return () => { live = false; };
-  }, [system, date]);
+  const { data: readings, error } = useRemembered(
+    `horoscope:${system}:${date}:${language}`,
+    () => api(`/api/horoscope?system=${system}&date=${date}${language === 'en' ? '' : `&lang=${language}`}`).then((d) => d.readings),
+    { maxAge: 12 * 3600 * 1000 },
+  );
 
   const names = system === 'vedic' ? RASHIS : SIGNS;
   const reading = readings ? readings.find((r) => r.sign === sign) : null;
 
   return (
     <>
-      <div className="pills" role="group" aria-label="Astrology system">
-        {[['vedic', 'Vedic, by Moon sign'], ['western', 'Western, by Sun sign']].map(([key, name]) => (
+      <div className="pills" role="group" aria-label={t('Astrology system')}>
+        {[['vedic', t('Vedic, by Moon sign')], ['western', t('Western, by Sun sign')]].map(([key, name]) => (
           <button key={key} type="button" aria-pressed={system === key} className={system === key ? 'pill on' : 'pill'}
             onClick={() => { setSystem(key); remember('horoscope.system', key); }}>{name}</button>
         ))}
       </div>
 
-      <div className="sign-grid" role="group" aria-label={system === 'vedic' ? 'Choose your Moon sign' : 'Choose your Sun sign'}>
+      <div className="sign-grid" role="group" aria-label={system === 'vedic' ? t('Choose your Moon sign') : t('Choose your Sun sign')}>
         {names.map((name, i) => (
           <button key={name} type="button" aria-pressed={sign === i + 1} className={sign === i + 1 ? 'on' : undefined}
             onClick={() => { setSign(i + 1); remember('horoscope.sign', i + 1); }}>
             <span className="glyph" aria-hidden="true">{SIGN_GLYPHS[i]}</span>
-            <span>{name}</span>
+            <span>{t(name)}</span>
           </button>
         ))}
       </div>
 
-      {error ? <p className="error" role="alert">{error}</p> : null}
-      {!error && !readings ? <ReadingCardSkeleton label="Loading today's readings…" /> : null}
+      {error ? <p className="error" role="alert">{t(error)}</p> : null}
+      {!error && !readings ? <ReadingCardSkeleton label={t('Loading today\'s readings…')} /> : null}
 
       {reading ? (
         <article className="card sign-reading msg" aria-live="polite" key={`${system}-${sign}`}>
           <span className="arch-badge glyph" aria-hidden="true">{SIGN_GLYPHS[sign - 1]}</span>
           <div>
-            <span className="tag plain">{TONE_LABELS[reading.content.tone]}</span>
-            <h3>{reading.signName}: {reading.content.title}</h3>
+            <span className="tag plain">{t(TONE_LABELS[reading.content.tone])}</span>
+            <h3>{t(reading.signName)}: {reading.content.title}</h3>
             <p>{reading.content.text}</p>
-            <p className="hint">Moon today in {reading.content.moon.sign}{reading.content.moon.nakshatra ? `, ${reading.content.moon.nakshatra}` : ''}.</p>
+            <p className="hint">{t('Moon today in {0}', [t(reading.content.moon.sign)])}{reading.content.moon.nakshatra ? `, ${t(reading.content.moon.nakshatra)}` : ''}.</p>
           </div>
         </article>
       ) : null}

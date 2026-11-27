@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase.js';
+import { setCacheScope, clearCache, pruneCache } from './lib/cache.js';
 import { AccountProvider, useAccount } from './lib/account.jsx';
-import { LanguageProvider } from './lib/language.jsx';
+import { LanguageProvider, LanguageSwitch, useT, msg } from './lib/language.jsx';
 import Icon from './components/Icon.jsx';
 import { DaySkeleton } from './components/Skeleton.jsx';
 import Home from './pages/Home.jsx';
@@ -33,8 +34,12 @@ function AuthProvider({ children }) {
   const [authError] = useState(returnedAuthError);
   const navigate = useNavigate();
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setState({ session: data.session, loading: false }));
+    pruneCache();
+    supabase.auth.getSession().then(({ data }) => { setCacheScope(data.session?.user.id); setState({ session: data.session, loading: false }); });
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      // Remembered data belongs to one person: switch to theirs, and wipe it when they sign out.
+      if (event === 'SIGNED_OUT') clearCache();
+      setCacheScope(session?.user.id);
       setState({ session, loading: false });
       if (event === 'SIGNED_IN' && session) {
         // After a Google sign-in the visitor lands on the home page; send them where they were going.
@@ -50,24 +55,27 @@ function AuthProvider({ children }) {
 
 /** Pages that need an account send signed-out visitors to sign in, then bring them back. */
 function Private({ children }) {
+  const t = useT();
   const { session, loading } = useAuth();
   const location = useLocation();
-  if (loading) return <DaySkeleton label="Loading…" />;
+  if (loading) return <DaySkeleton label={t('Loading…')} />;
   if (!session) return <Navigate to="/sign-in" replace state={{ from: location.pathname }} />;
   return children;
 }
 
 /** Pages read from the person's own chart. Without a profile yet, they are asked for it once. */
 function NeedsProfile({ children }) {
+  const t = useT();
   const { self, loading } = useAccount();
-  if (loading) return <DaySkeleton label="Loading your profile…" />;
+  if (loading) return <DaySkeleton label={t('Loading your profile…')} />;
   if (!self) return <Navigate to="/welcome" replace />;
   return children;
 }
 
-const TABS = [['/today', 'Today', 'sun'], ['/charts', 'My charts', 'chart'], ['/ask', 'Ask', 'chat'], ['/match', 'Matching', 'match']];
+const TABS = [['/today', msg('Today'), 'sun'], ['/charts', msg('My charts'), 'chart'], ['/ask', msg('Ask'), 'chat'], ['/match', msg('Matching'), 'match']];
 
 function Shell({ children }) {
+  const t = useT();
   const { session, authError } = useAuth();
   const { self } = useAccount();
   const location = useLocation();
@@ -76,47 +84,48 @@ function Shell({ children }) {
   return (
     <div className={`site${session ? ' signed-in' : ''}${bare ? ' bare' : ''}`}>
       <header className="top">
-        <Link to={session ? '/today' : '/'} className="brand" aria-label="Astro Book, home">
+        <Link to={session ? '/today' : '/'} className="brand" aria-label={t('Astro Book, home')}>
           <img className="owl" src="/brand/logo-symbol.svg" alt="" />
           <img className="wordmark" src="/brand/logo-wordmark.svg" alt="Astro Book" />
         </Link>
         {session ? (
-          <nav className="main-nav" aria-label="Main">
-            <NavLink to="/today">Today</NavLink>
-            <NavLink to="/charts">My charts</NavLink>
-            <NavLink to="/match">Matching</NavLink>
+          <nav className="main-nav" aria-label={t('Main')}>
+            <NavLink to="/today">{t('Today')}</NavLink>
+            <NavLink to="/charts">{t('My charts')}</NavLink>
+            <NavLink to="/match">{t('Matching')}</NavLink>
           </nav>
         ) : null}
         <div className="top-actions">
+          <LanguageSwitch compact />
           {session ? (
-            <NavLink to="/profile" className="profile-chip" aria-label="Your profile">
+            <NavLink to="/profile" className="profile-chip" aria-label={t('Your profile')}>
               <span className="avatar" aria-hidden="true">{initial}</span>
-              <span className="chip-name">{self?.name ?? 'Profile'}</span>
+              <span className="chip-name">{self?.name ?? t('Profile')}</span>
             </NavLink>
           ) : bare ? null : (
             <>
-              <Link className="ghost" to="/sign-in">Sign in</Link>
-              <Link className="btn small" to="/sign-in" state={{ mode: 'sign-up' }}>Get started</Link>
+              <Link className="ghost" to="/sign-in">{t('Sign in')}</Link>
+              <Link className="btn small" to="/sign-in" state={{ mode: 'sign-up' }}>{t('Get started')}</Link>
             </>
           )}
         </div>
       </header>
       <main className="page" key={location.pathname}>
-        {authError && !session ? <p className="error" role="alert">Sign-in did not complete: {authError}. Try again from the sign-in page.</p> : null}
+        {authError && !session ? <p className="error" role="alert">{t('Sign-in did not complete: {0}. Try again from the sign-in page.', [authError])}</p> : null}
         {children}
       </main>
       {bare ? null : (
         <footer className="foot">
           <div>
-            <span>Readings and answers are for reflection and guidance, not predictions or professional advice.</span>
-            <Link to="/about">About Astro Book</Link>
+            <span>{t('Readings and answers are for reflection and guidance, not predictions or professional advice.')}</span>
+            <Link to="/about">{t('About Astro Book')}</Link>
           </div>
         </footer>
       )}
       {session && !bare ? (
-        <nav className="tabbar" aria-label="Main">
+        <nav className="tabbar" aria-label={t('Main')}>
           {TABS.map(([to, label, icon]) => (
-            <NavLink key={to} to={to}><Icon name={icon} /><span>{label}</span></NavLink>
+            <NavLink key={to} to={to}><Icon name={icon} /><span>{t(label)}</span></NavLink>
           ))}
         </nav>
       ) : null}
@@ -135,6 +144,7 @@ function Providers({ children }) {
 }
 
 export default function App() {
+  const t = useT();
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -153,7 +163,7 @@ export default function App() {
               <Route path="/charts/new" element={<Private><NewProfile /></Private>} />
               <Route path="/charts/:id" element={<Private><ChartPage /></Private>} />
               <Route path="/match" element={<Private><Match /></Private>} />
-              <Route path="*" element={<><h1>Page not found</h1><p><Link to="/">Go to the home page</Link></p></>} />
+              <Route path="*" element={<><h1>{t('Page not found')}</h1><p><Link to="/">{t('Go to the home page')}</Link></p></>} />
             </Routes>
           </Shell>
         </Providers>

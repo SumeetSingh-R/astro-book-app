@@ -1,9 +1,11 @@
 import { SIGN_GLYPHS, PLANET_GLYPHS, SIGNS } from '../lib/format.js';
+import { useT } from '../lib/language.jsx';
 
 const C = 200;
 const rad = Math.PI / 180;
 
 export default function WesternWheel({ western, label }) {
+  const t = useT();
   const asc = western.ascendant ? western.ascendant.longitude : 0;
   // The ascendant sits at 9 o'clock and the zodiac runs anticlockwise.
   const point = (lon, r) => {
@@ -27,11 +29,11 @@ export default function WesternWheel({ western, label }) {
     radii.push(level);
   });
 
-  const summary = western.planets.map((p) => `${p.name} in ${p.sign}`).join(', ');
+  const summary = western.planets.map((p) => t('{0} in {1}', [t(p.name), t(p.sign)])).join(', ');
 
   return (
     <figure className="wheel">
-      <svg viewBox="0 0 400 400" role="img" aria-label={`${label ?? 'Birth chart wheel'}. ${summary}`}>
+      <svg viewBox="0 0 400 400" role="img" aria-label={`${label ?? t('Birth chart wheel')}. ${summary}`}>
         <circle cx={C} cy={C} r="192" className="wheel-outer" />
         <circle cx={C} cy={C} r="158" className="wheel-ring" />
         <circle cx={C} cy={C} r="62" className="wheel-core" />
@@ -64,16 +66,14 @@ export default function WesternWheel({ western, label }) {
               <path d={line(p.longitude, 152, 158)} className="wheel-tick" />
               <text x={x} y={y} textAnchor="middle" dominantBaseline="central" className="wheel-planet">
                 {PLANET_GLYPHS[p.name]}{'︎'}
-                <title>{`${p.name} in ${p.sign}${p.retrograde ? ' (retrograde)' : ''}`}</title>
+                <title>{t('{0} in {1}', [t(p.name), t(p.sign)])}{p.retrograde ? ` (${t('retrograde')})` : ''}</title>
               </text>
             </g>
           );
         })}
       </svg>
       <figcaption>
-        {western.ascendant
-          ? 'The ascendant is on the left. Inner numbers are houses (Placidus).'
-          : 'Birth time unknown, so houses and the ascendant are left out and Aries starts on the left.'}
+        {western.ascendant ? t('The ascendant is on the left. Inner numbers are houses (Placidus).') : t('Birth time unknown, so houses and the ascendant are left out and Aries starts on the left.')}
       </figcaption>
     </figure>
   );

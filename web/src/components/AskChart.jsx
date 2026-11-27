@@ -1,8 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { api } from '../lib/api.js';
+import { useRemembered } from '../lib/cache.js';
 import { supabase } from '../lib/supabase.js';
 import { todayISO } from '../lib/format.js';
-import { useLanguage, wordsFor } from '../lib/language.jsx';
+import { useLanguage, useT, msg } from '../lib/language.jsx';
+
+const SUGGESTIONS = [msg('When is a good period for marriage?'), msg('What kind of work suits me?'), msg('How do the next two years look for money?'), msg('What is my current period about?')];
 import { ThreadSkeleton, SkeletonLines } from './Skeleton.jsx';
 import Icon from './Icon.jsx';
 
@@ -35,9 +38,16 @@ function Answer({ text, basedOnLabel }) {
 /** Questions about one saved chart, answered from that chart. The conversation is kept with the account. */
 export default function AskChart({ profileId, title, panel = true }) {
   const [language] = useLanguage();
-  const w = wordsFor(language);
+  const t = useT();
   const inputId = useId();
-  const [messages, setMessages] = useState(null);
+  // The conversation is shown from memory at once and then checked against the server.
+  const thread = useRemembered(`chat:${profileId}`, async () => {
+    const { data, error: err } = await supabase.from('chat_messages').select('id, role, content, language').eq('birth_profile_id', profileId).order('created_at', { ascending: false }).limit(40);
+    if (err) throw new Error(t('The conversation could not be loaded.'));
+    return data.reverse();
+  }, { maxAge: 0 });
+  const messages = thread.data ?? (thread.error ? [] : null);
+  const setMessages = thread.set;
   const [remaining, setRemaining] = useState(null);
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
@@ -47,17 +57,9 @@ export default function AskChart({ profileId, title, panel = true }) {
 
   useEffect(() => {
     let live = true;
-    setMessages(null);
     setError(null);
-    (async () => {
-      const [history, usage] = await Promise.all([
-        supabase.from('chat_messages').select('id, role, content, language').eq('birth_profile_id', profileId).order('created_at', { ascending: false }).limit(40),
-        supabase.from('ai_usage').select('count').eq('kind', 'ask').eq('day', todayISO('Asia/Kolkata')).maybeSingle(),
-      ]);
-      if (!live) return;
-      setMessages(history.error ? [] : history.data.reverse());
-      setRemaining(usage.error ? null : LIMIT - (usage.data?.count ?? 0));
-    })();
+    supabase.from('ai_usage').select('count').eq('kind', 'ask').eq('day', todayISO('Asia/Kolkata')).maybeSingle()
+      .then((usage) => { if (live) setRemaining(usage.error ? null : LIMIT - (usage.data?.count ?? 0)); });
     return () => { live = false; };
   }, [profileId]);
 
@@ -87,52 +89,52 @@ export default function AskChart({ profileId, title, panel = true }) {
   async function clear() {
     const { error: err } = await supabase.from('chat_messages').delete().eq('birth_profile_id', profileId);
     setConfirmClear(false);
-    if (err) setError('The conversation could not be deleted. Try again.');
+    if (err) setError(t('The conversation could not be deleted. Try again.'));
     else setMessages([]);
   }
 
   const used = remaining !== null && remaining <= 0;
   return (
     <section className={panel ? 'ask panel' : 'ask'} aria-labelledby={`${inputId}-title`}>
-      <h2 id={`${inputId}-title`} lang={language}>{title ?? w.askTitle}</h2>
-      <p className="muted" lang={language}>{w.askIntro}</p>
+      <h2 id={`${inputId}-title`} lang={language}>{title ?? t('Ask about this chart')}</h2>
+      <p className="muted" lang={language}>{t('Ask in your own words. The answer is written from this chart, not from a sign.')}</p>
 
-      {messages === null ? <ThreadSkeleton label="Loading the conversation…" /> : null}
+      {messages === null ? <ThreadSkeleton label={t('Loading the conversation…')} /> : null}
       {messages?.length ? (
         <ol className="thread" aria-live="polite">
           {messages.map((m) => (
             <li key={m.id} className={m.role === 'user' ? 'q msg' : 'a msg'} lang={m.language}>
-              {m.role === 'user' ? <p>{m.content}</p> : <Answer text={m.content} basedOnLabel={wordsFor(m.language).basedOn} />}
+              {m.role === 'user' ? <p>{m.content}</p> : <Answer text={m.content} basedOnLabel={t('Based on')} />}
             </li>
           ))}
-          {busy ? <li className="a waiting" lang={language}><p>{w.asking}</p><SkeletonLines count={3} last="50%" /></li> : null}
+          {busy ? <li className="a waiting" lang={language}><p>{t('Reading the chart…')}</p><SkeletonLines count={3} last="50%" /></li> : null}
         </ol>
       ) : null}
       <div ref={endRef} />
 
       {messages && messages.length < 6 && !busy ? (
-        <div className="chips" role="group" aria-label="Questions to start with" lang={language}>
-          {w.suggestions.filter((s) => !messages.some((m) => m.content === s)).map((s) => <button key={s} type="button" disabled={used} onClick={() => ask(s)}>{s}</button>)}
+        <div className="chips" role="group" aria-label={t('Questions to start with')} lang={language}>
+          {SUGGESTIONS.map((s) => t(s)).filter((s) => !messages.some((m) => m.content === s)).map((s) => <button key={s} type="button" disabled={used} onClick={() => ask(s)}>{s}</button>)}
         </div>
       ) : null}
 
-      {error ? <p className="error" role="alert">{error}</p> : null}
+      {error ? <p className="error" role="alert">{t(error)}</p> : null}
       <form className="ask-form" onSubmit={(e) => { e.preventDefault(); ask(question); }}>
-        <label htmlFor={inputId} className="visually-hidden">{title ?? w.askTitle}</label>
-        <input id={inputId} lang={language} value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={500} placeholder={w.askPlaceholder} disabled={busy || used} autoComplete="off" />
-        <button type="submit" className="send" aria-label={w.ask} disabled={busy || used || question.trim().length < 3}><Icon name="go" /></button>
+        <label htmlFor={inputId} className="visually-hidden">{title ?? t('Ask about this chart')}</label>
+        <input id={inputId} lang={language} value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={500} placeholder={t('When is a good period for…')} disabled={busy || used} autoComplete="off" />
+        <button type="submit" className="send" aria-label={t('Ask')} disabled={busy || used || question.trim().length < 3}><Icon name="go" /></button>
       </form>
 
       <p className="hint" lang={language}>
-        {remaining !== null ? `${w.left(Math.max(0, remaining), LIMIT)} ` : null}
-        {w.privacy}
+        {remaining !== null ? `${t('{0} of {1} questions left today.', [Math.max(0, remaining), LIMIT])} ` : null}
+        {t('Your question, your age and this chart\'s planet positions go to an AI model (Claude) to write the answer. Your name, email, birth date and birth place are not sent. Answers are for reflection, not certainties.')}
       </p>
       {messages?.length ? (
         <p className="hint" lang={language}>
           {confirmClear ? (
-            <>{w.clearConfirm} <button type="button" className="link" onClick={clear}>{w.clearYes}</button> <button type="button" className="link" onClick={() => setConfirmClear(false)}>{w.clearNo}</button></>
+            <>{t('Delete every question and answer here?')} <button type="button" className="link" onClick={clear}>{t('Delete them')}</button> <button type="button" className="link" onClick={() => setConfirmClear(false)}>{t('Keep them')}</button></>
           ) : (
-            <button type="button" className="link" onClick={() => setConfirmClear(true)}>{w.clear}</button>
+            <button type="button" className="link" onClick={() => setConfirmClear(true)}>{t('Clear this conversation')}</button>
           )}
         </p>
       ) : null}

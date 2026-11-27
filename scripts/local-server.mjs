@@ -4,7 +4,8 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { handleChart, handleMatch, handleHoroscope, handlePlaces, handlePreview, handleReading, handleToday, handleAsk } from '../api/lib/handlers.mjs';
+import { handleChart, handleMatch, handleHoroscope, handlePlaces, handlePreview, handleReading, handleToday, handleAsk, handleI18n } from '../api/lib/handlers.mjs';
+import { translator, loadCatalog } from '../api/lib/i18n.mjs';
 import { createAi } from '../api/lib/ai.mjs';
 import { createDb } from '../api/lib/db.mjs';
 
@@ -15,11 +16,12 @@ const loadPlaces = async () => (dataset ??= (await import('../api/data/places.ge
 const routes = {
   '/api/chart': (req) => handleChart(req, { createDb }),
   '/api/chart/preview': (req) => handlePreview(req),
-  '/api/match': (req) => handleMatch(req, { createDb }),
-  '/api/horoscope': (req) => handleHoroscope(req),
+  '/api/match': (req) => handleMatch(req, { createDb, translator }),
+  '/api/horoscope': (req) => handleHoroscope(req, { translator }),
+  '/api/i18n': (req) => handleI18n(req, { translator, loadCatalog }),
   '/api/places': (req) => handlePlaces(req, { loadPlaces }),
-  '/api/reading': (req) => handleReading(req, { createDb, ai: createAi() }),
-  '/api/today': (req) => handleToday(req, { createDb, ai: createAi() }),
+  '/api/reading': (req) => handleReading(req, { createDb, ai: createAi(), translator }),
+  '/api/today': (req) => handleToday(req, { createDb, ai: createAi(), translator }),
   '/api/ask': (req) => handleAsk(req, { createDb, ai: createAi() }),
 };
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' };
