@@ -1,7 +1,7 @@
 // Translation of the app's own text. Every string is translated once by the AI model and then kept
 // in the store, so later visitors get it straight from there. Only text the app itself wrote is ever
 // sent here (the interface catalogue and engine-written sentences), never text typed by a visitor.
-import { languageInfo } from '../../config/languages.mjs';
+import { languageInfo, isEnglishBased } from '../../config/languages.mjs';
 
 const CHUNK = 30;        // strings per request to the model
 const PARALLEL = 4;      // requests at a time
@@ -73,7 +73,7 @@ export function createTranslator({ ai, store, now = Date.now }) {
    */
   async function translate(lang, texts, { space = 'prose', known = {}, budgetMs = 8000 } = {}) {
     const wanted = [...new Set(texts.filter(translatable))];
-    if (lang === 'en' || !wanted.length) return { strings: {}, complete: true };
+    if (isEnglishBased(lang) || !wanted.length) return { strings: {}, complete: true };
     const dict = await load(space, lang);
     const missing = wanted.filter((s) => !(s in known) && !(s in dict));
 
@@ -112,7 +112,7 @@ export function createTranslator({ ai, store, now = Date.now }) {
 
   /** Translate chosen text fields of an API payload in place. Returns true when everything was translated. */
   async function localize(lang, payload, fields, options) {
-    if (lang === 'en') return true;
+    if (isEnglishBased(lang)) return true;
     const spots = [];
     const walk = (node) => {
       if (Array.isArray(node)) { node.forEach(walk); return; }

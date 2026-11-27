@@ -37,7 +37,7 @@ export default function Person() {
     ? <div className="sheet"><h1>{t('{0} has not set up a profile yet', [acting.name])}</h1><Link className="btn" to="/family">{t('Back to family')}</Link></div>
     : <div className="sheet"><h1>{t('Meet people who fit your kundli')}</h1><Link className="btn" to="/me">{t('Set up my profile')}</Link></div>;
   if (!people) return <ListSkeleton label={t('Loading…')} />;
-  if (!person) return <div className="sheet"><h1>{t('This profile is not available')}</h1><p className="muted">{t('They may have paused or removed their profile.')}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Discover')}</Link></div>;
+  if (!person) return <div className="sheet"><h1>{t('This profile is not available')}</h1><p className="muted">{t('They may have paused or removed their profile.')}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Vibe match')}</Link></div>;
 
   const canLike = !acting || acting.can_like;
   const canChat = !acting || acting.can_chat;
@@ -76,7 +76,7 @@ export default function Person() {
 
   return (
     <>
-      <p><Link className="back" to={`${base}/discover`}><Icon name="back" size={18} />{t('Discover')}</Link></p>
+      <p><Link className="back" to={`${base}/discover`}><Icon name="back" size={18} />{t('Vibe match')}</Link></p>
       <div className="discover">
         <div className="discover-main">
           <div className="deck-card">

@@ -6,6 +6,7 @@ import { languageInfo } from '../../config/languages.mjs';
 /** How the model is told to write in each language. */
 function languageRule(code) {
   if (code === 'en') return 'Write in English.';
+  if (code === 'hg') return 'Write in Hinglish: the easy mix of English and Hindi, in Roman letters, that young people in Indian cities use when they text a friend (for example "Aaj ka din thoda slow hai, par evening tak mood better ho jayega"). Keep it natural and warm, not forced: English for common words like work, money, family and plan; Hindi for the connecting words and feeling. No Devanagari. Keep graha and rashi names as they are usually said (Shani, Guru, Shukra, Mesha, Tula). Write month names in English and years as digits.';
   const { name, script } = languageInfo(code);
   const example = code === 'hi' ? ' (शुक्र, गुरु, शनि, मेष, तुला and so on)' : '';
   return `Write in ${name}, in ${script} script, in simple everyday ${name} that anyone can follow, the way young people speak it today, not bookish. Use the common ${name} names for grahas and rashis${example}. Write month names in ${name} and keep years as digits, so dates stay easy to read.`;

@@ -41,7 +41,7 @@ function DeleteAccount({ onCancel }) {
         <p>{t('This removes, for good:')}</p>
         <ul className="plain-list">
           <li>{t('Your birth details, charts, readings and questions')}</li>
-          <li>{t('Your meet-and-match profile, photos, likes and matches')}</li>
+          <li>{t('Your Vibe match profile, photos, likes and matches')}</li>
           <li>{t('Your chats, for you and for the people you chatted with')}</li>
         </ul>
         <label className="check"><input type="checkbox" checked={sure} onChange={(e) => setSure(e.target.checked)} />{t('I understand this cannot be undone')}</label>
@@ -90,11 +90,11 @@ export default function Profile() {
       </div>
       <p className="banner"><Icon name="check" size={20} />{t('Saved once, used everywhere: your chart, your daily reading, matching and your questions all read from this profile.')}</p>
       <Link className="card cta" to="/me">
-        <span className="cta-text"><Icon name="heart" size={26} /><span><strong>{t('Meet and match')}</strong><span>{t('Add photos and details to the profile other people will see')}</span></span></span>
+        <span className="cta-text"><Icon name="heart" size={26} /><span><strong>{t('Vibe match')}</strong><span>{t('Add photos and details to the profile other people will see')}</span></span></span>
         <Icon name="go" size={20} />
       </Link>
       <Link className="card cta" to="/family">
-        <span className="cta-text"><Icon name="match" size={26} /><span><strong>{t('Family help')}</strong><span>{t('Invite a parent to look for matches with you')}</span></span></span>
+        <span className="cta-text"><Icon name="match" size={26} /><span><strong>{t('Family mode')}</strong><span>{t('Invite a parent to look for matches with you')}</span></span></span>
         <Icon name="go" size={20} />
       </Link>
       <h2>{t('Your birth details')}</h2>

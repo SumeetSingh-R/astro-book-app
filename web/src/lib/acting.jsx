@@ -58,7 +58,7 @@ export function Acting({ children }) {
       <div className="acting-bar" role="status">
         <p><Icon name="match" size={20} /><span>{t('You are helping {0}. They can see what you do here.', [link.name])}</span></p>
         <nav aria-label={t('Helping {0}', [link.name])}>
-          <NavLink to={`${base}/discover`}>{t('Discover')}</NavLink>
+          <NavLink to={`${base}/discover`}>{t('Vibe match')}</NavLink>
           {link.can_chat ? <NavLink to={`${base}/chats`}>{t('Chats')}</NavLink> : null}
           <Link to="/family">{t('Stop')}</Link>
         </nav>

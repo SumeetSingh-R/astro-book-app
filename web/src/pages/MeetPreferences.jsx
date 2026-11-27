@@ -83,7 +83,7 @@ function PreferencesForm({ userId, profile, photos, saved }) {
       </div>
 
       <div className="card toggles">
-        <Toggle label={t('Show me in Discover')} hint={vis.discoverable ? t('Everyone on Astro Book can find you.') : t('Paused. Nobody new can find you.')} checked={vis.discoverable} onChange={(v) => flip('discoverable', v)} />
+        <Toggle label={t('Show me in Vibe match')} hint={vis.discoverable ? t('Everyone on Astro Book can find you.') : t('Paused. Nobody new can find you.')} checked={vis.discoverable} onChange={(v) => flip('discoverable', v)} />
         <Toggle label={t('Only people I like can see me')} hint={t('Off by default: everyone can find you')} checked={vis.only_liked} onChange={(v) => flip('only_liked', v)} />
       </div>
 
@@ -112,7 +112,7 @@ function PreferencesForm({ userId, profile, photos, saved }) {
       <section aria-labelledby="pref-kundli">
         <h2 id="pref-kundli">{t('Kundli')}</h2>
         <div className="card">
-          <div className="title-row"><label htmlFor="pref-score"><strong>{t('Lowest score to show me')}</strong></label><span className="tag">{t('{0} of 36', [score])}</span></div>
+          <div className="title-row"><label htmlFor="pref-score"><strong>{t('Lowest vibe score to show me')}</strong></label><span className="tag">{t('Vibe score {0}/36', [score])}</span></div>
           <input id="pref-score" className="range" type="range" min="0" max="30" step="1" value={score} onChange={(e) => set({ min_score: Number(e.target.value) })} />
           <p className="hint">{score === 0 ? t('Showing everyone, whatever the score.') : score < 18 ? t('Includes matches below the traditional pass mark of 18.') : score === 18 ? t('18 is the traditional pass mark.') : t('Stricter than the traditional pass mark, so you will see fewer people.')}</p>
         </div>
@@ -129,7 +129,7 @@ function PreferencesForm({ userId, profile, photos, saved }) {
       <button type="submit" className="btn" disabled={busy}>{busy ? t('Saving…') : t('Save my preferences')}</button>
 
       <section aria-labelledby="pref-delete" className="danger-zone">
-        <h2 id="pref-delete">{t('Delete my meet-and-match profile')}</h2>
+        <h2 id="pref-delete">{t('Delete my Vibe match profile')}</h2>
         <p className="hint">{t('This removes your photos, details and preferences. Your charts and readings stay.')}</p>
         {confirming ? (
           <p className="title-row"><strong>{t('Delete it for good?')}</strong><span className="pills"><button type="button" className="btn small danger" onClick={removeAll}>{t('Delete it')}</button><button type="button" className="link" onClick={() => setConfirming(false)}>{t('Keep it')}</button></span></p>

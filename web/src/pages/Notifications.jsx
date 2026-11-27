@@ -11,7 +11,7 @@ const KINDS = {
   invite_accepted: { icon: 'match', title: msg('{0} accepted your invite'), hint: msg('See how your charts fit.'), to: () => '/invite' },
   photo_approved: { icon: 'camera', title: msg('Your photo was approved'), hint: msg('Other people can see it now.'), to: () => '/me' },
   family_joined: { icon: 'match', title: msg('{0} joined as your family helper'), hint: msg('Choose what they can do, or pause them, at any time.'), to: () => '/family', nobody: msg('A family member') },
-  family_suggested: { icon: 'star', title: msg('{0} suggested someone for you'), hint: msg('Open Discover to see who.'), to: () => '/discover', nobody: msg('A family member') },
+  family_suggested: { icon: 'star', title: msg('{0} suggested someone for you'), hint: msg('Open Vibe match to see who.'), to: () => '/discover', nobody: msg('A family member') },
   photo_rejected: { icon: 'camera', title: msg('A photo was not approved'), hint: msg('Photos need to show you clearly. Choose another one.'), to: () => '/me' },
 };
 
@@ -76,7 +76,7 @@ export default function Notifications() {
   return (
     <div className="sheet meet">
       <div><h1>{t('Notifications')}</h1><p className="muted">{t('New matches, accepted invites and photo reviews.')}</p></div>
-      {empty ? <div className="empty card"><p>{t('Nothing new yet. When someone likes you back or accepts your invite, you will see it here.')}</p><Link className="btn" to="/discover">{t('Go to Discover')}</Link></div> : (
+      {empty ? <div className="empty card"><p>{t('Nothing new yet. When someone likes you back or accepts your invite, you will see it here.')}</p><Link className="btn" to="/discover">{t('Go to Vibe match')}</Link></div> : (
         <ul className="meet-list">
           {review?.photos ? <Row to="/admin" icon="camera" title={`${review.photos} photos waiting for review`} hint="Open the admin portal to approve or reject them." fresh /> : null}
           {review?.reports ? <Row to="/admin" icon="lock" title={`${review.reports} open reports`} hint="Open the admin portal to read them." fresh /> : null}

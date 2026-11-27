@@ -105,7 +105,7 @@ function MeForm({ userId, self, saved, photos: firstPhotos, cacheKey }) {
           <p className="muted">{exists ? t('This is how others will see you.') : t('Set up the profile other people will see.')}</p>
         </div>
       </div>
-      {suspension.data ? <p className="notice" role="status">{t('An admin has hidden your profile from Discover for now.')}{suspension.data.reason ? ` ${t('Reason given: {0}', [suspension.data.reason])}` : ''}</p> : null}
+      {suspension.data ? <p className="notice" role="status">{t('An admin has hidden your profile from Vibe match for now.')}{suspension.data.reason ? ` ${t('Reason given: {0}', [suspension.data.reason])}` : ''}</p> : null}
       <div className="card complete">
         <div className="title-row"><strong>{t('Profile {0}% complete', [state.percent])}</strong><span className="hint">{state.next ? t(state.next) : t('Nothing missing.')}</span></div>
         <span className="bar" aria-hidden="true"><span style={{ width: `${state.percent}%` }} /></span>
@@ -165,7 +165,7 @@ function MeForm({ userId, self, saved, photos: firstPhotos, cacheKey }) {
           <Toggle label={t('Show my community')} checked={p.show_community} onChange={(v) => set({ show_community: v })} />
           <Toggle label={t('Show my income')} hint={t('Only ever shown as a range')} checked={p.show_income} onChange={(v) => set({ show_income: v })} />
         </div>
-        <p className="hint">{t('None of these change your kundli score.')}</p>
+        <p className="hint">{t('None of these change your vibe score.')}</p>
         <div className="toggles">
           <Toggle label={t('Show when I am online')} hint={t('Only your matches see it. If you turn it off, you also stop seeing when they are online.')} checked={p.show_online ?? true} onChange={(v) => set({ show_online: v })} />
         </div>
@@ -200,7 +200,7 @@ export default function Me() {
   const { data, error } = useMeetProfile(userId);
 
   if (ageOn(self.birth_date) < 18) {
-    return <div className="sheet"><h1>{t('Meet and match is for adults')}</h1><p className="muted">{t('You need to be 18 or older to make a profile here. Your chart and readings are still yours to use.')}</p></div>;
+    return <div className="sheet"><h1>{t('Vibe match is for adults')}</h1><p className="muted">{t('You need to be 18 or older to make a profile here. Your chart and readings are still yours to use.')}</p></div>;
   }
   if (error) return <p className="error" role="alert">{t(error)}</p>;
   if (!data) return <ListSkeleton label={t('Loading your profile…')} />;

@@ -43,7 +43,7 @@ export default function Chats() {
   const reload = inbox.refresh;
   useEffect(() => listen((event) => { if (event.type !== 'read') reload(); }), [listen, reload]);
 
-  if (acting && !acting.can_chat) return <div className="sheet"><h1>{t('Chats')}</h1><p className="muted">{t('{0} has not let family read or reply to chats. Only they can change that.', [acting.name])}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Discover')}</Link></div>;
+  if (acting && !acting.can_chat) return <div className="sheet"><h1>{t('Chats')}</h1><p className="muted">{t('{0} has not let family read or reply to chats. Only they can change that.', [acting.name])}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Vibe match')}</Link></div>;
   if (!matches) return <ListSkeleton label={t('Loading…')} />;
   if (!hasProfile && acting) return <div className="sheet"><h1>{t('{0} has not set up a profile yet', [acting.name])}</h1><Link className="btn" to="/family">{t('Back to family')}</Link></div>;
   if (!hasProfile) return <div className="sheet"><h1>{t('Chats')}</h1><p className="muted">{t('Set up the profile other people will see, then come back here to find your matches.')}</p><Link className="btn" to="/me">{t('Set up my profile')}</Link></div>;
@@ -56,7 +56,7 @@ export default function Chats() {
       <div><h1>{t('Chats')}</h1><p className="muted">{acting ? t('People {0} matched with.', [acting.name]) : t('People you liked who liked you back.')}</p></div>
       {inbox.error ? <p className="error" role="alert">{t(inbox.error)}</p> : null}
       {rows.length === 0 ? (
-        <div className="empty card"><p>{acting ? t('No matches yet.') : t('No matches yet. Like someone in Discover; when they like you back, they appear here.')}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Discover')}</Link></div>
+        <div className="empty card"><p>{acting ? t('No matches yet.') : t('No matches yet. Like someone in Vibe match; when they like you back, they appear here.')}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Vibe match')}</Link></div>
       ) : (
         <ul className="meet-list">
           {rows.map(({ p, last, unread }) => (
@@ -65,13 +65,13 @@ export default function Chats() {
                 <span className="face-wrap"><Face person={p} />{!acting && online.has(p.user_id) ? <span className="online-dot" role="img" aria-label={t('Online')} /> : null}</span>
                 <span className="chat-row-text"><strong>{p.display_name}, {p.age}</strong>
                   <span className="hint">{last ? `${last.sender === p.user_id ? '' : `${t('You')}: `}${last.body}` : t('You matched. Say hello.')}</span></span>
-                {unread ? <span className="tag focus" aria-label={t('{0} new messages', [unread])}>{unread}</span> : <span className="tag">{t('{0} of 36', [p.match.total])}</span>}
+                {unread ? <span className="tag focus" aria-label={t('{0} new messages', [unread])}>{unread}</span> : <span className="tag">{t('Vibe score {0}/36', [p.match.total])}</span>}
               </Link>
             </li>
           ))}
         </ul>
       )}
-      {acting ? null : <Link className="card cta" to="/invite"><span className="cta-text"><Icon name="match" size={26} /><span><strong>{t('Match with someone you know')}</strong><span>{t('Send a link and compare your charts')}</span></span></span><Icon name="go" size={20} /></Link>}
+      {acting ? null : <Link className="card cta" to="/invite"><span className="cta-text"><Icon name="match" size={26} /><span><strong>{t('Vibe check with someone you know')}</strong><span>{t('Send a link and compare your charts')}</span></span></span><Icon name="go" size={20} /></Link>}
       <p className="private"><Icon name="lock" size={18} />{t('You can only chat after you have both liked each other. You can block or report from any chat.')}</p>
     </>
   );
@@ -190,7 +190,7 @@ export function Chat() {
   const refreshInbox = inbox.refresh;
   useEffect(() => { if (unread && !acting) supabase.rpc('meet_mark_read', { p_other: id }).then(() => { forget(`inbox:${userId}`); refreshInbox(true); }); }, [unread, acting, id, userId, refreshInbox]);
 
-  if (acting && !acting.can_chat) return <div className="sheet"><h1>{t('Chats')}</h1><p className="muted">{t('{0} has not let family read or reply to chats. Only they can change that.', [acting.name])}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Discover')}</Link></div>;
+  if (acting && !acting.can_chat) return <div className="sheet"><h1>{t('Chats')}</h1><p className="muted">{t('{0} has not let family read or reply to chats. Only they can change that.', [acting.name])}</p><Link className="btn" to={`${base}/discover`}>{t('Go to Vibe match')}</Link></div>;
   if (!matches) return <ListSkeleton label={t('Loading…')} />;
   if (!person) return <div className="sheet"><h1>{t('This chat is not available')}</h1><p className="muted">{t('You can chat with someone only while you are both matched.')}</p><Link className="btn" to={`${base}/chats`}>{t('Back to chats')}</Link></div>;
 
@@ -230,7 +230,7 @@ export function Chat() {
       <header className="chat-head">
         <Link className="back" to={`${base}/chats`} aria-label={t('Back to chats')}><Icon name="back" size={20} /></Link>
         <Face person={person} />
-        <div className="chat-who"><h1><Link to={`${base}/people/${person.user_id}`}>{person.display_name}, {person.age}</Link></h1><p className="hint">{!acting && inbox.online.has(person.user_id) ? <span className="online-text"><span className="online-dot inline" aria-hidden="true" />{t('Online')} · </span> : null}{summaryLines(person, t)[0] ?? ''} · {t('{0} of 36', [person.match.total])}</p></div>
+        <div className="chat-who"><h1><Link to={`${base}/people/${person.user_id}`}>{person.display_name}, {person.age}</Link></h1><p className="hint">{!acting && inbox.online.has(person.user_id) ? <span className="online-text"><span className="online-dot inline" aria-hidden="true" />{t('Online')} · </span> : null}{summaryLines(person, t)[0] ?? ''} · {t('Vibe score {0}/36', [person.match.total])}</p></div>
         {acting ? null : <div className="chat-menu">
           <button type="button" className="round small" aria-expanded={menu} aria-label={t('Safety options')} onClick={() => setMenu(!menu)}><Icon name="lock" size={20} /></button>
           {menu ? (
@@ -253,7 +253,7 @@ export function Chat() {
       </ol>
       {thread.data && thread.data.length === 0 ? (
         <section className="card starters" aria-labelledby="starters-title">
-          <p id="starters-title"><strong>{t('Not sure how to start?')}</strong></p>
+          <p id="starters-title"><strong>{t('Icebreakers')}</strong></p>
           {mine.data ? <p className="hint">{t('Your Moon is in {0}; {1}\'s is in {2}.', [t(moonSign(mine.data)), person.display_name, t(moonSign(person.keys))])}</p> : null}
           {STARTERS.map((s) => <button key={s} type="button" className="starter" onClick={() => send(t(s))}>{t(s)}</button>)}
         </section>

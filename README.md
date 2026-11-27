@@ -6,6 +6,24 @@ A free web app that draws a person's birth chart, explains it in plain words, an
 
 **Positioning.** Astrology is what a person gets on day one, alone: their chart, a reading for each day, and answers from their own chart. Matching is what it leads to: a 36-point kundli match with the reasons shown, for someone they already know (by link) or for people they meet here. The person makes their own choices; a parent can help only as far as the person allows. The landing page (`web/src/pages/Home.jsx`) follows this order and says plainly that the app is new.
 
+**Voice and names.** The app is written for young adults in India, in Hinglish by default: English with everyday Hindi mixed in, in Roman letters. Plain English stays in the language menu, next to Hindi and the other Indian languages.
+
+| What it is | What the app calls it |
+|---|---|
+| Meeting people (swipe or browse) | Vibe match |
+| Comparing charts with someone you know, by link | Vibe check |
+| The 36-point kundli score | Vibe score, always shown out of 36 kundli points |
+| The tests that went best for two people | Green flags |
+| The one thing worth discussing | Talk about this |
+| The reading for the day | Today's vibe |
+| A parent helping, on the person's terms | Family mode |
+| Suggested first messages | Icebreakers |
+| Comparing any two saved charts | Kundli match |
+
+Older sections of this file still use the earlier names (meet and match, family help, invite to match).
+
+How Hinglish works: it is a language choice with the code `hg`, marked as English underneath (`config/languages.mjs`). Its lines are written by hand in `i18n/seed/hg.mjs` and ship with the app; anything not written there reads in English, so nothing is machine-translated and nothing waits for the server. Safety, privacy, errors and settings are left in plain English on purpose. Readings and answers written by the AI model are asked for in Hinglish (`api/lib/prompts.mjs`); text the engine writes stays in English. New accounts start in Hinglish (`20261127150000_hinglish.sql`).
+
 ## Stack
 
 - **Frontend:** web app deployed on Netlify (`astro-book-app`), live at https://astro-book-app.netlify.app

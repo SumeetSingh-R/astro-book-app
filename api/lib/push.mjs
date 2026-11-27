@@ -4,6 +4,7 @@
 // VAPID_PRIVATE_KEY). Until both are set, alerts are simply off and nothing else changes.
 import webpush from 'web-push';
 import hi from '../../i18n/seed/hi.mjs';
+import hg from '../../i18n/seed/hg.mjs';
 
 export const PUSH_KINDS = ['message', 'match', 'invite_accepted', 'family_joined', 'family_suggested', 'photo_approved', 'photo_rejected'];
 
@@ -17,16 +18,17 @@ const TEXT = {
   photo_approved: ['Your photo was approved', () => '/me'],
   photo_rejected: ['A photo was not approved', () => '/me'],
 };
-const NOBODY = { en: 'Someone', hi: hi.Someone ?? 'Someone' };
+const WORDS = { hi, hg };
+const NOBODY = { en: 'Someone', hi: hi.Someone ?? 'Someone', hg: hg.Someone ?? 'Someone' };
 
 /**
  * What an alert says and where it leads. It never includes what a message says: alerts show on lock screens.
- * Hindi readers get Hindi; every other language gets English for now.
+ * Hindi and Hinglish readers get their own words; every other language gets English for now.
  */
 export function pushText(kind, { name = '', actor = null, language = 'en' } = {}) {
   const [english, path] = TEXT[kind];
-  const lang = language === 'hi' ? 'hi' : 'en';
-  const template = lang === 'hi' ? (hi[english] ?? english) : english;
+  const lang = WORDS[language] ? language : 'en';
+  const template = WORDS[lang]?.[english] ?? english;
   return { title: 'Astro Book', body: template.replace('{0}', name || NOBODY[lang]), url: actor ? path(actor) : '/notifications', tag: `${kind}:${actor ?? ''}` };
 }
 

@@ -48,13 +48,13 @@ export function Why({ person, link = false, base = '', forName = null }) {
   const habits = [labelOf(DIETS, person.diet), labelOf(DRINKING, person.drinking), labelOf(SMOKING, person.smoking)].filter(Boolean).map((x) => t(x));
   return (
     <section className="why-fit" aria-labelledby="why-fit-title" aria-live="polite">
-      <h2 id="why-fit-title">{forName ? t('Why {0} and {1} fit', [forName, person.display_name]) : t('Why you and {0} fit', [person.display_name])}</h2>
-      <div className="banner"><div><p><strong>{t('{0} of 36', [match.total])} · {t(match.band)}</strong></p><p className="hint">{t('18 is the traditional pass mark.')} {t('Worked out from both birth charts.')}</p></div></div>
+      <h2 id="why-fit-title">{forName ? t('Green flags for {0} and {1}', [forName, person.display_name]) : t('Green flags with {0}', [person.display_name])}</h2>
+      <div className="banner"><div><p><strong>{t('Vibe score {0}/36', [match.total])} · {t(match.band)}</strong></p><p className="hint">{t('Out of 36 kundli points, worked out from both birth charts.')} {t('18 is the traditional pass mark.')}</p></div></div>
       {person.family_helps ? <p className="hint family-note"><Icon name="match" size={16} />{t('A family member helps {0} with this profile.', [person.display_name])}</p> : null}
       {good.map((k) => (
         <p key={k.name} className="why-line"><span className="why-mark good"><Icon name="check" size={18} /></span><span><strong>{t(k.name)} {k.score} / {k.max}.</strong> <span className="muted">{t(KOOTA_ABOUT[k.name])}</span></span></p>
       ))}
-      {careText ? <p className="why-line care"><span className="why-mark"><Icon name="chat" size={18} /></span><span><strong>{t('Worth a conversation.')}</strong> {careText}</span></p> : null}
+      {careText ? <p className="why-line care"><span className="why-mark"><Icon name="chat" size={18} /></span><span><strong>{t('Talk about this.')}</strong> {careText}</span></p> : null}
       <div className="card">
         <p><strong>{forName ? t('Fits {0} of {1} preferences', [fit.passed, fit.checks.length]) : t('Fits {0} of your {1} preferences', [fit.passed, fit.checks.length])}</strong></p>
         <ul className="checks">{fit.checks.map(([label, ok]) => <li key={label} className={ok ? 'ok' : 'miss'}><Icon name={ok ? 'check' : 'x'} size={14} />{t(label)}</li>)}</ul>
@@ -116,7 +116,7 @@ function Deck({ userId, me, selfId }) {
   const hidden = people.length - people.filter((p) => p.fit.fits).length;
   return (
     <>
-      <h1 className="visually-hidden">{t('Discover')}</h1>
+      <h1 className="visually-hidden">{t('Vibe match')}</h1>
       <div className="title-row">
         <div className="switch" role="group" aria-label={t('View')}>
           <button type="button" aria-pressed={view === 'swipe'} className={view === 'swipe' ? 'on' : undefined} onClick={() => setView('swipe')}>{t('Swipe')}</button>
@@ -171,7 +171,7 @@ function Deck({ userId, me, selfId }) {
                   <li key={p.user_id} className={open?.user_id === p.user_id ? 'card meet-person on' : 'card meet-person'}>
                     <button type="button" className="person-open" aria-pressed={open?.user_id === p.user_id} onClick={() => setOpenId(p.user_id)}>
                       <Face person={p} />
-                      <span><strong>{p.display_name}, {p.age}</strong>{summaryLines(p, t).map((x) => <span key={x} className="hint">{x}</span>)}<span className="tag">{t('{0} of 36', [p.match.total])} · {t(p.match.band)}</span>{suggestedTag(p)}</span>
+                      <span><strong>{p.display_name}, {p.age}</strong>{summaryLines(p, t).map((x) => <span key={x} className="hint">{x}</span>)}<span className="tag">{t('Vibe score {0}/36', [p.match.total])} · {t(p.match.band)}</span>{suggestedTag(p)}</span>
                     </button>
                     {canLike
                       ? <button type="button" className={p.my_kind === 'like' ? 'round small like' : 'round small'} aria-pressed={p.my_kind === 'like'} aria-label={t('Like {0}', [p.display_name])} onClick={() => act(p, p.my_kind === 'like' ? 'pass' : 'like')}><Icon name="heart" size={22} /></button>
@@ -189,8 +189,8 @@ function Deck({ userId, me, selfId }) {
         <div className="modal" role="dialog" aria-modal="true" aria-labelledby="matched-title">
           <div className="modal-card msg">
             <Face person={matched} className="face large" />
-            <h2 id="matched-title">{t('You both said yes')}</h2>
-            <p>{acting ? t('{0} and {1} liked each other. Their charts score {2} of 36.', [acting.name, matched.display_name, matched.match.total]) : t('You and {0} liked each other. Your charts score {1} of 36.', [matched.display_name, matched.match.total])}</p>
+            <h2 id="matched-title">{t('It\'s a match!')}</h2>
+            <p>{acting ? t('{0} and {1} liked each other. Their vibe score is {2}/36.', [acting.name, matched.display_name, matched.match.total]) : t('You and {0} liked each other. Your vibe score is {1}/36.', [matched.display_name, matched.match.total])}</p>
             {!acting || acting.can_chat ? <Link className="btn" to={`${base}/chats/${matched.user_id}`}>{t('Say hello')}<Icon name="go" size={20} /></Link> : null}
             <button type="button" className="link" onClick={() => setMatched(null)}>{t('Keep looking')}</button>
           </div>

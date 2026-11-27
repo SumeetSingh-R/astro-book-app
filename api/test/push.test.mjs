@@ -76,6 +76,8 @@ test('push text: every kind has words, Hindi readers get Hindi, a missing name s
     assert.ok(!hi.body.includes('{0}'));
   }
   assert.equal(pushText('message', { name: '', actor: ACTOR, language: 'en' }).body, 'Someone sent you a message');
+  assert.equal(pushText('message', { name: 'Dev', actor: ACTOR, language: 'hg' }).body, 'Dev ne tumhe message bheja', 'Hinglish readers get Hinglish');
+  assert.equal(pushText('photo_approved', { language: 'hg' }).body, 'Tumhari photo approve ho gayi');
   assert.equal(pushText('match', { name: 'Dev', actor: ACTOR, language: 'gu' }).body, 'You and Dev matched', 'other languages fall back to English');
   assert.equal(pushText('photo_approved', { name: '', actor: null }).url, '/notifications');
 });

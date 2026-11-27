@@ -84,11 +84,11 @@ test('GET /api/i18n: another language is filled by the translator and kept', asy
   const translator = async () => createTranslator({ ai, store });
   const one = await (await handleI18n(get('/api/i18n?lang=gu'), { loadCatalog, translator })).json();
   assert.equal(one.complete, true);
-  assert.equal(one.strings.Today, '«Today»');
+  assert.equal(one.strings.Chats, '«Chats»');
   const callsAfterFirst = ai.calls.length;
   assert.ok(callsAfterFirst > 1, 'the catalogue is sent in several small requests');
   const two = await (await handleI18n(get('/api/i18n?lang=gu'), { loadCatalog, translator: async () => createTranslator({ ai, store }) })).json();
-  assert.equal(two.strings.Today, '«Today»');
+  assert.equal(two.strings.Chats, '«Chats»');
   assert.equal(ai.calls.length, callsAfterFirst, 'the second visitor costs nothing');
 });
 
@@ -114,10 +114,43 @@ test('GET /api/horoscope: lang translates the reading text and leaves names and 
   assert.equal(plain.language, 'en');
 });
 
-test('languages: ten are offered, unknown codes fall back to English, and prompts name the language', () => {
-  assert.equal(LANGUAGES.length, 10);
+test('languages: Hinglish and ten more are offered, unknown codes fall back to English, and prompts name the language', () => {
+  assert.equal(LANGUAGES.length, 11);
+  assert.equal(LANGUAGES[0].code, 'hg', 'Hinglish is first in the menu');
   assert.equal(languageOf('te'), 'te');
   assert.equal(languageOf('xx'), 'en');
   assert.match(chartReadingPrompt({ language: 'ta', factsText: 'x' }).system, /Write in Tamil, in Tamil script/);
   assert.match(chartReadingPrompt({ language: 'en', factsText: 'x' }).system, /Write in English\./);
+});
+
+test('Hinglish: the voice the app opens in is English underneath, with its own hand-written lines', async () => {
+  const { DEFAULT_LANGUAGE, isEnglishBased, languageInfo } = await import('../../config/languages.mjs');
+  const hg = (await import('../../i18n/seed/hg.mjs')).default;
+  const catalog = (await import('../../i18n/catalog.mjs')).default;
+  assert.equal(DEFAULT_LANGUAGE, 'hg');
+  assert.equal(isEnglishBased('hg'), true);
+  assert.equal(isEnglishBased('en'), true);
+  assert.equal(isEnglishBased('hi'), false);
+  assert.equal(languageInfo('hg').locale, 'en-IN');
+  assert.equal(languageOf('hg'), 'hg');
+
+  const placeholders = (x) => (x.match(/\{[A-Za-z0-9_]+\}/g) ?? []).sort().join(',');
+  assert.ok(Object.keys(hg).length >= 150, 'the main screens are covered');
+  for (const [english, line] of Object.entries(hg)) {
+    assert.ok(catalog.includes(english), `"${english}" is a line the app still shows`);
+    assert.equal(placeholders(line), placeholders(english), `"${english}" keeps its placeholders`);
+    assert.doesNotMatch(line, /[\u0900-\u097F]/, `"${english}" is in Roman letters`);
+  }
+  assert.equal(hg["It's a match!"], 'Jodi ban gayi!');
+  assert.equal(hg["Today's vibe"], 'Aaj ka vibe');
+});
+
+test('Hinglish: nothing is machine-translated for it, and readings are asked for in Hinglish', async () => {
+  const ai = fakeAi();
+  const translator = async () => createTranslator({ ai, store: memoryStore(new Map()) });
+  assert.equal((await handleI18n(get('/api/i18n?lang=hg'), { loadCatalog, translator })).status, 400, 'its words ship with the app');
+  const res = await (await handleHoroscope(get('/api/horoscope?system=vedic&sign=1&date=2026-11-27&lang=hg'), { translator })).json();
+  assert.equal(res.language, 'hg');
+  assert.equal(ai.calls.length, 0, 'the engine text is left in English');
+  assert.match(chartReadingPrompt({ language: 'hg', factsText: 'x' }).system, /Write in Hinglish/);
 });

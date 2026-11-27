@@ -1,6 +1,10 @@
 // The languages Astro Book can be read in. Shared by the web app and the API.
 // `font` is a Google Fonts family that carries the script; `locale` is used for dates and numbers.
+// Hinglish (English with everyday Hindi mixed in, in Roman letters) is the voice the app opens in. It is
+// English underneath: only the lines written for it differ (i18n/seed/hg.mjs), nothing is machine-translated,
+// and the text the engine writes stays in English. `base: 'en'` marks that.
 export const LANGUAGES = [
+  { code: 'hg', name: 'Hinglish', native: 'Hinglish', script: 'Latin', locale: 'en-IN', font: null, base: 'en' },
   { code: 'en', name: 'English', native: 'English', script: 'Latin', locale: 'en-IN', font: null },
   { code: 'hi', name: 'Hindi', native: 'हिन्दी', script: 'Devanagari', locale: 'hi-IN', font: null }, // Mukta carries Devanagari
   { code: 'gu', name: 'Gujarati', native: 'ગુજરાતી', script: 'Gujarati', locale: 'gu-IN', font: 'Mukta Vaani' },
@@ -14,6 +18,10 @@ export const LANGUAGES = [
 ];
 
 export const LANGUAGE_CODES = LANGUAGES.map((l) => l.code);
-export const languageInfo = (code) => LANGUAGES.find((l) => l.code === code) ?? LANGUAGES[0];
+export const languageInfo = (code) => LANGUAGES.find((l) => l.code === code) ?? LANGUAGES.find((l) => l.code === 'en');
+/** The voice a new visitor gets before they choose one. */
+export const DEFAULT_LANGUAGE = 'hg';
+/** True for English and for a voice that is English underneath (Hinglish): nothing needs translating. */
+export const isEnglishBased = (code) => code === 'en' || languageInfo(code).base === 'en';
 /** A supported language code, or English for anything else. */
 export const languageOf = (value) => (LANGUAGE_CODES.includes(value) ? value : 'en');

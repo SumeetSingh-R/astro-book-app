@@ -27,9 +27,9 @@ function Overview() {
   if (error) return <p className="error" role="alert">{error}</p>;
   if (!data) return <ListSkeleton label="Loading…" />;
   const stats = [
-    ['Accounts', data.accounts, `${data.new_this_week} new this week`], ['Meet profiles', data.profiles, `${data.discoverable} visible in Discover`],
+    ['Accounts', data.accounts, `${data.new_this_week} new this week`], ['Vibe match profiles', data.profiles, `${data.discoverable} visible in Discover`],
     ['Photos to review', data.photos_pending, `${data.photos_approved} approved, ${data.photos_rejected} rejected`], ['Likes', data.likes, `${data.matches} mutual matches`],
-    ['Suspended profiles', data.suspended, 'Hidden from Discover by an admin'], ['Charts saved', data.charts_saved, `${data.questions_asked} questions asked`],
+    ['Suspended profiles', data.suspended, 'Hidden from Vibe match by an admin'], ['Charts saved', data.charts_saved, `${data.questions_asked} questions asked`],
   ];
   return <ul className="stats">{stats.map(([label, value, note]) => <li key={label} className="card"><p className="note-label">{label}</p><p className="stat">{value}</p><p className="hint">{note}</p></li>)}</ul>;
 }

@@ -146,7 +146,7 @@ export function fitsPreferences(person, prefs, match) {
   if (prefs.communities.length) checks.push([msg('Community'), has(prefs.communities, person.community)]);
   if (prefs.mother_tongues.length) checks.push([msg('Mother tongue'), has(prefs.mother_tongues, person.mother_tongue)]);
   if (prefs.income_min) checks.push([msg('Income'), Boolean(person.income_range) && INCOME_ORDER.indexOf(person.income_range) >= INCOME_ORDER.indexOf(prefs.income_min)]);
-  checks.push([msg('Kundli score'), match.total >= Number(prefs.min_score)]);
+  checks.push([msg('Vibe score'), match.total >= Number(prefs.min_score)]);
   return { checks, fits: checks.every(([, ok]) => ok), passed: checks.filter(([, ok]) => ok).length };
 }
 

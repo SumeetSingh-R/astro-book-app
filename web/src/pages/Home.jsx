@@ -23,18 +23,18 @@ function nowInIndia() {
 }
 
 const FEATURES = [
-  ['heart', msg('Meet people who fit your kundli'), msg('Swipe or browse profiles, best kundli match first. Each one shows the 36-point score, why you fit, and what to talk about.')],
-  ['match', msg('Match with someone you know'), msg('Send them a link. When they add their birth details, you both see how your charts fit. No profile needed.')],
-  ['people', msg('Bring your family in, on your terms'), msg('Invite a parent to look with you. You choose what they can do, and you can stop it at any time.')],
+  ['heart', msg('Vibe match: meet people who fit your kundli'), msg('Swipe or browse profiles, best match first. Each one shows a vibe score out of 36 kundli points, your green flags, and what to talk about.')],
+  ['match', msg('Vibe check with someone you know'), msg('Send them a link. When they add their birth details, you both see how your charts fit. No profile needed.')],
+  ['people', msg('Family mode: your family, on your terms'), msg('Invite a parent to look with you. You choose what they can do, and you can stop it at any time.')],
   ['chart', msg('Your chart, in plain words'), msg('Your kundli explained area by area: work, money, marriage, family. In your own language.')],
-  ['sun', msg('A reading for your day'), msg('Each morning, a reading made from your own chart, not only your sign.')],
+  ['sun', msg('Today\'s vibe: a reading for your day'), msg('Each morning, a reading made from your own chart, not only your sign.')],
   ['chat', msg('Ask your chart'), msg('Ask when a good period for marriage or a job change is, and get an answer drawn from your own chart.')],
 ];
 
 const STEPS = [
   [msg('Add your birth details once'), msg('Your chart is drawn from them. Other people never see your date, time or place of birth.')],
   [msg('Set up your profile and filters'), msg('Photos, a few lines about you, and what you are looking for: marriage, something long-term, or still figuring it out.')],
-  [msg('See who fits, and why'), msg('Every profile shows the kundli score, the reasons in plain words, and how it meets your filters.')],
+  [msg('See who fits, and why'), msg('Every profile shows a vibe score out of 36 kundli points, your green flags, and how it meets your filters.')],
   [msg('Chat when you both say yes'), msg('A chat opens only after you have both liked each other.')],
 ];
 
@@ -56,10 +56,10 @@ const SAFETY = [
 
 const FAQS = [
   [msg('What do I need to get started?'), msg('Your date, time and place of birth. You enter them once in your profile and Astro Book uses them for everything: your chart, your daily reading and your questions.')],
-  [msg('How is the match score worked out?'), msg('It is the traditional 36-point kundli match: eight tests that compare the two Moon positions, plus a Manglik check. You see each test and its score, not only the total. 18 is the traditional pass mark.')],
+  [msg('How is the vibe score worked out?'), msg('The vibe score is the traditional 36-point kundli match: eight tests that compare the two Moon positions, plus a Manglik check. You see each test and its score, not only the total. 18 is the traditional pass mark.')],
   [msg('Is it for marriage or for dating?'), msg('You choose. Your profile says whether you are looking for marriage, something long-term, or are still figuring it out, and you can filter other people by the same.')],
   [msg('Can my parents use it for me?'), msg('Yes, if you invite them. You make your profile yourself, then send a parent a link and choose what they can do. You can change that, or remove them, at any time.')],
-  [msg('Who can see my profile and photos?'), msg('A meet-and-match profile is optional. If you make one, signed-in people see what you put on it, and your photos once a person on our team has checked them. Nobody else sees your date, time or place of birth, or your saved charts.')],
+  [msg('Who can see my profile and photos?'), msg('A Vibe match profile is optional. If you make one, signed-in people see what you put on it, and your photos once a person on our team has checked them. Nobody else sees your date, time or place of birth, or your saved charts.')],
   [msg('What if I don\'t know my birth time?'), msg('Tick "I don\'t know my birth time". Your chart is still drawn from your Moon sign. A few details that depend on the exact time are left out.')],
   [msg('How does "Ask your chart" work?'), msg('The app first works out the facts of your chart. An AI model then writes the answer in plain words from those facts only. Timing is given as ranges of months, never as a date or a promise.')],
   [msg('Why is my Vedic sign different from my Western sign?'), msg('Vedic astrology measures the zodiac against the stars and Western astrology against the seasons. The two are about 24 degrees apart today, so many people have a different sign in each.')],
@@ -167,7 +167,7 @@ export default function Home() {
       ) : null}
 
       <section className="home-how" aria-labelledby="how-title">
-        <h2 id="how-title">{t('How meeting someone works')}</h2>
+        <h2 id="how-title">{t('How Vibe match works')}</h2>
         <ol className="steps">
           {STEPS.map(([title, text]) => <li key={title}><strong>{t(title)}</strong><span className="hint">{t(text)}</span></li>)}
         </ol>

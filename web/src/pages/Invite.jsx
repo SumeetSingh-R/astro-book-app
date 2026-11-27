@@ -25,9 +25,9 @@ function MatchResult({ match, name }) {
   const careText = careSentence(care, t);
   return (
     <div className="why-fit">
-      <div className="banner deck-score"><Ring total={match.total} max={36} /><div><p><strong>{t('You and {0}: {1} of 36', [name, match.total])} · {t(match.band)}</strong></p><p className="hint">{t('18 is the traditional pass mark.')} {t(match.manglik.summary)}</p></div></div>
+      <div className="banner deck-score"><Ring total={match.total} max={36} /><div><p><strong>{t('You and {0}: vibe score {1}/36', [name, match.total])} · {t(match.band)}</strong></p><p className="hint">{t('Out of 36 kundli points.')} {t('18 is the traditional pass mark.')} {t(match.manglik.summary)}</p></div></div>
       {good.map((k) => <p key={k.name} className="why-line"><span className="why-mark good"><Icon name="check" size={18} /></span><span><strong>{t(k.name)} {k.score} / {k.max}.</strong> <span className="muted">{t(KOOTA_ABOUT[k.name])}</span></span></p>)}
-      {careText ? <p className="why-line care"><span className="why-mark"><Icon name="chat" size={18} /></span><span><strong>{t('Worth a conversation.')}</strong> {careText}</span></p> : null}
+      {careText ? <p className="why-line care"><span className="why-mark"><Icon name="chat" size={18} /></span><span><strong>{t('Talk about this.')}</strong> {careText}</span></p> : null}
       <dl className="facts-list tests">
         {match.kootas.map((k) => <div key={k.name}><dt><strong>{t(k.name)}</strong><span className="hint">{t(KOOTA_ABOUT[k.name])}</span></dt><dd>{k.score} / {k.max}</dd></div>)}
       </dl>
@@ -82,7 +82,7 @@ export default function Invite() {
     <div className="sheet meet">
       <div>
         <p><Link className="back" to="/chats"><Icon name="back" size={18} />{t('Chats')}</Link></p>
-        <h1>{t('Match with someone you know')}</h1>
+        <h1>{t('Vibe check with someone you know')}</h1>
         <p className="muted">{t('Send them a link. When they add their birth details, you both see how your charts fit.')}</p>
       </div>
       {invites.error || keysError ? <p className="error" role="alert">{t(invites.error ?? 'Your chart could not be read. Open your chart once, then try again.')}</p> : null}
@@ -120,7 +120,7 @@ export default function Invite() {
                 <li key={p.user_id} className="card">
                   <button type="button" className="person-open" aria-expanded={open === p.user_id} onClick={() => setOpen(open === p.user_id ? null : p.user_id)}>
                     <span className="face initial" aria-hidden="true">{p.name.charAt(0).toUpperCase()}</span>
-                    <span><strong>{p.name}</strong><span className="hint">{t('Accepted on {0}', [formatDate(p.accepted_at)])}</span>{match ? <span className="tag">{t('{0} of 36', [match.total])} · {t(match.band)}</span> : null}</span>
+                    <span><strong>{p.name}</strong><span className="hint">{t('Accepted on {0}', [formatDate(p.accepted_at)])}</span>{match ? <span className="tag">{t('Vibe score {0}/36', [match.total])} · {t(match.band)}</span> : null}</span>
                   </button>
                   {open === p.user_id && match ? <MatchResult match={match} name={p.name} /> : null}
                 </li>
@@ -152,7 +152,7 @@ export function InviteLink() {
     try { sessionStorage.setItem('postProfilePath', location.pathname); } catch { /* storage unavailable */ }
     return (
       <div className="sheet">
-        <h1>{t('Someone wants to see how your charts fit')}</h1>
+        <h1>{t('Someone sent you a vibe check')}</h1>
         <p className="muted">{t('Add your birth details first. It takes a minute, and you get your own chart too.')}</p>
         <Link className="btn" to="/welcome">{t('Add my birth details')}<Icon name="go" size={20} /></Link>
       </div>
@@ -160,7 +160,7 @@ export function InviteLink() {
   }
   if (invite.error) return <p className="error" role="alert">{t(invite.error)}</p>;
   if (invite.data === null) return <ListSkeleton label={t('Loading…')} />;
-  if (!invite.data) return <div className="sheet"><h1>{t('This link has expired')}</h1><p className="muted">{t('Invite links work for 7 days. Ask for a new one.')}</p><Link className="btn" to="/today">{t('Go to Today')}</Link></div>;
+  if (!invite.data) return <div className="sheet"><h1>{t('This link has expired')}</h1><p className="muted">{t('Invite links work for 7 days. Ask for a new one.')}</p><Link className="btn" to="/today">{t('Go to Today\'s vibe')}</Link></div>;
   const { inviter, mine, accepted } = invite.data;
   if (mine) return <div className="sheet"><h1>{t('This is your own link')}</h1><p className="muted">{t('Send it to someone you know. You will see the match when they accept.')}</p><Link className="btn" to="/invite">{t('Open my link')}</Link></div>;
 
@@ -187,10 +187,10 @@ export function InviteLink() {
         </>
       ) : (
         <>
-          <h1>{t('{0} wants to see how your charts fit', [inviter.name])}</h1>
-          <p className="muted">{t('If you accept, you both see the 36-point match between your charts. They see the result and your first name, nothing else.')}</p>
+          <h1>{t('{0} sent you a vibe check', [inviter.name])}</h1>
+          <p className="muted">{t('If you accept, you both see your vibe score out of 36 kundli points. They see the result and your first name, nothing else.')}</p>
           {error ? <p className="error" role="alert">{error}</p> : null}
-          <button type="button" className="btn" disabled={busy} onClick={accept}>{busy ? t('Please wait…') : t('See how we match')}<Icon name="go" size={20} /></button>
+          <button type="button" className="btn" disabled={busy} onClick={accept}>{busy ? t('Please wait…') : t('See our vibe score')}<Icon name="go" size={20} /></button>
           <Link className="link" to="/today">{t('Not now')}</Link>
         </>
       )}

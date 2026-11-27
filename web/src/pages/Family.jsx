@@ -86,7 +86,7 @@ export default function Family() {
     <div className="sheet meet family">
       <div>
         <p><Link className="back" to={self ? '/profile' : '/'}><Icon name="back" size={18} />{self ? t('Profile') : t('Home')}</Link></p>
-        <h1>{t('Family help')}</h1>
+        <h1>{t('Family mode')}</h1>
         <p className="muted">{t('Invite a parent to look for matches with you. You decide what they can do, you see what they did, and you can stop it at any time.')}</p>
       </div>
       {error ? <p className="error" role="alert">{error}</p> : null}

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from './supabase.js';
-import { LANGUAGES, languageInfo, languageOf } from '../../../config/languages.mjs';
+import { LANGUAGES, languageInfo, languageOf, DEFAULT_LANGUAGE, isEnglishBased } from '../../../config/languages.mjs';
+import hinglish from '../../../i18n/seed/hg.mjs';
 import { CATALOG_VERSION } from '../../../i18n/version.mjs';
 import { setLocale } from './format.js';
 import Icon from '../components/Icon.jsx';
@@ -8,7 +9,12 @@ import Icon from '../components/Icon.jsx';
 // The language the whole app is read in: the interface, the readings and the answers.
 // English text is the key. `t('Save')` gives the same words in the chosen language, or English
 // while a translation is still on its way.
+// Hinglish, the voice the app opens in, ships with the app: its lines are in i18n/seed/hg.mjs and
+// anything not written there reads in English, so it never waits for the server.
 const fill = (text, vars) => (vars ? text.replace(/\{(\w+)\}/g, (m, k) => (vars[k] ?? m)) : text);
+const BUNDLED = { hg: hinglish };
+/** True when a language's words have to be fetched: not English, and not shipped with the app. */
+const needsServer = (language) => !isEnglishBased(language);
 const LanguageContext = createContext({ language: 'en', setLanguage: () => {}, t: fill, ready: true });
 
 /** [language, setLanguage] */
@@ -18,7 +24,7 @@ export const useT = () => useContext(LanguageContext).t;
 export { msg } from './msg.js';
 
 function stored() {
-  try { return languageOf(localStorage.getItem('reading.language')); } catch { return 'en'; }
+  try { const saved = localStorage.getItem('reading.language'); return saved ? languageOf(saved) : DEFAULT_LANGUAGE; } catch { return DEFAULT_LANGUAGE; }
 }
 const dictKey = (language) => `ab.i18n.${language}`;
 function storedDict(language) {
@@ -32,7 +38,7 @@ function storedDict(language) {
 function useScriptFont(language) {
   useEffect(() => {
     const { font } = languageInfo(language);
-    document.documentElement.lang = language;
+    document.documentElement.lang = isEnglishBased(language) ? languageInfo(language).locale : language;
     document.documentElement.style.setProperty('--font-script', font ? `'${font}'` : "'Mukta'");
     if (!font) return;
     const id = `font-${font.replace(/\s+/g, '-')}`;
@@ -47,7 +53,7 @@ function useScriptFont(language) {
 
 export function LanguageProvider({ userId, children }) {
   const [language, setState] = useState(stored);
-  const [dict, setDict] = useState(() => (language === 'en' ? null : storedDict(language)));
+  const [dict, setDict] = useState(() => (needsServer(language) ? storedDict(language) : null));
   const tries = useRef(0);
   useScriptFont(language);
   setLocale(languageInfo(language).locale);
@@ -64,7 +70,7 @@ export function LanguageProvider({ userId, children }) {
 
   // The words for the chosen language: from this device if it has them, otherwise from the server.
   useEffect(() => {
-    if (language === 'en') { setDict(null); return undefined; }
+    if (!needsServer(language)) { setDict(null); return undefined; }
     const have = storedDict(language);
     setDict(have);
     if (have?.complete) return undefined;
@@ -98,9 +104,9 @@ export function LanguageProvider({ userId, children }) {
   }, [userId]);
 
   const value = useMemo(() => {
-    const strings = language === 'en' ? null : dict?.strings ?? null;
+    const strings = needsServer(language) ? dict?.strings ?? null : BUNDLED[language] ?? null;
     const t = (text, vars) => (typeof text === 'string' ? fill(strings?.[text] ?? text, vars) : text);
-    return { language, setLanguage, t, ready: language === 'en' || Boolean(dict) };
+    return { language, setLanguage, t, ready: !needsServer(language) || Boolean(dict) };
   }, [language, dict, setLanguage]);
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
@@ -114,7 +120,7 @@ export function LanguageSwitch({ compact = false }) {
       <Icon name="globe" size={18} />
       <span className="visually-hidden">{t('Language')}</span>
       <select value={language} onChange={(e) => setLanguage(e.target.value)} aria-label={t('Language')}>
-        {LANGUAGES.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
+        {LANGUAGES.map((l) => <option key={l.code} value={l.code} lang={l.base ? l.locale : l.code}>{l.native}</option>)}
       </select>
     </label>
   );

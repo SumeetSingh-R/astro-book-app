@@ -172,7 +172,7 @@ export default function Match() {
   return (
     <>
       <div>
-        <h1>{t('Matching')}</h1>
+        <h1>{t('Kundli match')}</h1>
         <p className="muted">{t('Pick two people from your charts and see how they fit.')}</p>
       </div>
       {loadError ? <p className="error" role="alert">{t(loadError)}</p> : null}

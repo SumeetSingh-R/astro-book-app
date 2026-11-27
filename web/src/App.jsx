@@ -93,7 +93,7 @@ function NoProfile() {
   return <Navigate to={family.data?.helping.length ? '/family' : '/welcome'} replace />;
 }
 
-const TABS = [['/today', msg('Today'), 'sun'], ['/discover', msg('Discover'), 'heart'], ['/chats', msg('Chats'), 'chat'], ['/charts', msg('My charts'), 'chart'], ['/ask', msg('Ask'), 'planet']];
+const TABS = [['/today', msg('Today\'s vibe'), 'sun'], ['/discover', msg('Vibe match'), 'heart'], ['/chats', msg('Chats'), 'chat'], ['/charts', msg('My charts'), 'chart'], ['/ask', msg('Ask'), 'planet']];
 
 function Shell({ children }) {
   const t = useT();
@@ -112,11 +112,11 @@ function Shell({ children }) {
         </Link>
         {session ? (
           <nav className="main-nav" aria-label={t('Main')}>
-            <NavLink to="/today">{t('Today')}</NavLink>
-            <NavLink to="/discover">{t('Discover')}</NavLink>
+            <NavLink to="/today">{t('Today\'s vibe')}</NavLink>
+            <NavLink to="/discover">{t('Vibe match')}</NavLink>
             <NavLink to="/chats" aria-label={unread ? t('Chats, {0} new messages', [unread]) : undefined}>{t('Chats')}<Badge count={unread} /></NavLink>
             <NavLink to="/charts">{t('My charts')}</NavLink>
-            <NavLink to="/match">{t('Matching')}</NavLink>
+            <NavLink to="/match">{t('Kundli match')}</NavLink>
           </nav>
         ) : null}
         <div className="top-actions">

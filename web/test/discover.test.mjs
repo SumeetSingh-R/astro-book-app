@@ -41,10 +41,10 @@ test('preferences: only the ones that were set are checked, and "open to all" fi
   const match = scoreBetween(asha, dev);
   const open = fitsPreferences(dev, blankPreferences(), match);
   assert.equal(open.fits, true);
-  assert.deepEqual(open.checks.map(([label]) => label), ['Age', 'Kundli score']);
+  assert.deepEqual(open.checks.map(([label]) => label), ['Age', 'Vibe score']);
   const strict = fitsPreferences(dev, { ...blankPreferences(), age_max: 30, communities: ['rajput'], religions: ['hindu'], income_min: '10_15', min_score: 31 }, match);
   assert.equal(strict.fits, false);
-  assert.deepEqual(Object.fromEntries(strict.checks), { Age: false, Religion: true, Community: false, Income: true, 'Kundli score': false });
+  assert.deepEqual(Object.fromEntries(strict.checks), { Age: false, Religion: true, Community: false, Income: true, 'Vibe score': false });
   const hidden = fitsPreferences({ ...dev, community: '' }, { ...blankPreferences(), communities: ['Patel'] }, match);
   assert.equal(hidden.fits, false, 'a hidden community cannot satisfy a named community');
 });

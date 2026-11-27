@@ -4,6 +4,7 @@ import { useRemembered } from '../lib/cache.js';
 import { SIGNS, RASHIS, SIGN_GLYPHS, todayISO } from '../lib/format.js';
 import { ReadingCardSkeleton } from './Skeleton.jsx';
 import { useT, useLanguage, msg } from '../lib/language.jsx';
+import { isEnglishBased } from '../../../config/languages.mjs';
 
 const TONE_LABELS = { supportive: msg('A supportive day'), demanding: msg('A demanding day'), steady: msg('A steady day') };
 
@@ -23,7 +24,7 @@ export default function HoroscopeReader() {
   const date = todayISO();
   const { data: readings, error } = useRemembered(
     `horoscope:${system}:${date}:${language}`,
-    () => api(`/api/horoscope?system=${system}&date=${date}${language === 'en' ? '' : `&lang=${language}`}`).then((d) => d.readings),
+    () => api(`/api/horoscope?system=${system}&date=${date}${isEnglishBased(language) ? '' : `&lang=${language}`}`).then((d) => d.readings),
     { maxAge: 12 * 3600 * 1000 },
   );
 

@@ -7,7 +7,7 @@ import {
 import { ruleChartReading } from '../../engine/src/readingText.mjs';
 import { ApiError, json, errorResponse, requireMethod, bearerToken, readJson, requireUuid } from './http.mjs';
 import { searchPlaces } from './places.mjs';
-import { languageOf, LANGUAGE_CODES } from '../../config/languages.mjs';
+import { languageOf, LANGUAGE_CODES, isEnglishBased } from '../../config/languages.mjs';
 import { PUSH_KINDS, pushText } from './push.mjs';
 import { chartReadingPrompt, dailyReadingPrompt, askPrompt, parseChartReading, parseDailyReading, tidy } from './prompts.mjs';
 
@@ -124,7 +124,7 @@ export async function handleMatch(req, deps) {
     });
     const language = languageOf(body.language);
     let shown = result;
-    if (language !== 'en') {
+    if (!isEnglishBased(language)) {
       const translator = await translatorOf(deps);
       if (translator) { shown = structuredClone(result); await translator.localize(language, shown, ['reason', 'cancellations', 'notes', 'summary']); }
     }
@@ -171,7 +171,7 @@ export async function handleHoroscope(req, deps = {}) {
       readings = [await dailyHoroscope(date, system, sign)];
     }
     let translated = true;
-    if (lang !== 'en') {
+    if (!isEnglishBased(lang)) {
       const translator = await translatorOf(deps);
       translated = translator ? await translator.localize(lang, readings, ['title', 'text', 'focus', 'highlights']) : false;
     }
@@ -211,7 +211,7 @@ export async function handleI18n(req, deps) {
   try {
     requireMethod(req, 'GET');
     const lang = new URL(req.url).searchParams.get('lang');
-    if (!LANGUAGE_CODES.includes(lang) || lang === 'en') throw new ApiError(400, 'invalid_input', 'lang must be one of the supported languages.');
+    if (!LANGUAGE_CODES.includes(lang) || isEnglishBased(lang)) throw new ApiError(400, 'invalid_input', 'lang must be one of the supported languages.');
     const { catalog, seed } = await deps.loadCatalog(lang);
     const translator = await translatorOf(deps);
     let strings = {};
@@ -273,7 +273,7 @@ export async function handleReading(req, deps) {
       return json({ reading: { ...written.parsed, source: 'ai', language } });
     }
     const fallback = ruleChartReading(facts);
-    const translator = language === 'en' ? null : await translatorOf(deps);
+    const translator = isEnglishBased(language) ? null : await translatorOf(deps);
     const done = translator ? await translator.localize(language, fallback, ['summary', 'text', 'why'], { budgetMs: 12000 }) : false;
     return json({ reading: { ...fallback, source: 'rules', language: done ? language : 'en' } });
   } catch (e) { return errorResponse(e); }
@@ -306,7 +306,7 @@ export async function handleToday(req, deps) {
     const { ruleReading, ...day } = await personalDay(chart, date, { timezone });
     // The model is always given the day in English; the person sees it in their own language.
     const dayText = dayToText(day);
-    const translator = language === 'en' ? null : await translatorOf(deps);
+    const translator = isEnglishBased(language) ? null : await translatorOf(deps);
     const shownDay = translator ? structuredClone(day) : day;
     if (translator) await translator.localize(language, shownDay, ['topics', 'title', 'focus', 'meaning', 'note', 'phase'], { budgetMs: 6000 });
     const head = { date, profile: { id: profile.id, name: profile.name }, day: shownDay };
