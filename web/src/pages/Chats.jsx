@@ -38,7 +38,7 @@ export default function Chats() {
     if (error) throw new Error('Your chats could not be loaded. Refresh the page to try again.');
     return data;
   }, { maxAge: 0 });
-  const { listen } = useInbox();
+  const { listen, online } = useInbox();
   const reload = inbox.refresh;
   useEffect(() => listen((event) => { if (event.type !== 'read') reload(); }), [listen, reload]);
 
@@ -59,7 +59,7 @@ export default function Chats() {
           {rows.map(({ p, last, unread }) => (
             <li key={p.user_id}>
               <Link className="card meet-person chat-row" to={`/chats/${p.user_id}`}>
-                <Face person={p} />
+                <span className="face-wrap"><Face person={p} />{online.has(p.user_id) ? <span className="online-dot" role="img" aria-label={t('Online')} /> : null}</span>
                 <span className="chat-row-text"><strong>{p.display_name}, {p.age}</strong>
                   <span className="hint">{last ? `${last.sender === p.user_id ? '' : `${t('You')}: `}${last.body}` : t('You matched. Say hello.')}</span></span>
                 {unread ? <span className="tag focus" aria-label={t('{0} new messages', [unread])}>{unread}</span> : <span className="tag">{t('{0} of 36', [p.match.total])}</span>}
@@ -117,6 +117,9 @@ export function Chat() {
   const [menu, setMenu] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [typing, setTyping] = useState(false);
+  const typingChannel = useRef(null);
+  const typedAt = useRef(0);
   const endRef = useRef(null);
   const inbox = useInbox();
   const person = matches?.find((p) => p.user_id === id) ?? null;
@@ -143,12 +146,37 @@ export function Chat() {
       if (!loaded.current) return; // the first load will include it
       const { row } = event;
       if (event.type === 'message' && row.sender === id) {
+        setTyping(false);
         set((list) => (list.some((m) => m.id === row.id) ? list : [...list, { id: row.id, sender: row.sender, body: row.body, created_at: row.created_at, read_at: row.read_at }]));
       } else if (event.type === 'read' && row.recipient === id) {
         set((list) => list.map((m) => (m.id === row.id ? { ...m, read_at: row.read_at } : m)));
       }
     });
   }, [person, id, listen, refresh, set]);
+  // "Typing…" travels on a private channel that only the two matched people may join.
+  const matched = Boolean(person);
+  useEffect(() => {
+    if (!matched) return undefined;
+    let clear = null;
+    let gone = false;
+    const channel = supabase.channel(`chat:${[userId, id].sort().join(':')}`, { config: { private: true, broadcast: { self: false } } })
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if (payload?.from !== id) return;
+        setTyping(true);
+        clearTimeout(clear);
+        clear = setTimeout(() => setTyping(false), 4000);
+      });
+    supabase.realtime.setAuth().catch(() => {}).then(() => { if (!gone) { channel.subscribe(); typingChannel.current = channel; } });
+    return () => { gone = true; clearTimeout(clear); typingChannel.current = null; setTyping(false); supabase.removeChannel(channel); };
+  }, [matched, userId, id]);
+  /** Tell the other person, at most every two seconds, that a message is being written. */
+  function type(value) {
+    setDraft(value);
+    const channel = typingChannel.current;
+    if (!value.trim() || !channel || channel.state !== 'joined' || Date.now() - typedAt.current < 2000) return;
+    typedAt.current = Date.now();
+    channel.send({ type: 'broadcast', event: 'typing', payload: { from: userId } });
+  }
   // Asking again on a timer stays as a safety net: every few seconds without the socket, rarely with it.
   useEffect(() => {
     if (!person) return undefined;
@@ -197,7 +225,7 @@ export function Chat() {
       <header className="chat-head">
         <Link className="back" to="/chats" aria-label={t('Back to chats')}><Icon name="back" size={20} /></Link>
         <Face person={person} />
-        <div className="chat-who"><h1><Link to={`/people/${person.user_id}`}>{person.display_name}, {person.age}</Link></h1><p className="hint">{summaryLines(person, t)[0] ?? ''} · {t('{0} of 36', [person.match.total])}</p></div>
+        <div className="chat-who"><h1><Link to={`/people/${person.user_id}`}>{person.display_name}, {person.age}</Link></h1><p className="hint">{inbox.online.has(person.user_id) ? <span className="online-text"><span className="online-dot inline" aria-hidden="true" />{t('Online')} · </span> : null}{summaryLines(person, t)[0] ?? ''} · {t('{0} of 36', [person.match.total])}</p></div>
         <div className="chat-menu">
           <button type="button" className="round small" aria-expanded={menu} aria-label={t('Safety options')} onClick={() => setMenu(!menu)}><Icon name="lock" size={20} /></button>
           {menu ? (
@@ -226,11 +254,12 @@ export function Chat() {
         </section>
       ) : null}
 
+      <p className="typing" aria-live="polite">{typing ? <><span className="typing-dots" aria-hidden="true"><i /><i /><i /></span>{t('{0} is typing…', [person.display_name])}</> : null}</p>
       {error ? <p className="error" role="alert">{error}</p> : null}
       {waiting ? <p className="notice" role="status">{t('You have sent {0} messages. You can send more when {1} replies.', [FIRST_MESSAGES, person.display_name])}</p> : null}
       <form className="compose" onSubmit={(e) => { e.preventDefault(); send(draft); }}>
         <label className="visually-hidden" htmlFor="dm-input">{t('Message {0}', [person.display_name])}</label>
-        <input id="dm-input" value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={1000} autoComplete="off" disabled={waiting} placeholder={t('Say hello to {0}', [person.display_name])} />
+        <input id="dm-input" value={draft} onChange={(e) => type(e.target.value)} maxLength={1000} autoComplete="off" disabled={waiting} placeholder={t('Say hello to {0}', [person.display_name])} />
         <button type="submit" className="send" aria-label={t('Send')} disabled={waiting || !draft.trim()}><Icon name="go" /></button>
       </form>
 

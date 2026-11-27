@@ -165,6 +165,9 @@ function MeForm({ userId, self, saved, photos: firstPhotos, cacheKey }) {
           <Toggle label={t('Show my income')} hint={t('Only ever shown as a range')} checked={p.show_income} onChange={(v) => set({ show_income: v })} />
         </div>
         <p className="hint">{t('None of these change your kundli score.')}</p>
+        <div className="toggles">
+          <Toggle label={t('Show when I am online')} hint={t('Only your matches see it. If you turn it off, you also stop seeing when they are online.')} checked={p.show_online ?? true} onChange={(v) => set({ show_online: v })} />
+        </div>
       </section>
 
       <section aria-labelledby="me-kundli">

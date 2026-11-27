@@ -2,8 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useLocation } from 'react-router-dom';
 import { supabase } from './supabase.js';
 
-const EMPTY = { unread_messages: 0, notifications: [], review: null };
-const InboxContext = createContext({ unread: 0, fresh: 0, notifications: [], review: null, live: false, refresh() {}, markRead() {}, listen() { return () => {}; } });
+const EMPTY = { unread_messages: 0, notifications: [], review: null, online: [] };
+const InboxContext = createContext({ unread: 0, fresh: 0, notifications: [], review: null, online: new Set(), live: false, refresh() {}, markRead() {}, listen() { return () => {}; } });
 const EVERY = 60 * 1000; // how often to ask while the page is open
 const AT_MOST = 10 * 1000; // moving between pages asks again, but not more often than this
 const SETTLE = 800; // several live events close together make one check, not one each
@@ -73,7 +73,7 @@ export function InboxProvider({ userId, children }) {
   const value = useMemo(() => {
     const waiting = (data.review?.photos ?? 0) + (data.review?.reports ?? 0);
     const unseen = cleared ? 0 : data.notifications.filter((n) => !n.read).length;
-    return { unread: Number(data.unread_messages) || 0, fresh: unseen + waiting, unseen, notifications: data.notifications, review: data.review, live, refresh, markRead, listen };
+    return { unread: Number(data.unread_messages) || 0, fresh: unseen + waiting, unseen, notifications: data.notifications, review: data.review, online: new Set(data.online ?? []), live, refresh, markRead, listen };
   }, [data, cleared, live, refresh, markRead, listen]);
   return <InboxContext.Provider value={value}>{children}</InboxContext.Provider>;
 }

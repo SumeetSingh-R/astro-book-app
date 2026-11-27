@@ -73,7 +73,7 @@ export function blankProfile(self) {
     gender: '', interested_in: '', looking_for: 'marriage', about: '', height_cm: null, education: '', work: '', city: '',
     marital_status: null, diet: null, drinking: null, smoking: null, interests: [],
     religion: '', community: '', mother_tongue: '', gotra: '', income_range: null, family_type: null, parents: '', siblings: '',
-    show_religion: true, show_community: true, show_income: true, discoverable: true, only_liked: false,
+    show_religion: true, show_community: true, show_income: true, show_online: true, discoverable: true, only_liked: false,
   };
 }
 export const blankPreferences = () => ({ age_min: 21, age_max: 40, height_min_cm: null, looking_for: [], marital_statuses: [], religions: [], communities: [], mother_tongues: [], income_min: null, min_score: 18, manglik: 'any' });

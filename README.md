@@ -96,6 +96,8 @@ The plan is a profile other people can see, a swipe-and-browse Discover ranked b
 
 **Account deletion (built).** A person can delete their own account from the profile page; an owner can delete someone's account from the People tab of the admin portal (not their own, and not a team member's until they are taken off the team). Deleting the sign-in record removes everything that belongs to it, because every table refers to it with `on delete cascade`. Photo files go first, through the storage service, and the database refuses to delete an account while any file is left. The last owner cannot delete their own account (`20261127100000_account_deletion.sql`).
 
+**Typing and online (built).** "Dev is typing…" is sent over a private socket channel named for the two people; the database lets only that matched pair join, listen or send (`meet_chat_topic_ok`, policies on `realtime.messages`). Online status needs no extra connection: each inbox check notes the time, and a person seen in the last two minutes shows a green dot to their matches only. "Show when I am online" on the profile page turns it off both ways (`20261127110000_meet_typing_online.sql`).
+
 **Next stages:** alerts when the app is closed (email or phone), parent accounts.
 
 ### Switching the AI on
