@@ -88,7 +88,11 @@ The plan is a profile other people can see, a swipe-and-browse Discover ranked b
 
 **Invite to match (built).** `/invite` makes a link (`/m/<code>`, valid 7 days) to send to someone you already know. They sign up or sign in, add their birth details if they have none, accept, and both people see the 36-point result with reasons and all eight tests. Neither needs a meet-and-match profile. Only a first name and the match keys are shared (`open_invite`, `accept_invite`, `my_invites` in `20261127060000_meet_invites.sql`).
 
-**Next stages:** live message delivery instead of polling, notifications, limits on how many messages can be sent.
+**Message limits (built).** The database checks every message: at most 20 a minute and 500 a day from one person, and at most 5 to someone who has not replied yet. The chat explains the limit in plain words and pauses the message box while waiting for a first reply. Message times are set by the database, so a limit cannot be dodged by back-dating.
+
+**Notifications (built).** A bell in the header and a count on Chats. The database writes a notification when a like completes a match, when a photo is approved or rejected, and when an invite link is accepted; unread messages are counted from the messages themselves. Admins also see how many photos and reports are waiting. `/notifications` lists them and marks them as seen. The app asks once a minute while it is open (`meet_inbox`); nothing is sent by email or to a phone (`20261127070000_meet_limits_notifications.sql`).
+
+**Next stages:** live message delivery instead of polling, alerts when the app is closed (email or phone), parent accounts.
 
 ### Switching the AI on
 

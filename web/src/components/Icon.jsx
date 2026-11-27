@@ -14,6 +14,7 @@ const PATHS = {
   globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.800 3 2.800 15 0 18M12 3c-2.800 3-2.800 15 0 18" /></>,
   x: <path d="M6 6l12 12M18 6L6 18" />,
   camera: <><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></>,
+  bell: <><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2.5h-15z" /><path d="M10 21a2 2 0 0 0 4 0" /></>,
   heart: <path d="M12 20s-7-4.6-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.4-7 10-7 10z" />,
   sliders: <><path d="M4 7h10M18 7h2M4 17h2M10 17h10" /><circle cx="16" cy="7" r="2" /><circle cx="8" cy="17" r="2" /></>,
   planet: <><circle cx="12" cy="12" r="5" /><path d="M3.5 15.5c-1.500 2.500 4 1.500 9-1.500s8.500-7.500 7-10" /></>,

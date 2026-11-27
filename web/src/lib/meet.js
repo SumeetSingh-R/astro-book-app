@@ -52,6 +52,21 @@ export function toList(text, max = 10) {
 }
 
 /** A new profile's starting values, from the person's saved birth details. */
+/** Until the other person replies once, this many messages can be sent. The database enforces it; this is for the hint. */
+export const FIRST_MESSAGES = 5;
+const LIMIT_TEXT = {
+  'limit:minute': msg('You are sending messages very quickly. Wait a minute, then try again.'),
+  'limit:day': msg('You have reached the limit for messages in one day. Try again tomorrow.'),
+  'limit:first': msg('Wait for {0} to reply before you send more.'),
+};
+/** The plain-words reason the database refused a message, or null when it was refused for another reason. */
+export const limitText = (error) => LIMIT_TEXT[error?.message] ?? null;
+/** True when the person has used up their opening messages and the other person has not replied yet. */
+export function waitingForReply(thread, userId) {
+  if (!thread || thread.some((m) => m.sender !== userId)) return false;
+  return thread.length >= FIRST_MESSAGES;
+}
+
 export function blankProfile(self) {
   return {
     display_name: String(self?.name ?? '').trim().split(/\s+/)[0] ?? '', birth_year: Number(String(self?.birth_date ?? '').slice(0, 4)) || null,

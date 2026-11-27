@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { feetInches, HEIGHTS, ageOn, toList, blankProfile, blankPreferences, completeness, labelOf, LOOKING_FOR } from '../src/lib/meet.js';
+import { feetInches, HEIGHTS, ageOn, toList, blankProfile, blankPreferences, completeness, labelOf, LOOKING_FOR, FIRST_MESSAGES, limitText, waitingForReply } from '../src/lib/meet.js';
 
 test('heights: shown in feet and inches, one inch apart', () => {
   assert.equal(feetInches(170), '5 ft 7 in');
@@ -45,4 +45,22 @@ test('completeness: reaches 100 only when everything is filled, and names what t
   assert.equal(completeness(full, 1).percent, 90);
   assert.equal(completeness(full, 1).next, 'Add at least 3 photos');
   assert.equal(labelOf(LOOKING_FOR, 'long_term'), 'Something long-term');
+});
+
+test('message limits: the database reason becomes plain words, and other errors are left alone', () => {
+  assert.match(limitText({ message: 'limit:minute' }), /Wait a minute/);
+  assert.match(limitText({ message: 'limit:day' }), /tomorrow/);
+  assert.match(limitText({ message: 'limit:first' }), /\{0\}/, 'names the other person');
+  assert.equal(limitText({ message: 'new row violates row-level security policy' }), null);
+  assert.equal(limitText(null), null);
+});
+
+test('opening messages: five are allowed until the other person replies', () => {
+  const mine = (n) => Array.from({ length: n }, (_, i) => ({ id: i, sender: 'me' }));
+  assert.equal(FIRST_MESSAGES, 5);
+  assert.equal(waitingForReply(null, 'me'), false, 'still loading');
+  assert.equal(waitingForReply([], 'me'), false);
+  assert.equal(waitingForReply(mine(4), 'me'), false);
+  assert.equal(waitingForReply(mine(5), 'me'), true);
+  assert.equal(waitingForReply([...mine(8), { id: 'r', sender: 'them' }], 'me'), false, 'a reply lifts the limit');
 });

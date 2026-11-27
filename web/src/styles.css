@@ -225,6 +225,22 @@ button.link:hover { color: var(--ink); }
 .steps li::before { content: counter(step); grid-row: span 2; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 16px; background: var(--btn); color: #fff; font-weight: 700; }
 .steps li .hint { grid-column: 2; }
 
+/* ---------- notifications ---------- */
+.badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--btn); color: #fff; font-size: 0.75rem; font-weight: 700; line-height: 1; }
+.main-nav a .badge { margin-left: 8px; }
+.main-nav a.active .badge { background: #fff; color: var(--btn); }
+.bell { position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); transition: transform 0.18s ease, box-shadow 0.18s ease; }
+.bell:hover { transform: translateY(-2px); box-shadow: var(--lift); color: var(--ink); }
+.bell.active { background: var(--raised); }
+.bell .badge, .tab-icon .badge { position: absolute; top: -4px; right: -6px; box-shadow: 0 0 0 2px var(--surface); }
+.tab-icon { position: relative; display: flex; }
+.note-row { display: flex; align-items: center; gap: 14px; text-decoration: none; color: var(--ink); }
+.note-row.new { background: var(--tint); }
+.note-icon { flex: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 22px; background: var(--raised); color: var(--accent-text); }
+.note-row.new .note-icon { background: var(--surface); }
+.note-row .when { flex: none; white-space: nowrap; }
+.note-row .chat-row-text .hint { white-space: normal; }
+
 /* ---------- admin portal ---------- */
 .stats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
 .stat { font-family: var(--font-display); font-size: 2.4rem; line-height: 1.1; }

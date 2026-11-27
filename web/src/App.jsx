@@ -4,6 +4,7 @@ import { supabase } from './lib/supabase.js';
 import { setCacheScope, clearCache, pruneCache } from './lib/cache.js';
 import { AccountProvider, useAccount } from './lib/account.jsx';
 import { LanguageProvider, LanguageSwitch, useT, msg } from './lib/language.jsx';
+import { InboxProvider, useInbox, Badge } from './lib/inbox.jsx';
 import Icon from './components/Icon.jsx';
 import { DaySkeleton } from './components/Skeleton.jsx';
 import Home from './pages/Home.jsx';
@@ -22,6 +23,7 @@ import Discover from './pages/Discover.jsx';
 import Chats, { Chat } from './pages/Chats.jsx';
 import Person from './pages/Person.jsx';
 import Invite, { InviteLink } from './pages/Invite.jsx';
+import Notifications from './pages/Notifications.jsx';
 import AdminPhotos from './pages/AdminPhotos.jsx';
 import Admin from './pages/Admin.jsx';
 import MeetPreferences from './pages/MeetPreferences.jsx';
@@ -86,6 +88,7 @@ function Shell({ children }) {
   const t = useT();
   const { session, authError } = useAuth();
   const { self } = useAccount();
+  const { unread, fresh } = useInbox();
   const location = useLocation();
   const bare = location.pathname === '/sign-in' || location.pathname === '/welcome';
   const initial = (self?.name || session?.user?.email || 'A').trim().charAt(0).toUpperCase();
@@ -100,13 +103,16 @@ function Shell({ children }) {
           <nav className="main-nav" aria-label={t('Main')}>
             <NavLink to="/today">{t('Today')}</NavLink>
             <NavLink to="/discover">{t('Discover')}</NavLink>
-            <NavLink to="/chats">{t('Chats')}</NavLink>
+            <NavLink to="/chats" aria-label={unread ? t('Chats, {0} new messages', [unread]) : undefined}>{t('Chats')}<Badge count={unread} /></NavLink>
             <NavLink to="/charts">{t('My charts')}</NavLink>
             <NavLink to="/match">{t('Matching')}</NavLink>
           </nav>
         ) : null}
         <div className="top-actions">
           <LanguageSwitch compact />
+          {session && !bare ? (
+            <NavLink to="/notifications" className="bell" aria-label={fresh ? t('Notifications, {0} new', [fresh]) : t('Notifications')}><Icon name="bell" size={22} /><Badge count={fresh} /></NavLink>
+          ) : null}
           {session ? (
             <NavLink to="/profile" className="profile-chip" aria-label={t('Your profile')}>
               <span className="avatar" aria-hidden="true">{initial}</span>
@@ -135,7 +141,7 @@ function Shell({ children }) {
       {session && !bare ? (
         <nav className="tabbar" aria-label={t('Main')}>
           {TABS.map(([to, label, icon]) => (
-            <NavLink key={to} to={to}><Icon name={icon} /><span>{t(label)}</span></NavLink>
+            <NavLink key={to} to={to} aria-label={to === '/chats' && unread ? t('Chats, {0} new messages', [unread]) : undefined}><span className="tab-icon"><Icon name={icon} />{to === '/chats' ? <Badge count={unread} /> : null}</span><span>{t(label)}</span></NavLink>
           ))}
         </nav>
       ) : null}
@@ -148,7 +154,7 @@ function Providers({ children }) {
   const userId = session?.user?.id ?? null;
   return (
     <AccountProvider userId={userId}>
-      <LanguageProvider userId={userId}>{children}</LanguageProvider>
+      <LanguageProvider userId={userId}><InboxProvider userId={userId}>{children}</InboxProvider></LanguageProvider>
     </AccountProvider>
   );
 }
@@ -172,6 +178,7 @@ export default function App() {
               <Route path="/discover" element={<Private><NeedsProfile><Discover /></NeedsProfile></Private>} />
               <Route path="/invite" element={<Private><NeedsProfile><Invite /></NeedsProfile></Private>} />
               <Route path="/m/:code" element={<Private><InviteLink /></Private>} />
+              <Route path="/notifications" element={<Private><Notifications /></Private>} />
               <Route path="/people/:id" element={<Private><NeedsProfile><Person /></NeedsProfile></Private>} />
               <Route path="/chats" element={<Private><NeedsProfile><Chats /></NeedsProfile></Private>} />
               <Route path="/chats/:id" element={<Private><NeedsProfile><Chat /></NeedsProfile></Private>} />

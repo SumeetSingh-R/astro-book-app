@@ -7,6 +7,8 @@ import { useAccount } from '../lib/account.jsx';
 import { useT, msg } from '../lib/language.jsx';
 import { RASHIS, formatDate } from '../lib/format.js';
 import { useDiscover, saveOwnKeys, forgetDiscover } from '../lib/meetData.js';
+import { FIRST_MESSAGES, limitText, waitingForReply } from '../lib/meet.js';
+import { useInbox } from '../lib/inbox.jsx';
 import { useMeetProfile } from './Me.jsx';
 import { Face, summaryLines } from './Discover.jsx';
 import Icon from '../components/Icon.jsx';
@@ -113,6 +115,7 @@ export function Chat() {
   const [reporting, setReporting] = useState(false);
   const [notice, setNotice] = useState(null);
   const endRef = useRef(null);
+  const inbox = useInbox();
   const person = matches?.find((p) => p.user_id === id) ?? null;
 
   const thread = useRemembered(person ? `thread:${userId}:${id}` : null, async () => {
@@ -133,7 +136,8 @@ export function Chat() {
     return () => clearInterval(timer);
   }, [person, refresh]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }); }, [count]);
-  useEffect(() => { if (unread) supabase.rpc('meet_mark_read', { p_other: id }).then(() => forget(`inbox:${userId}`)); }, [unread, id, userId]);
+  const refreshInbox = inbox.refresh;
+  useEffect(() => { if (unread) supabase.rpc('meet_mark_read', { p_other: id }).then(() => { forget(`inbox:${userId}`); refreshInbox(true); }); }, [unread, id, userId, refreshInbox]);
 
   if (!matches) return <ListSkeleton label={t('Loading…')} />;
   if (!person) return <div className="sheet"><h1>{t('This chat is not available')}</h1><p className="muted">{t('You can chat with someone only while you are both matched.')}</p><Link className="btn" to="/chats">{t('Back to chats')}</Link></div>;
@@ -149,12 +153,14 @@ export function Chat() {
     if (err) {
       thread.set((list) => list.filter((m) => m.id !== pending.id));
       setDraft(body);
-      setError(t('That message could not be sent. You can only chat while you are both matched.'));
+      const limit = limitText(err);
+      setError(limit ? t(limit, [person.display_name]) : t('That message could not be sent. You can only chat while you are both matched.'));
       return;
     }
     thread.set((list) => list.map((m) => (m.id === pending.id ? data : m)));
     forget(`inbox:${userId}`);
   }
+  const waiting = waitingForReply(thread.data, userId);
   async function leave(action) {
     setMenu(false);
     const res = action === 'block'
@@ -200,10 +206,11 @@ export function Chat() {
       ) : null}
 
       {error ? <p className="error" role="alert">{error}</p> : null}
+      {waiting ? <p className="notice" role="status">{t('You have sent {0} messages. You can send more when {1} replies.', [FIRST_MESSAGES, person.display_name])}</p> : null}
       <form className="compose" onSubmit={(e) => { e.preventDefault(); send(draft); }}>
         <label className="visually-hidden" htmlFor="dm-input">{t('Message {0}', [person.display_name])}</label>
-        <input id="dm-input" value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={1000} autoComplete="off" placeholder={t('Say hello to {0}', [person.display_name])} />
-        <button type="submit" className="send" aria-label={t('Send')} disabled={!draft.trim()}><Icon name="go" /></button>
+        <input id="dm-input" value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={1000} autoComplete="off" disabled={waiting} placeholder={t('Say hello to {0}', [person.display_name])} />
+        <button type="submit" className="send" aria-label={t('Send')} disabled={waiting || !draft.trim()}><Icon name="go" /></button>
       </form>
 
       {reporting ? <Report person={person} userId={userId} onCancel={() => setReporting(false)} onDone={(blocked) => {
