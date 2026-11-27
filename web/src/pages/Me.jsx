@@ -50,7 +50,8 @@ function Pick({ label, options, value, onChange, t, empty }) {
 
 function MeForm({ userId, self, saved, photos: firstPhotos, cacheKey }) {
   const t = useT();
-  const [p, setP] = useState(() => ({ ...blankProfile(self), ...(saved ? Object.fromEntries(FIELDS.map((k) => [k, saved[k]])) : {}) }));
+  // Start from an empty profile and lay the saved values over it, so a value the database left empty never breaks the form.
+  const [p, setP] = useState(() => { const blank = blankProfile(self); return saved ? Object.fromEntries(FIELDS.map((k) => [k, saved[k] ?? blank[k]])) : blank; });
   const [interestText, setInterestText] = useState(() => (saved?.interests ?? []).join(', '));
   const [photos, setPhotos] = useState(firstPhotos);
   const [exists, setExists] = useState(Boolean(saved));

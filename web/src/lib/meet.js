@@ -83,19 +83,20 @@ export const blankPreferences = () => ({ age_min: 21, age_max: 40, height_min_cm
  * Photos and the things people filter on count the most.
  */
 export function completeness(profile, photoCount) {
+  const said = (key) => String(profile[key] ?? '').trim();
   const parts = [
     [photoCount >= 1, 20, msg('Add a clear photo of your face')],
     [photoCount >= 3, 10, msg('Add at least 3 photos')],
     [Boolean(profile.gender && profile.interested_in), 10, msg('Say who you are and who you want to meet')],
-    [profile.about.trim().length >= 20, 10, msg('Write a line or two about yourself')],
+    [said('about').length >= 20, 10, msg('Write a line or two about yourself')],
     [Boolean(profile.height_cm), 5, msg('Add your height')],
-    [Boolean(profile.education.trim() && profile.work.trim()), 10, msg('Add your education and work')],
-    [Boolean(profile.city.trim()), 5, msg('Add where you live')],
+    [Boolean(said('education') && said('work')), 10, msg('Add your education and work')],
+    [Boolean(said('city')), 5, msg('Add where you live')],
     [Boolean(profile.marital_status), 5, msg('Add your marital status')],
-    [Boolean(profile.religion.trim() && profile.mother_tongue.trim()), 10, msg('Add your religion and mother tongue')],
+    [Boolean(said('religion') && said('mother_tongue')), 10, msg('Add your religion and mother tongue')],
     [Boolean(profile.family_type), 5, msg('Add a little about your family')],
     [Boolean(profile.diet && profile.drinking && profile.smoking), 5, msg('Add your food, drinking and smoking habits')],
-    [profile.interests.length >= 3, 5, msg('Add at least 3 interests')],
+    [(profile.interests ?? []).length >= 3, 5, msg('Add at least 3 interests')],
   ];
   const percent = parts.reduce((sum, [done, weight]) => sum + (done ? weight : 0), 0);
   return { percent, next: parts.find(([done]) => !done)?.[2] ?? null };

@@ -171,8 +171,13 @@ function Providers({ children }) {
   );
 }
 
-export default function App() {
+/** Its own component so it reads the chosen language, which is set up inside the app, not around it. */
+function NotFound() {
   const t = useT();
+  return <><h1>{t('Page not found')}</h1><p><Link to="/">{t('Go to the home page')}</Link></p></>;
+}
+
+export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -209,7 +214,7 @@ export default function App() {
               <Route path="/charts/new" element={<Private><NewProfile /></Private>} />
               <Route path="/charts/:id" element={<Private><ChartPage /></Private>} />
               <Route path="/match" element={<Private><Match /></Private>} />
-              <Route path="*" element={<><h1>{t('Page not found')}</h1><p><Link to="/">{t('Go to the home page')}</Link></p></>} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Shell>
         </Providers>

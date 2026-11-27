@@ -116,6 +116,7 @@ function Deck({ userId, me, selfId }) {
   const hidden = people.length - people.filter((p) => p.fit.fits).length;
   return (
     <>
+      <h1 className="visually-hidden">{t('Discover')}</h1>
       <div className="title-row">
         <div className="switch" role="group" aria-label={t('View')}>
           <button type="button" aria-pressed={view === 'swipe'} className={view === 'swipe' ? 'on' : undefined} onClick={() => setView('swipe')}>{t('Swipe')}</button>

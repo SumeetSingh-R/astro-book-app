@@ -64,3 +64,8 @@ test('opening messages: five are allowed until the other person replies', () => 
   assert.equal(waitingForReply(mine(5), 'me'), true);
   assert.equal(waitingForReply([...mine(8), { id: 'r', sender: 'them' }], 'me'), false, 'a reply lifts the limit');
 });
+
+test('completeness: a profile with fields missing or empty is counted, not a crash', () => {
+  assert.deepEqual(completeness({ display_name: 'Asha', gender: 'woman', interested_in: 'men' }, 0).percent, 10);
+  assert.equal(completeness({ about: null, education: null, interests: null }, 1).percent, 20);
+});
